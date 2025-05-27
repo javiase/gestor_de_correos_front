@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<script src="config.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <title>Página de Inicio de Sesion</title>
+  <style>
+    /* --------------------------------------------------------------
+       RESET / ESTILO GLOBAL
+    -------------------------------------------------------------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f0f0f; /* Modo oscuro por defecto */
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --------------------------------------------------------------
+       HEADER
+    -------------------------------------------------------------- */
+    header {
+      width: 100%;
+      height: 60px;
+      background: #0f0f0f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 10;
+    }
+    header .logo {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .header-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .header-links a {
+      text-decoration: none;
+      color: #fff;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s ease;
+    }
+    .header-links a:hover {
+      color: #66ffc1; /* Efecto hover */
+    }
+
+    /* --------------------------------------------------------------
+       CONTENEDOR PRINCIPAL (FORMULARIO)
+    -------------------------------------------------------------- */
+    .main-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(160deg, #1a1a1a 0%, #111111 100%);
+      position: relative;
+    }
+
+    /* FORMULARIO */
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 2em;
+      background-color: #171717;
+      border-radius: 25px;
+      transition: 0.4s ease-in-out;
+      width: 300px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+    }
+    .form:hover {
+      transform: scale(1.02);
+    }
+
+    /* Título del formulario */
+    #heading {
+      text-align: center;
+      margin-bottom: 1em;
+      color: #fff;
+      font-size: 1.4em;
+    }
+
+    /* Campos de texto */
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      border-radius: 25px;
+      padding: 0.6em;
+      background-color: #171717;
+      box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
+    }
+    .input-icon {
+      height: 1.3em;
+      width: 1.3em;
+      fill: #ccc;
+      flex-shrink: 0;
+    }
+    .input-field {
+      background: none;
+      border: none;
+      outline: none;
+      width: 100%;
+      color: #d3d3d3;
+      font-size: 0.95rem;
+    }
+
+    /* Botón de Iniciar Sesión (estilo similar al de "Crear Cuenta") */
+    .create-button {
+      margin-top: 1rem;
+      padding: 0.6em;
+      border-radius: 5px;
+      border: none;
+      outline: none;
+      transition: 0.4s ease-in-out;
+      background-color: #252525;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    .create-button:hover {
+      background-color: #000;
+    }
+
+    /* Texto de ayuda / enlace "¿No tienes cuenta? Regístrate" */
+    .already-registered {
+      margin-top: 0.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+    .already-registered a {
+      color: #66ffc1;
+      text-decoration: none;
+      font-weight: 500;
+      margin-left: 0.3rem;
+    }
+    .already-registered a:hover {
+      color: #33ffa2;
+    }
+
+    /* --------------------------------------------------------------
+       FOOTER
+    -------------------------------------------------------------- */
+    footer {
+      width: 100%;
+      background: #0f0f0f;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 1rem 2rem;
+    }
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .footer-menu {
+      display: flex;
+      gap: 1rem;
+    }
+    .footer-menu a {
+      text-decoration: none;
+      color: #555;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    .footer-menu a:hover {
+      color: #aaa;
+    }
+    .footer-left .copyright {
+      color: #666;
+      font-size: 0.8rem;
+    }
+    .footer-right {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* TOGGLE (opcional) */
+    .toggle-container {
+      position: relative;
+    }
+    .toggle-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .toggle-label {
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .toggle-background {
+      position: relative;
+      width: 80px;
+      height: 36px;
+      background: #fff;
+      border-radius: 9999px;
+      transition: 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2) inset;
+    }
+    .toggle-handle {
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(to right, orange, yellow);
+      transition: 0.3s;
+    }
+    .toggle-input:checked + .toggle-background {
+      background: #0f0f0f;
+      border: 1px solid #444;
+    }
+    .toggle-input:checked + .toggle-background .toggle-handle {
+      background: #333;
+      left: 44px;
+    }
+    .toggle-sun, .toggle-moon {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      fill: white;
+      opacity: 0.7;
+    }
+    .toggle-sun {
+      left: 8px;
+      top: 8px;
+    }
+    .toggle-moon {
+      right: 8px;
+      top: 8px;
+      fill: black;
+      opacity: 0.6;
+    }
+    .toggle-input:checked + .toggle-background .toggle-sun {
+      opacity: 0.6;
+    }
+    .toggle-input:checked + .toggle-background .toggle-moon {
+      fill: white;
+      opacity: 0.7;
+    }
+
+    /* "He olvidado mi contraseña" */
+    .forgot-password {
+      margin-top: 0.3rem;
+      text-align: center;
+      font-size: 0.85rem; /* Tamaño más pequeño */
+      color: #999; /* Color más oscuro */
+      text-decoration: underline; /* Subrayado */
+      cursor: pointer;
+    }
+    .forgot-password:hover {
+      color: #ccc; /* Un poco más claro en hover */
+    }
+
+  </style>
+
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">MiLogo</div>
+    <div class="header-links">
+      <a href="registrar.html">Regístrate</a>
+      <a href="#">Contacto</a>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="main-container">
+    <!-- FORMULARIO DE INICIO DE SESION -->
+    <form class="form" id="loginForm">
+
+      <p id="heading">Iniciar Sesión</p>
+      <div class="field">
+        <!-- Ícono de usuario -->
+        <svg class="input-icon" xmlns="http://www.w3.org/2000/svg"
+             width="16" height="16" fill="currentColor"
+             viewBox="0 0 16 16">
+          <path d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643z"></path>
+        </svg>
+        <input name="email" autocomplete="off" placeholder="Correo" class="input-field" type="text">
+      </div>
+
+      <div class="field">
+        <!-- Ícono candado -->
+        <svg class="input-icon" xmlns="http://www.w3.org/2000/svg"
+             width="16" height="16" fill="currentColor"
+             viewBox="0 0 16 16">
+          <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"></path>
+        </svg>
+        <input name="password" placeholder="Contraseña" class="input-field" type="password">
+      </div>
+
+      <!-- Botón de Iniciar Sesión que ocupa todo el ancho -->
+      <button class="create-button" type="submit">Iniciar Sesión</button>
+
+      <!-- Texto clickable para ir al registro -->
+      <div class="already-registered">
+        ¿No tienes cuenta?
+        <a href="registrar.html">Regístrate</a>
+      </div>
+      <div class="forgot-password">
+        <p>He olvidado mi contraseña</p>
+      </div>
+    </form>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">
+      <div class="footer-menu">
+        <a href="#" style="font-weight:500;">Home</a>
+        <a href="#" style="font-weight:500;">Contact</a>
+      </div>
+      <div class="copyright">
+        © 2025, Tuempresa
+      </div>
+    </div>
+    <div class="footer-right">
+      <label for="toggle" class="toggle-label toggle-container">
+        <input id="toggle" class="toggle-input" type="checkbox" />
+        <div class="toggle-background">
+          <div class="toggle-handle"></div>
+          <!-- Ícono Sol -->
+          <svg class="toggle-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12,17c-2.76,0-5-2.24-5-5s2.24-5,5-5,5,2.24,5,5-2.24,5-5,5ZM13,0h-2V5h2V0Zm0,19h-2v5h2v-5ZM5,11H0v2H5v-2Zm19,0h-5v2h5v-2Zm-2.81-6.78l-1.41-1.41-3.54,3.54,1.41,1.41,3.54-3.54ZM7.76,17.66l-1.41-1.41-3.54,3.54,1.41,1.41,3.54-3.54Zm0-11.31l-3.54-3.54-1.41,1.41,3.54,3.54,1.41-1.41Zm13.44,13.44l-3.54-3.54-1.41,1.41,3.54,3.54,1.41-1.41Z"></path>
+          </svg>
+          <!-- Ícono Luna -->
+          <svg class="toggle-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.009,24A12.067,12.067,0,0,1,.075,10.725,12.121,12.121,0,0,1,10.1.152a13,13,0,0,1,5.03.206,2.5,2.5,0,0,1,1.8,1.8,2.47,2.47,0,0,1-.7,2.425c-4.559,4.168-4.165,10.645.807,14.412h0a2.5,2.5,0,0,1-.7,4.319A13.875,13.875,0,0,1,12.009,24Zm.074-22a10.776,10.776,0,0,0-1.675.127,10.1,10.1,0,0,0-8.344,8.8A9.928,9.928,0,0,0,4.581,18.7a10.473,10.473,0,0,0,11.093,2.734.5.5,0,0,0,.138-.856h0C9.883,16.1,9.417,8.087,14.865,3.124a.459.459,0,0,0,.127-.465.491.491,0,0,0-.356-.362A10.68,10.68,0,0,0,12.083,2Z"></path>
+          </svg>
+        </div>
+      </label>
+    </div>
+  </footer>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+  
+      const email = e.target.email.value;
+      const password = e.target.password.value;
+  
+      try {
+        const res = await fetch(`https://sincere-musical-squid.ngrok-free.app/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+  
+        const { access_token, user_id } = await res.json();
+        if (!res.ok) throw new Error("Credenciales inválidas");
+
+        // Guarda el token de forma segura
+        localStorage.setItem("token", access_token);
+        localStorage.setItem("user_id", user_id);
+
+        // Redirige a la página principal de tu frontend
+        window.location.href = "perfil.html";
+
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    });
+  </script>
+  <!-- Script para el toggle de modo oscuro/claro (opcional) -->
+  <script>
+    const toggleCheckbox = document.getElementById("toggle");
+    toggleCheckbox.addEventListener("change", () => {
+      document.body.classList.toggle("light-mode");
+    });
+  </script>
+
+</body>
+</html>

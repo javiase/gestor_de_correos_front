@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Página de Registro</title>
+  <style>
+    /* --------------------------------------------------------------
+       RESET / ESTILO GLOBAL
+    -------------------------------------------------------------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f0f0f; /* Modo oscuro por defecto */
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --------------------------------------------------------------
+       HEADER
+    -------------------------------------------------------------- */
+    header {
+      width: 100%;
+      height: 60px;
+      background: #0f0f0f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 10;
+    }
+    header .logo {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .header-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .header-links a {
+      text-decoration: none;
+      color: #fff;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s ease;
+    }
+    .header-links a:hover {
+      color: #66ffc1;
+    }
+
+    /* --------------------------------------------------------------
+       CONTENEDOR PRINCIPAL (FORMULARIO)
+    -------------------------------------------------------------- */
+    .main-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(160deg, #1a1a1a 0%, #111111 100%);
+      position: relative;
+    }
+
+    /* FORMULARIO */
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 2em;
+      background-color: #171717;
+      border-radius: 25px;
+      transition: 0.4s ease-in-out;
+      width: 320px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+    }
+
+
+    /* Título del formulario */
+    #heading {
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: #fff;
+      font-size: 1.4em;
+    }
+
+    /* Campos de texto */
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      border-radius: 25px;
+      padding: 0.6em;
+      background-color: #171717;
+      box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
+    }
+    .input-icon {
+      height: 1.3em;
+      width: 1.3em;
+      fill: #ccc;
+      flex-shrink: 0;
+    }
+    .input-field {
+      background: none;
+      border: none;
+      outline: none;
+      width: 100%;
+      color: #d3d3d3;
+      font-size: 0.95rem;
+    }
+
+    /* Botón para crear cuenta (ancho completo, hover similar) */
+    .create-button {
+      margin-top: 1rem;
+      padding: 0.6em;
+      border-radius: 5px;
+      border: none;
+      outline: none;
+      transition: 0.4s ease-in-out;
+      background-color: #252525;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    .create-button:hover {
+      background-color: #000;
+    }
+
+    /* Texto de ayuda / enlace "¿Ya tienes cuenta?" */
+    .already-registered {
+      margin-top: 0.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+    .already-registered a {
+      color: #66ffc1;
+      text-decoration: none;
+      font-weight: 500;
+      margin-left: 0.3rem;
+    }
+    .already-registered a:hover {
+      color: #33ffa2;
+    }
+
+    /* --------------------------------------------------------------
+       FOOTER
+    -------------------------------------------------------------- */
+    footer {
+      width: 100%;
+      background: #0f0f0f;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 1rem 2rem;
+    }
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .footer-menu {
+      display: flex;
+      gap: 1rem;
+    }
+    .footer-menu a {
+      text-decoration: none;
+      color: #555;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    .footer-menu a:hover {
+      color: #aaa;
+    }
+    .footer-left .copyright {
+      color: #666;
+      font-size: 0.8rem;
+    }
+    .footer-right {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* TOGGLE (modo oscuro/claro) */
+    .toggle-container {
+      position: relative;
+    }
+    .toggle-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .toggle-label {
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .toggle-background {
+      position: relative;
+      width: 80px;
+      height: 36px;
+      background: #fff;
+      border-radius: 9999px;
+      transition: 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2) inset;
+    }
+    .toggle-handle {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(to right, orange, yellow);
+      transition: 0.3s;
+    }
+    .toggle-input:checked + .toggle-background {
+      background: #0f0f0f;
+      border: 1px solid #444;
+    }
+    .toggle-input:checked + .toggle-background .toggle-handle {
+      background: #333;
+      left: 48px;
+    }
+    .toggle-sun, .toggle-moon {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      fill: white;
+      opacity: 0.7;
+    }
+    .toggle-sun {
+      left: 8px;
+      top: 8px;
+    }
+    .toggle-moon {
+      right: 8px;
+      top: 8px;
+      fill: black;
+      opacity: 0.6;
+    }
+    .toggle-input:checked + .toggle-background .toggle-sun {
+      opacity: 0.6;
+    }
+    .toggle-input:checked + .toggle-background .toggle-moon {
+      fill: white;
+      opacity: 0.7;
+    }
+    /* "He olvidado mi contraseña" */
+    .forgot-password {
+      margin-top: 0.3rem;
+      text-align: center;
+      font-size: 0.85rem; /* Tamaño más pequeño */
+      color: #999; /* Color más oscuro */
+      text-decoration: underline; /* Subrayado */
+      cursor: pointer;
+    }
+    .forgot-password:hover {
+      color: #ccc; /* Un poco más claro en hover */
+    }
+    .field-container {
+      position: relative;
+    }
+
+    .error-message {
+      display: none; /* 🔒 Oculto por defecto */
+      position: absolute;
+      top: 50%;
+      left: calc(100% + 0.5em);
+      transform: translateY(-50%);
+      background: #2b2b2b;            /* fondo oscuro */
+      border: 1px solid #f87171;     /* borde rojo suave */
+      border-radius: 4px;            /* esquinas redondeadas */
+      padding: 0.25em 0.5em;         /* espacio interno */
+      font-size: 0.85rem;
+      color: #f87171;                /* texto rojo */
+      white-space: nowrap;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      z-index: 5;
+    }
+
+    /* flechita tipo tooltip */
+    .error-message::before {
+      display: none; /* 🔒 Flechita también oculta por defecto */
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: -0.4em;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-right-color: #2b2b2b;
+    }
+
+    .error-message:not(:empty) {
+      display: block;
+    }
+
+    .error-message:not(:empty)::before {
+      display: block;
+    }
+
+
+    /* Botón de toggle dentro del .field */
+    .toggle-password {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-left: 0.5em;
+      align-self: center;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">MiLogo</div>
+    <div class="header-links">
+      <a href="iniciar_sesion.html">Iniciar Sesión</a>
+      <a href="#">Contacto</a>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="main-container">
+    <!-- FORMULARIO DE REGISTRO -->
+    <form class="form" id="registerForm">
+      <p id="heading">Registrarse</p>
+
+      <!-- Email -->
+      <div class="field-container">
+        <div class="field">
+          <svg class="input-icon" xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24" fill="none">
+            <path fill="currentColor" d="M19.5 4h-15A2.504 2.504 0 0 0 2 6.5v11A2.504 2.504 0 0 0 4.5 20h15a2.504 2.504 0 0 0 2.5-2.5v-11A2.504 2.504 0 0 0 19.5 4zm0 2l-7.5 4.714L4.5 6zm0 12h-15a.5.5 0 0 1-.5-.5V8.117l7.206 4.53a1.004 1.004 0 0 0 1.088 0L20 8.117V17.5a.5.5 0 0 1-.5.5z"/>
+          </svg>
+          <input autocomplete="off" name = "email" placeholder="Correo electrónico" class="input-field" type="email" required>
+          <span class="error-message" id="emailError"></span>
+        </div>
+      </div>
+      
+      <!-- Teléfono -->
+      <div class="field-container">
+        <div class="field">
+          <svg class="input-icon" xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24" fill="none">
+            <path fill="currentColor" d="M17.066 14.558c-1.173.489-2.11.139-2.906-.675-.408-.411-.807-.835-1.201-1.266-.96-1.07-1.092-2.485-.335-3.786l-.001-.001.822-1.4c.11-.187.14-.41.085-.624-.847-3.215-3.09-5.914-6.2-7.124C7.162.262 6.979.249 6.808.333L4.98 1.211C3.66 1.82 2.52 3.215 2.52 4.821c0 10.53 8.22 19.107 18.38 19.107 1.522 0 3.001-.323 4.316-.931l.864-1.823c.12-.252.131-.547.028-.81-1.203-3.036-3.882-5.256-7.108-6.105-.21-.056-.434-.023-.624.085l-1.382.802-.001-.001c-1.279.761-2.674.618-3.743-.358z"/>
+            </svg>
+          <input autocomplete="off" name = "phone" placeholder="Número de teléfono" class="input-field" type="tel" required>
+          <span class="error-message" id="phoneError"></span>
+        </div>
+      </div>
+
+      <!-- Nombre -->
+      <div class="field-container">
+        <div class="field">
+          <svg class="input-icon" xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 16 16" fill="none">
+            <path fill="currentColor" d="M8 8a3 3 0 1 0-3-3 3 3 0 0 0 3 3zm0 1c-2.33 0-7 1.17-7 3.5V15h14v-2.5C15 10.17 10.33 9 8 9z"/>
+          </svg>
+          <input autocomplete="off" name = "name" placeholder="Nombre" class="input-field" type="text" required>
+          <span class="error-message" id="nameError"></span>
+        </div>
+      </div>
+
+      <!-- Apellidos -->
+      <div class="field-container">
+        <div class="field">
+          <svg class="input-icon" xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 16 16" fill="none">
+          <path fill="currentColor" d="M8 8a3 3 0 1 0-3-3 3 3 0 0 0 3 3zm0 1c-2.33 0-7 1.17-7 3.5V15h14v-2.5C15 10.17 10.33 9 8 9z"/>
+          </svg>
+          <input autocomplete="off" name = "surname" placeholder="Apellidos" class="input-field" type="text" required>
+          <span class="error-message" id="surnameError"></span>
+        </div>
+      </div>
+      
+      <!-- Contraseña -->
+      <div class="field-container">
+        <div class="field">
+          <svg class="input-icon" xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 16 16" fill="none">
+            <path fill="currentColor" d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+          </svg>
+          <input placeholder="Contraseña" name = "password" class="input-field" type="password" id="password" required>
+          <button type="button" class="toggle-password" data-target="password">👁</button>
+          <span class="error-message" id="passwordError"></span>
+        </div>
+      </div>
+      <!-- Repetir Contraseña -->
+      <div class="field-container">
+        <div class="field">
+          <svg class="input-icon" xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 16 16" fill="none">
+            <path fill="currentColor" d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+          </svg>
+          <input placeholder="Repetir contraseña" name = "confirmPassword" class="input-field" type="password" id="confirmPassword" required>
+          <button type="button" class="toggle-password" data-target="confirmPassword">👁</button>
+          <span class="error-message" id="confirmPasswordError"></span>
+        </div>
+      </div>
+      <!-- Botón Crear Cuenta -->
+      <button class="create-button" type="submit">Crear Cuenta</button>
+      
+      <!-- ¿Ya tienes cuenta? -->
+      <div class="already-registered">
+        ¿Ya tienes cuenta?
+        <a href="iniciar_sesion.html">Iniciar Sesión</a>
+      </div>
+      <div class="forgot-password">
+        <p>He olvidado mi contraseña</p>
+      </div>
+    </form>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">
+      <div class="footer-menu">
+        <a href="#" style="font-weight:500;">Home</a>
+        <a href="#" style="font-weight:500;">Contact</a>
+      </div>
+      <div class="copyright">
+        © 2025, Tuempresa
+      </div>
+    </div>
+    <div class="footer-right">
+      <label for="toggle" class="toggle-label toggle-container">
+        <input id="toggle" class="toggle-input" type="checkbox" />
+        <div class="toggle-background">
+          <div class="toggle-handle"></div>
+          <!-- Ícono Sol -->
+          <svg class="toggle-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12,17c-2.76,0-5-2.24-5-5s2.24-5,5-5,5,2.24,5,5-2.24,5-5,5ZM13,0h-2V5h2V0Zm0,19h-2v5h2v-5ZM5,11H0v2H5v-2Zm19,0h-5v2h5v-2Zm-2.81-6.78l-1.41-1.41-3.54,3.54,1.41,1.41,3.54-3.54ZM7.76,17.66l-1.41-1.41-3.54,3.54,1.41,1.41,3.54-3.54Zm0-11.31l-3.54-3.54-1.41,1.41,3.54,3.54,1.41-1.41Zm13.44,13.44l-3.54-3.54-1.41,1.41,3.54,3.54,1.41-1.41Z"></path>
+          </svg>
+          <!-- Ícono Luna -->
+          <svg class="toggle-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.009,24A12.067,12.067,0,0,1,.075,10.725,12.121,12.121,0,0,1,10.1.152a13,13,0,0,1,5.03.206,2.5,2.5,0,0,1,1.8,1.8,2.47,2.47,0,0,1-.7,2.425c-4.559,4.168-4.165,10.645.807,14.412h0a2.5,2.5,0,0,1-.7,4.319A13.875,13.875,0,0,1,12.009,24Zm.074-22a10.776,10.776,0,0,0-1.675.127,10.1,10.1,0,0,0-8.344,8.8A9.928,9.928,0,0,0,4.581,18.7a10.473,10.473,0,0,0,11.093,2.734.5.5,0,0,0,.138-.856h0C9.883,16.1,9.417,8.087,14.865,3.124a.459.459,0,0,0,.127-.465.491.491,0,0,0-.356-.362A10.68,10.68,0,0,0,12.083,2Z"></path>
+          </svg>
+        </div>
+      </label>
+    </div>
+  </footer>
+  <script>  
+    // Obtén referencias
+    const form = document.getElementById("registerForm");
+    const fields = {
+      email: {
+        input: form.email,
+        error: document.getElementById("emailError"),
+        validate: value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+          ? "" : "Correo inválido"
+      },
+      phone: {
+        input: form.phone,
+        error: document.getElementById("phoneError"),
+        validate: value => /^[6789]\d{8}$/.test(value.trim())
+          ? "" : "Teléfono debe tener 9 dígitos y empezar por 6-9"
+      },
+      name: {
+        input: form.name,
+        error: document.getElementById("nameError"),
+        validate: value => value.trim().length >= 2
+          ? "" : "Nombre min 2 caracteres"
+      },
+      surname: {
+        input: form.surname,
+        error: document.getElementById("surnameError"),
+        validate: value => value.trim().length >= 2
+          ? "" : "Apellidos min 2 caracteres"
+      },
+      password: {
+        input: document.getElementById("password"),
+        error: document.getElementById("passwordError"),
+        validate: value => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(value)
+          ? "" : "Min 8 caracteres, may, min, número y símbolo"
+      },
+      confirmPassword: {
+        input: document.getElementById("confirmPassword"),
+        error: document.getElementById("confirmPasswordError"),
+        validate: value => value === document.getElementById("password").value
+          ? "" : "No coincide con contraseña"
+      }
+    };
+  
+    // Attach validation on blur & input
+    for (const key in fields) {
+      const f = fields[key];
+      f.input.addEventListener("blur", () => {
+        f.error.textContent = f.validate(f.input.value);
+      });
+      f.input.addEventListener("input", () => {
+        // borra mensaje mientras escribe
+        if (f.error.textContent) f.error.textContent = "";
+      });
+    }
+  
+    // Toggle visibilidad de contraseñas
+    document.querySelectorAll(".toggle-password").forEach(btn => {
+      btn.addEventListener("click", () => {
+        console.log("click");
+        const target = btn.dataset.target;
+        const inp = document.getElementById(target);
+        inp.type = inp.type === "password" ? "text" : "password";
+        btn.textContent = inp.type === "password" ? "👁" : "🙈";
+      });
+    });
+  
+    // Envío final con validación completa
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      let hasError = false;
+      // ejecuta todas las validaciones
+      for (const key in fields) {
+        const f = fields[key];
+        const msg = f.validate(f.input.value);
+        f.error.textContent = msg;
+        if (msg) hasError = true;
+      }
+      if (hasError) return; // no envía mientras haya errores
+  
+      // ─── ENVÍO AL BACK ────────────────────────────────────────────
+      const email = fields.email.input.value.trim();
+      const phone = fields.phone.input.value.trim();
+      const name = fields.name.input.value.trim();
+      const surname = fields.surname.input.value.trim();
+      const password = fields.password.input.value;
+
+      try {
+        const res = await fetch(`https://sincere-musical-squid.ngrok-free.app/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, phone, name, surname, password })
+        });
+  
+        const data = await res.json();
+  
+        if (!res.ok) throw new Error(data.detail || "Registro fallido.");
+  
+        // Guardar el token en localStorage
+        localStorage.setItem("token", data.token);
+
+        // Redirigir al perfil
+        window.location.href = "perfil.html";
+      } catch (err) {
+        alert("Error en el servidor: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aplicación de Mensajes Unificada</title>
+
+  <style>
+    /* RESET BÁSICO */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ESTILOS GLOBALES */
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow-y: hidden;
+      font-family: sans-serif;
+      background-color: #1a1a1a;
+      color: #fff;
+    }
+
+    body {
+      display: flex;
+    }
+
+    /* ------------------------------------------------------------
+       BARRA LATERAL (22%)
+    ------------------------------------------------------------ */
+    .sidebar {
+      width: 22%;
+      height: 100vh;
+      background-color: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      margin-top: 1.5vh;
+      padding: 1.6vh;
+      display: flex;
+      flex-direction: column;
+      gap: 3vh;
+    }
+    /* Incrementamos un poco más la fuente */
+    .sidebar-header h2 {
+      font-size: 2.8vh;
+      font-weight: 600;
+      padding-top: 1vh;
+      padding-left: 1vh;
+    }
+
+    .search-container input[type="search"] {
+      width: 100%;
+      padding: 0.8vh 1.2vh;
+      border: 0.1vh solid #3f3f46;
+      border-radius: 0.4vh;
+      background-color: #27272a;
+      color: #ffffff;
+      font-size: 1.8vh;
+    }
+    
+    .search-container input[type="search"]::placeholder {
+      color: #a1a1aa;
+    }
+
+    .new-message-alert {
+      position: absolute;  /* O fixed, según necesites */
+      bottom: 0;           /* Colócalo justo debajo de la cabecera */
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #059669;  /* Color de fondo, puede ajustarse */
+      color: #fff;
+      padding: 0.8vh 1.5vh;
+      border-radius: 1vh;
+      box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3);
+      z-index: 9999; /* Se asegura que flote sobre otros elementos */
+      transition: opacity 0.3s ease;
+    }
+
+    .visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .panel a {
+      color: #fff;            /* Color blanco */
+      text-decoration: underline;  /* Subrayado, si quieres */
+    }
+
+    .arrow-icon {
+      width: 2vh;
+      height: 2vh;
+      vertical-align: middle;
+      margin-left: 0.5vh;
+    }
+
+    .buttons-container {
+      display: flex;
+      gap: 0.8vh;
+    }
+
+    .icon-button {
+      flex: 1;
+      border: none;
+      padding: 0.8vh;
+      border-radius: 1.2vh;
+      background-color: #059669;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease;
+    }
+    .icon-button.active {
+      border: 2px solid #fff; /* Borde blanco */
+    }
+    .icon-button:hover {
+      background-color: #047857;
+    }
+    .icon-button svg {
+      width: 1.7vh;
+      height: 1.7vh;
+      stroke: white;
+    }
+
+    .scroll-area {
+      height: calc(100vh - 17vh);
+      overflow-y: auto;
+    }
+    .scroll-area::-webkit-scrollbar {
+      width: 0.6vh; 
+    }
+    .scroll-area::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    .scroll-area::-webkit-scrollbar-thumb {
+      background: #797985;
+      border-radius: 0.3vh;
+    }
+
+    .messages {
+      padding: 1.6vh;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8vh;
+    }
+
+    /* Recuadros de mensajes a la izquierda */
+    .message {
+      font-size: 1.6vh;
+      width: 100%;
+      padding: 1.45vh;
+      background-color: #2A2A2A;
+      border: none;
+      border-radius: 1.2vh;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: block;
+      color: #fff;
+      text-align: left;
+    }
+    .message.selected {
+      border: 2px solid #fff;
+    }
+    .message:hover {
+      background-color: #3f3f46;
+    }
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .message-sender {
+      font-weight: 500;
+    }
+    .message-time {
+      font-size: 1.4vh;
+      color: #a1a1aa;
+    }
+    .message-subject {
+      font-size: 1.7vh;
+      font-weight: 500;
+      color: #d4d4d8;
+      margin: 0.3vh 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .message-preview {
+      font-size: 1.7vh;
+      color: #a1a1aa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ------------------------------------------------------------
+       SECCIÓN DERECHA (78%)
+    ------------------------------------------------------------ */
+    .right-section {
+      width: 78%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #1a1a1a;
+      box-sizing: border-box;
+    }
+
+    .top-header {
+      height: 10vh;
+      background-color: #242424;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4vh;
+      flex-shrink: 0;
+    }
+
+    .header-container {
+      display: flex;
+      align-items: center;
+    }
+    nav {
+      display: flex;
+      gap: 4vh;
+      margin-right: auto; 
+    }
+
+    /* Los botones del encabezado (.btn-secondary) se mantienen sin cambio */
+    .btn-secondary {
+      font-family: "WF Visual Sans", sans-serif;
+      font-weight: 600;
+      font-size: 2vh;
+      background-color: #2C2C2C;
+      color: #fff;
+      border: none;
+      padding: 1.5vh 3vh;
+      border-radius: 1vh;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+      box-shadow: 0 0.5vh 1.25vh rgba(0,0,0,0.3);
+    }
+    .btn-secondary:hover {
+      background-color: #3C3C3C;
+    }
+
+    /* Se elimina el antiguo botón y se sustituye por el nuevo enlace */
+    .btn {
+      display: inline-block;
+      padding: 0.9vh 1.8vh;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      border: 3px solid #059669;
+      cursor: pointer;
+      position: relative;
+      background-color: transparent;
+      text-decoration: none;
+      overflow: hidden;
+      border-radius: 0.4vh;
+      z-index: 1;
+      font-family: inherit;
+    }
+    .btn::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #059669;
+      transform: translateX(-100%);
+      transition: all .3s;
+      z-index: -1;
+    }
+    .btn:hover::before {
+      transform: translateX(0);
+    }
+
+    .main-content {
+      position:relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Botón flotante para ver conversación */
+    .conversation-button {
+      position: absolute;
+      top: 1vh;           /* ajusta según donde desees que aparezca */
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 1vh auto 1vh auto; /* 1vh de margen superior para separarlo del header y se centra */
+      display: block;
+      background-color: #efefef;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.8vh 1.5vh;
+      cursor: pointer;
+      z-index: 1100;
+      font-size: 1.8vh;
+    }
+
+    .conversation-button.cerrar{
+      margin-top: 51vh;
+    }
+    /* Contenedor de conversación (se insertará encima del grid-wrapper) */
+    .conversation-container {
+      display: flex;
+      flex-direction: column;
+      background-color: #2d2d2d; /* mismo fondo que main-content */
+      padding: 1.6vh;
+      padding-top: 1vh;
+      margin-bottom: 1.6vh;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+    .inicio-coversacion {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+    /* Estilo para cada mensaje de la conversación */
+    .conversation-message {
+      background-color: #3f3f3f;
+      border-radius: 1.2vh;
+      padding: 1vh;
+      margin-bottom: 1vh;
+      white-space: pre-wrap;  /* conserva los saltos de línea */
+      font-size: 2vh;
+      line-height: 2.3vh;
+      color: #e5e5e5;
+      max-width: 70%;
+    }
+
+    /* Alineación según el rol: cliente a la izquierda, bot a la derecha */
+    .conversation-message.client {
+      align-self: flex-start;
+    }
+
+    .conversation-message.bot {
+      align-self: flex-end;
+    }
+
+    /* Clase "hidden" para ocultar elementos */
+    .hidden {
+      display: none;
+    }
+
+    /* Scrollbar para main-content */
+    .main-content::-webkit-scrollbar {
+      width: 1vh; /* más gruesa */
+    }
+    .main-content::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    .main-content::-webkit-scrollbar-thumb {
+      background: #555; /* un poco más claro */
+      border-radius: 0.5vh;
+    }
+
+    /* Scrollbar para conversation-container */
+    .conversation-container::-webkit-scrollbar {
+      width: 1vh;
+    }
+    .conversation-container::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    .conversation-container::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 0.5vh;
+    }
+
+    .grid-wrapper {
+      flex: 5;
+      display: flex;
+      flex-direction: column;
+      padding: 1.6vh 3.2vh;
+      padding-top: 12vh;
+      box-sizing: border-box;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      column-gap: 3vh;
+      height: 65%;
+      width: 100%;
+      row-gap: 2vh;
+    }
+
+    .grid-container > h2 {
+      font-size: 2.8vh;
+      font-weight: bold;
+      color: #ffffff;
+      margin-bottom: 1.2vh;
+      padding-left: 1.5vh;
+    }
+
+    .panel {
+      background-color: #2A2A2A;
+      border-radius: 1.6vh;
+      box-shadow: 0 0.4vh 0.8vh rgba(0, 0, 0, 0.3);
+      display: flex;
+      min-height: 60vh;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .panel-header {
+      padding: 2.5vh;
+      border-bottom: 0.1vh solid #333333;
+      flex-shrink: 0;
+    }
+
+    .panel-header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-header-content p,
+    .panel-header-content span,
+    .panel-subject,
+    .panel-content p,
+    .styled-textarea {
+      font-size: 2vh;
+      line-height: 2.3vh;
+      font-family: "WF Visual Sans", sans-serif;
+      color: #e5e5e5;
+    }
+
+    .panel-header-content p {
+      color: #e5e5e5;
+    }
+
+    .panel-subject {
+      color: #d4d4d8;
+      margin-top: 0.3vh;
+    }
+
+    /* Panel izquierdo: mantenemos .panel-scroll */
+    .panel-scroll {
+      flex: 1;
+      padding: 2.5vh;
+      position: relative;
+      overflow-y: auto;
+    }
+    .panel-scroll::-webkit-scrollbar {
+      width: 0.6vh;
+    }
+    .panel-scroll::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    .panel-scroll::-webkit-scrollbar-thumb {
+      background: #333333;
+      border-radius: 0.3vh;
+    }
+
+    .panel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2vh;
+      color: #e5e5e5;
+    }
+
+    /* TEXAREA DEL PANEL DERECHO */
+    .styled-textarea {
+      flex: 1;
+      padding: 2.5vh;
+      position: relative;
+      overflow-y: auto; 
+      width: 100%;
+      min-height: 18.5vh;
+      background-color: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      color: #e5e5e5;
+    }
+    .styled-textarea::-webkit-scrollbar {
+      width: 0.6vh;
+    }
+    .styled-textarea::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    .styled-textarea::-webkit-scrollbar-thumb {
+      background: #333333;
+      border-radius: 0.3vh;
+    }
+    .styled-textarea::placeholder {
+      color: #a1a1aa;
+    }
+
+    .panel-footer {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 2.5vh;
+      gap: 1vh;
+    }
+
+    .send-button {
+      background-color: #059669;
+      border: none;
+      color: #fff;
+      padding: 1.4vh 1.8vh;
+      font-size: 1.8vh;
+      border-radius: 0.6vh;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .send-button:hover {
+      background-color: #047857;
+    }
+
+    .trash-button {
+      background-color: #2A2A2A;
+      border: 0.2vh solid #d4d4d8;
+      width: 4vh;
+      height: 4vh;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .trash-button svg {
+      width: 1.8vh;
+      height: 1.8vh;
+      color: #d4d4d8;
+      stroke: #d4d4d8;
+    }
+    .trash-button:hover {
+      background-color: #ec2929;
+      border-color: #666666;
+    }
+    .trash-button:hover svg {
+      stroke: #666666;
+    }
+
+    .right-subject {
+      font-size: 2vh;
+      font-weight: normal;
+      color: #e5e5e5;
+      overflow-wrap: break-word;
+      word-break: break-all; /* O bien: word-break: break-word; según el comportamiento que desees */
+      max-width: 100%;            /* Evita que se expanda más allá del tamaño del contenedor */
+
+    }
+
+    .right-subject:focus {
+      outline: none;
+    }
+
+    /* La fecha/hora del panel izquierdo se fuerza a 1vh */
+    .grid-container .panel:nth-child(1) .panel-header-content span {
+      font-size: 1vh !important;
+    }
+    .sidebar-footer {
+      height: 7vh;              /* Altura de la barra; ajústala según prefieras */
+      background-color: #1a1a1a; /* Mismo color de fondo que la sidebar */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA LATERAL (22%) -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Entrada</h2>
+      <div class="search-container">
+        <input type="search" placeholder="Buscar" />
+      </div>
+      <div class="buttons-container">
+        <button class="icon-button" id="btn-procesables" aria-label="Globo">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" stroke="currentColor"></circle>
+            <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor"></path>
+          </svg>
+        </button>
+        <button class="icon-button" id="btn-no-procesables" aria-label="Usuario">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor"></path>
+            <path d="M4 21v-2a4 4 0 0 1 3-3.87" stroke="currentColor"></path>
+            <circle cx="12" cy="7" r="4" stroke="currentColor"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div class="messages"></div>
+    </div>
+    <div class="sidebar-footer"></div>
+  </div>
+
+  <!-- SECCIÓN DERECHA (78%) -->
+  <div class="right-section">
+    <!-- HEADER SUPERIOR -->
+    <div class="top-header">
+      <div class="header-container">
+        <nav>
+          <button class="btn-secondary">Devoluciones</button>
+          <button class="btn-secondary">Análisis</button>
+        </nav>
+      </div>
+      <!-- Reemplazamos el botón de usuario por el nuevo botón -->
+      <a class="btn" href="{% url 'perfil' %}">Emilia Marino</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <button id="showConversationBtn" class="conversation-button hidden">
+        ver conversacion completa
+      </button>
+      <div class="grid-wrapper">
+        <div class="grid-container">
+          <h2>Mensaje recibido</h2>
+          <h2>Mensaje producido por el bot</h2>
+
+          <!-- PANEL IZQUIERDO -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-header-content">
+                <p>De: ---</p>
+                <span>--- ---, --:--</span>
+              </div>
+              <p class="panel-subject">Asunto: ---</p>
+            </div>
+            <div class="panel-scroll">
+              <div class="panel-content"></div>
+            </div>
+            <div class="panel-footer"></div>
+          </div>
+
+          <!-- PANEL DERECHO -->
+          <div class="panel">
+            <div class="panel-header">
+              <p class="panel-header-content" style="justify-content: flex-start; margin-bottom: 0;">
+                <strong style="font-size:1.8vh; color: #e5e5e5;">Asunto:</strong>
+                <!-- Se hace editable el texto a la derecha de "Asunto:" -->
+                <span class="right-subject" contenteditable="true" style="margin-left:0.7vh;">---</span>
+              </p>
+            </div>
+            <!-- TEXTAREA con scroll interno -->
+            <div id="editableContent" class="styled-textarea" contenteditable="true" style="white-space: pre-wrap;">
+              <!-- Se rellenará dinámicamente con .innerHTML -->
+            </div>
+            <div class="panel-footer">
+              <div id="infoFaltanteContainer" style="display:none; margin-right: auto; background-color: #2d2d2d; border-radius: 0.8vh; padding: 1vh; max-width: 25vh;">
+                <h4 style="font-size:1.8vh; margin-bottom: 0.5vh; color: #fff;">Info faltante:</h4>
+                <ul id="infoFaltanteList" style="list-style-type: disc; margin-left: 3vh; font-size:1.6vh; color: #fff;"></ul>
+              </div>
+              
+              <button class="send-button">Enviar</button>
+              <button class="trash-button" aria-label="Borrar">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6" stroke="currentColor"></polyline>
+                  <path d="M19 6l-1.35 14.11A2 2 0 0 1 15.66 22H8.34
+                           A2 2 0 0 1 6.35 20.11L5 6" stroke="currentColor"></path>
+                  <path d="M14 10v6" stroke="currentColor"></path>
+                  <path d="M10 10v6" stroke="currentColor"></path>
+                  <line x1="9" y1="6" x2="9" y2="4" stroke="currentColor"></line>
+                  <line x1="15" y1="6" x2="15" y2="4" stroke="currentColor"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-space"></div>
+    </div>
+  </div>
+
+  <!-- =========================
+       LÓGICA JAVASCRIPT
+  ========================== -->
+  <script>
+    /*******************************************
+     * 1) VARIABLES GLOBALES
+     *******************************************/
+    let currentPage = 1;      // Página actual de paginación
+    let allEmails = [];       // Array global con todos los correos cargados
+    let loading = false;      // Evita llamadas simultáneas
+    let currentEmail = null;  // Correo actualmente seleccionado
+    let hasMoreEmails = true; // Indica si hay más correos por cargar
+    let throttleTimeout = null; // Para throttlear el scroll
+    let currentFilter = "no_procesables"; // por defecto
+
+    // Seleccionamos los elementos del DOM
+    const messagesContainer = document.querySelector('.messages');
+    const searchInput = document.querySelector('.search-container input[type="search"]');
+  
+    // Panel izquierdo (Correo recibido)
+    const leftPanel = document.querySelectorAll('.panel')[0];
+    const leftFrom = leftPanel.querySelector('.panel-header-content p');
+    const leftTime = leftPanel.querySelector('.panel-header-content span');
+    const leftSubject = leftPanel.querySelector('.panel-subject');
+    const leftBodyContainer = leftPanel.querySelector('.panel-content');
+  
+    // Panel derecho (Mensaje generado por el bot)
+    const rightPanel = document.querySelectorAll('.panel')[1];
+    const rightAsuntoText = rightPanel.querySelector('.right-subject');
+  
+    // Botones para acciones (en panel derecho)
+    const sendButton = document.querySelector('.send-button');
+    const trashButton = document.querySelector('.trash-button');
+    const conversationButton = document.getElementById("showConversationBtn");
+
+    /*******************************************
+     * 2) FORMATEO DE FECHAS
+     *******************************************/
+    function formatEmailDate(dateString) {
+      const now = new Date();
+      const emailDate = new Date(dateString);
+      if (isNaN(emailDate.getTime())) {
+        return dateString;
+      }
+      const diffMs = now - emailDate;
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      const hh = emailDate.getHours().toString().padStart(2, '0');
+      const mm = emailDate.getMinutes().toString().padStart(2, '0');
+  
+      if (diffDays < 1 && now.getDate() === emailDate.getDate()) {
+        return `${hh}:${mm}`;
+      }
+      const ayer = new Date(now);
+      ayer.setDate(ayer.getDate() - 1);
+      if (ayer.getDate() === emailDate.getDate() &&
+          ayer.getMonth() === emailDate.getMonth() &&
+          ayer.getFullYear() === emailDate.getFullYear()) {
+        return `Ayer, ${hh}:${mm}`;
+      }
+      if (diffDays < 7) {
+        const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        return `${diasSemana[emailDate.getDay()]}, ${hh}:${mm}`;
+      }
+      const d  = emailDate.getDate().toString().padStart(2, '0');
+      const mo = (emailDate.getMonth() + 1).toString().padStart(2, '0');
+      const y  = emailDate.getFullYear();
+      return `${d}/${mo}/${y}, ${hh}:${mm}`;
+    }
+  
+    /*******************************************
+     * 3) CARGAR CORREOS (AJAX)
+     *******************************************/
+    async function loadEmails(page = 1) {
+      if (loading || !hasMoreEmails) return;
+      loading = true;
+      try {
+        // Usamos URL absoluta para evitar rutas relativas
+        const resp = await fetch(`get_emails?page=${page}`);
+        if (!resp.ok) {
+          throw new Error("Error al cargar correos");
+        }
+        const data = await resp.json();
+        const fetchedEmails = data.emails;
+  
+        if (fetchedEmails.length === 0) {
+          hasMoreEmails = false;
+        } else {
+          allEmails = [...allEmails, ...fetchedEmails];
+          renderMessages(getFilteredEmails());
+          currentPage = page;
+        }
+      } catch (err) {
+        console.error("Error loadEmails:", err);
+      } finally {
+        loading = false;
+      }
+    }
+  
+    /*******************************************
+     * 4) RENDERIZAR LISTA DE CORREOS (Sidebar)
+     *******************************************/
+    function renderMessages(emailList) {
+      messagesContainer.innerHTML = '';
+      emailList.forEach(email => {
+        const button = document.createElement('button');
+        button.classList.add('message');
+        button.setAttribute('data-email-id', email.id);
+        const formattedTime = formatEmailDate(email.date);
+        // Generar preview: usa email.snippet o las primeras 15 palabras del body
+        const previewText = email.snippet || (email.body || "").split(/\s+/).slice(0,15).join(" ") + "...";
+        button.innerHTML = `
+          <div class="message-content">
+            <div class="message-header">
+              <span class="message-sender">${email.sender || "Cliente"}</span>
+              <span class="message-time">${formattedTime}</span>
+            </div>
+            <p class="message-subject">${email.subject || "Sin asunto"}</p>
+            <p class="message-preview">${previewText}</p>
+          </div>
+        `;
+        // Si el correo actual es el seleccionado, se marca
+        if (currentEmail && String(currentEmail.id) === String(email.id)) {
+          button.classList.add("selected");
+        }
+
+        button.addEventListener('click', () => {
+          // Quita la clase 'selected' de todos y la asigna solo al clicado
+          document.querySelectorAll('.message').forEach(btn => btn.classList.remove('selected'));
+          button.classList.add('selected');
+          displayEmail(email);
+        });
+        messagesContainer.appendChild(button);
+      });
+    }
+  
+    /*******************************************
+     * 5) MOSTRAR CORREO (Al hacer clic)
+     *******************************************/
+     const editableDiv = document.getElementById('editableContent');
+
+     function displayEmail(email) {
+      if(email === null) {
+        currentEmail = null;         
+        leftFrom.textContent = "De: ---";
+        leftTime.textContent = "---";
+        leftSubject.textContent = "Asunto: ---";
+        leftBodyContainer.innerHTML = "";
+        rightAsuntoText.textContent = "---";
+        document.getElementById("editableContent").innerHTML = "";
+        infoFaltanteContainer.style.display = "none";
+        infoFaltanteList.innerHTML = "";
+      }else{
+        currentEmail = email;
+        leftFrom.textContent = `De: ${email.sender || "Desconocido"}`;
+        leftTime.textContent = formatEmailDate(email.date);
+        leftSubject.textContent = `Asunto: ${email.subject || "Sin asunto"}`;
+        leftBodyContainer.innerHTML = "";
+        (email.body || "").split("\n\n").forEach(par => {
+          const p = document.createElement('p');
+          p.textContent = par;
+          leftBodyContainer.appendChild(p);
+        });
+        rightAsuntoText.textContent = email.asunto_respuesta || email.subject;
+        editableDiv.innerHTML = email.texto_combinado || "<p>Sin contenido</p>";
+
+        const infoFaltanteContainer = document.getElementById('infoFaltanteContainer');
+        const infoFaltanteList = document.getElementById('infoFaltanteList');
+
+        if (email.ideas_clave_sin_informacion && email.ideas_clave_sin_informacion.length > 0) {
+          // Limpiar la lista
+          infoFaltanteList.innerHTML = "";
+          // Mostrar el contenedor
+          infoFaltanteContainer.style.display = "block";
+          // Iterar las ideas y agregarlas como <li>
+          email.ideas_clave_sin_informacion.forEach(idea => {
+            const li = document.createElement('li');
+            li.textContent = idea;
+            infoFaltanteList.appendChild(li);
+          });
+        } else {
+          // Si no hay info faltante, ocultamos el contenedor
+          infoFaltanteContainer.style.display = "none";
+          infoFaltanteList.innerHTML = "";
+        }
+    
+        // Si existe un contenedor de conversación abierto, se remueve
+        const existingConversation = document.getElementById('conversationContainer');
+        if (existingConversation) {
+          existingConversation.remove();
+        }
+        const existingCloseBtn = document.getElementById('closeConversationBtn');
+        if (existingCloseBtn) {
+          existingCloseBtn.remove();
+        }
+        // Mostrar el botón de conversación solo si el correo tiene mensajes en la propiedad "conversation"
+        if (email.conversation && email.conversation.length > 0) {
+          conversationButton.style.display = "block";
+        } else {
+          conversationButton.style.display = "none";
+        }
+      }
+    }
+  
+    /*******************************************
+     * 6) FILTRADO LOCAL
+     *******************************************/
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase();
+      const baseList = getFilteredEmails();
+
+      const searched = baseList.filter(email =>
+        (email.sender || "").toLowerCase().includes(query) ||
+        (email.subject || "").toLowerCase().includes(query) ||
+        (email.body || "").toLowerCase().includes(query)
+      );
+      renderMessages(searched);
+    });
+    /*********************************************************
+     * 7) Botones procesable y no procesable
+     * ***********************************************************/
+  
+    // 1) Seleccionamos los botones
+    const btnProcesables = document.getElementById("btn-procesables");
+    const btnNoProcesables = document.getElementById("btn-no-procesables");
+
+    // Una pequeña función para quitar 'active' de ambos y dárselo al que toquen
+    function activarBoton(boton) {
+      // Remueve la clase .active de ambos
+      btnProcesables.classList.remove("active");
+      btnNoProcesables.classList.remove("active");
+
+      // Añade .active al botón actual
+      boton.classList.add("active");
+    }
+
+    // 2) Listener para mostrar SOLO procesables
+    btnProcesables.addEventListener("click", () => {
+      currentFilter = "procesables";
+      activarBoton(btnProcesables);
+      searchInput.value = "";
+      document.querySelectorAll('.message.selected').forEach(msg => msg.classList.remove('selected'));
+      displayEmail(null);
+      renderMessages(getFilteredEmails());
+    });
+
+    // 3) Listener para mostrar SOLO no procesables
+    btnNoProcesables.addEventListener("click", () => {
+      currentFilter = "no_procesables";
+      activarBoton(btnNoProcesables);
+      searchInput.value = "";
+      document.querySelectorAll('.message.selected').forEach(msg => msg.classList.remove('selected'));
+      displayEmail(null);
+      renderMessages(getFilteredEmails());
+    });
+
+
+    /*******************************************
+     * 7) INFINITE SCROLL (Throttle)
+     *******************************************/
+    const scrollArea = document.querySelector('.scroll-area');
+    scrollArea.addEventListener('scroll', () => {
+      if (throttleTimeout || !hasMoreEmails) return;
+      throttleTimeout = setTimeout(async () => {
+        throttleTimeout = null;
+        const scrollTop = scrollArea.scrollTop;
+        const scrollHeight = scrollArea.scrollHeight;
+        const clientHeight = scrollArea.clientHeight;
+        if (scrollTop + clientHeight >= scrollHeight - 50) {
+          await loadEmails(currentPage + 1);
+        }
+      }, 200);
+    });
+  
+    /*******************************************
+     * 8) ACCIONES: ENVIAR Y ELIMINAR CORREOS
+     *******************************************/
+    // Función para eliminar un correo del array y re-renderizar
+    function removeEmailFromList(emailId) {
+      // Determinar el índice del correo que se va a eliminar
+      const index = allEmails.findIndex(email => String(email.id) === String(emailId));
+      
+      allEmails.splice(index, 1);
+      // 2) Refiltrar según currentFilter
+      const filtered = getFilteredEmails();
+
+      // 3) Determinar quién será el “siguiente” correo dentro de esa sub-lista
+      let nextEmail = null;
+      if (filtered.length > 0) {
+        // Intentamos usar el mismo índice 'indexInAll' para no saltar
+        if (index < filtered.length) {
+          nextEmail = filtered[index];
+        } else {
+          nextEmail = filtered[filtered.length - 1];
+        }
+      }
+      // 4) Renderizamos esa lista filtrada
+      renderMessages(filtered);
+      // Actualizar la vista según si existe o no el siguiente correo
+      if (nextEmail) {
+        displayEmail(nextEmail);
+      } else {
+        leftFrom.textContent = "De: ---";
+        leftTime.textContent = "---";
+        leftSubject.textContent = "Asunto: ---";
+        leftBodyContainer.innerHTML = "";
+        rightAsuntoText.textContent = "---";
+        document.getElementById("editableContent").innerHTML = "";
+        infoFaltanteContainer.style.display = "none";
+        infoFaltanteList.innerHTML = "";
+      }
+      renderMessages(getFilteredEmails());
+      // Si quedan menos de 10 correos, se cargan los siguientes 20
+      if (allEmails.length < 10 && hasMoreEmails) {
+        loadEmails(currentPage + 1);
+      }
+    }
+  
+    // Listener para el botón "Enviar"
+    sendButton.addEventListener('click', async () => {
+      if (!currentEmail) return;
+      const emailId = currentEmail.id;
+      const updatedSubject = rightAsuntoText.textContent.trim();
+      const messageContent = editableDiv.innerHTML.trim();
+  
+      try {
+        const response = await fetch('/principal/send_email/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            emailId: emailId,
+            subject: updatedSubject,
+            message: messageContent
+          })
+        });
+        if (!response.ok) throw new Error('Error al enviar el correo');
+        removeEmailFromList(emailId);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  
+    // Listener para el botón "Eliminar" (Papelera)
+    trashButton.addEventListener('click', async () => {
+      if (!currentEmail) return;
+      const emailId = currentEmail.id;
+      try {
+        const response = await fetch('/principal/delete_email/', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emailId: emailId })
+        });
+        if (!response.ok) throw new Error('Error al eliminar el correo');
+        removeEmailFromList(emailId);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    conversationButton.addEventListener("click", function() {
+      // Remover el botón
+      conversationButton.style.display = "none";
+
+      // Crear contenedor de conversación
+      const conversationContainer = document.createElement("div");
+      conversationContainer.id = "conversationContainer";
+      conversationContainer.classList.add("conversation-container");
+      inicioconver = document.createElement("div");
+      inicioconver.classList.add("inicio-coversacion");
+
+      const inicioConversacion = document.createElement("small");
+      inicioConversacion.style.display = "block";
+      inicioConversacion.style.fontSize = "1.5vh";
+      inicioConversacion.style.color = "rgb(170, 170, 170)";
+      inicioConversacion.style.paddingBottom = "1vh";
+      inicioConversacion.textContent = "Inicio de la conversacion";
+      inicioconver.appendChild(inicioConversacion);
+      conversationContainer.appendChild(inicioconver);
+      // Recorrer cada mensaje de la conversación
+      if (currentEmail && currentEmail.conversation) {
+          currentEmail.conversation.forEach(msg => {
+              const msgDiv = document.createElement("div");
+              msgDiv.classList.add("conversation-message");
+              
+              // Alineamos según rol (opcional)
+              if (msg.role === "client") {
+                msgDiv.classList.add("client");
+              } else if (msg.role === "bot") {
+                msgDiv.classList.add("bot");
+              }
+              
+              // Insertamos el texto (pre-wrap se encarga de los saltos de línea)
+              msgDiv.textContent = msg.message;
+              
+              // Si se desea agregar la fecha debajo del mensaje:
+              if (msg.date) {
+                  const dateSpan = document.createElement("small");
+                  dateSpan.style.display = "block";
+                  dateSpan.style.fontSize = "1.5vh";
+                  dateSpan.style.color = "#aaa";
+                  dateSpan.textContent = msg.date;
+                  msgDiv.appendChild(dateSpan);
+              }
+              
+              conversationContainer.appendChild(msgDiv);
+          });
+      }
+
+      // Insertar el contenedor de conversación en main-content, justo encima del grid-wrapper
+      const mainContent = document.querySelector(".main-content");
+      const gridWrapper = mainContent.querySelector(".grid-wrapper");
+      mainContent.insertBefore(conversationContainer, gridWrapper);
+
+      // Crear botón para cerrar la conversación
+      const closeConversationBtn = document.createElement("button");
+      closeConversationBtn.id = "closeConversationBtn";
+      closeConversationBtn.classList.add("conversation-button");
+      closeConversationBtn.classList.add("cerrar");
+      closeConversationBtn.textContent = "cerrar conversacion";
+      // Posicionar el botón: lo insertamos justo debajo del contenedor de conversación
+      mainContent.insertBefore(closeConversationBtn, gridWrapper);
+
+      // Listener para cerrar conversación
+      closeConversationBtn.addEventListener("click", function() {
+        conversationContainer.remove();
+        closeConversationBtn.remove();
+        // Volver a mostrar el botón de ver conversación
+        conversationButton.style.display = "block";
+      });
+    });
+
+    /*******************************************
+     * 9) FILTRAR CORREOS POR BUZON 
+     *******************************************/
+    function getFilteredEmails() {
+      if (currentFilter === "procesables") {
+        return allEmails.filter(e => e.procesable === true);
+      } else {
+        return allEmails.filter(e => e.procesable === false);
+      }
+    }
+    /*******************************************
+     * 10) CARGAR LA PRIMERA PÁGINA AL INICIAR
+     *******************************************/
+    document.addEventListener('DOMContentLoaded', () => {
+      loadEmails(1).then(() => {
+        btnProcesables.click();
+      });
+    });
+  </script>
+
+</body>
+</html>
