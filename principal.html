@@ -611,7 +611,7 @@
         </nav>
       </div>
       <!-- Reemplazamos el botón de usuario por el nuevo botón -->
-      <a class="btn" href="{% url 'perfil' %}">Emilia Marino</a>
+      <a class="btn" id="userProfileLink">Sin tienda</a>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -682,6 +682,79 @@
        LÓGICA JAVASCRIPT
   ========================== -->
   <script>
+    // ─── Helpers de token ───
+
+    // Comprueba si el JWT expira en menos de `minutos`
+    function tokenExpiraEnMenosDe(minutos = 10) {
+      const token = localStorage.getItem("token");
+      if (!token) return true;
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const expMs = payload.exp * 1000;
+        return expMs - Date.now() < minutos * 60 * 1000;
+      } catch {
+        return true; // token corrupto → forzar renovación
+      }
+    }
+
+    // Pide al backend un refresh y guarda el nuevo token
+    async function renovarToken() {
+      const oldToken = localStorage.getItem("token");
+      if (!oldToken) throw new Error("No hay token para renovar");
+      const res = await fetch("/api/auth/refresh_token", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${oldToken}` }
+      });
+      if (!res.ok) throw new Error("No se pudo renovar el token");
+      const { access_token } = await res.json();
+      localStorage.setItem("token", access_token);
+      console.log("🔁 Token renovado");
+    }
+
+    // Muestra un modal bonito cuando la sesión caduque
+    function mostrarModalSesionCaducada() {
+      // crea o reutiliza un modal en tu HTML; por simplicidad, uso alert estilizado:
+      const existing = document.getElementById("modal-sesion-caducada");
+      if (existing) return existing.style.display = "flex";
+      const modal = document.createElement("div");
+      modal.id = "modal-sesion-caducada";
+      Object.assign(modal.style, {
+        position: "fixed", top:0, left:0, width:"100%", height:"100%",
+        background:"rgba(0,0,0,0.5)", display:"flex",
+        justifyContent:"center", alignItems:"center", zIndex:9999
+      });
+      modal.innerHTML = `
+        <div id="session-expired-modal" style="display: none; position: fixed; top: 0; left: 0;
+          width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+          <div style="background: rgb(42 42 42); padding: 2rem; border-radius: 8px; text-align: center; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
+            <h2>Sesión caducada</h2>
+            <p>Tu sesión ha expirado. Por favor, vuelve a iniciar sesión para continuar.</p>
+            <button id="cerrar-modal-sesion" style="margin-top: 1rem; padding: 0.5rem 1rem; border: none; background: #20ab7a; color: white; border-radius: 5px; cursor: pointer;">
+              Entendido
+            </button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      document.getElementById("cerrar-modal-sesion").onclick = () => {
+        localStorage.clear();
+        window.location.href = "/login.html";
+      };
+    }
+
+    // --- helper para renovar token y añadir Authorization ---
+    async function fetchWithAuth(input, init = {}) {
+      // 1) renueva si expira en <10'
+      if (tokenExpiraEnMenosDe(10)) {
+        try { await renovarToken(); }
+        catch (err) { mostrarModalSesionCaducada(); return Promise.reject(err); }
+      }
+      const token = localStorage.getItem("token");
+      if (!token) { mostrarModalSesionCaducada(); return Promise.reject("No token"); }
+      init.headers = { ...(init.headers||{}), "Authorization": `Bearer ${token}` };
+      const res = await fetch(input, init);
+      if (res.status === 401) { mostrarModalSesionCaducada(); return Promise.reject("401"); }
+      return res;
+    }
     /*******************************************
      * 1) VARIABLES GLOBALES
      *******************************************/
@@ -755,7 +828,7 @@
       loading = true;
       try {
         // Usamos URL absoluta para evitar rutas relativas
-        const resp = await fetch(`get_emails?page=${page}`);
+        const resp = await fetchWithAuth(`https://sincere-musical-squid.ngrok-free.app/api/emails/get?page=${page}`);
         if (!resp.ok) {
           throw new Error("Error al cargar correos");
         }
@@ -1003,7 +1076,7 @@
       const messageContent = editableDiv.innerHTML.trim();
   
       try {
-        const response = await fetch('/principal/send_email/', {
+        const response = await fetchWithAuth('https://sincere-musical-squid.ngrok-free.app/api/emails/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1024,7 +1097,7 @@
       if (!currentEmail) return;
       const emailId = currentEmail.id;
       try {
-        const response = await fetch('/principal/delete_email/', {
+        const response = await fetchWithAuth(`https://sincere-musical-squid.ngrok-free.app/api/emails/delete?email_id=${emailId}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ emailId: emailId })
@@ -1122,6 +1195,12 @@
      * 10) CARGAR LA PRIMERA PÁGINA AL INICIAR
      *******************************************/
     document.addEventListener('DOMContentLoaded', () => {
+      const rawStore = localStorage.getItem("store");
+      const store = rawStore ? JSON.parse(rawStore) : null;
+      const userProfileLink = document.getElementById("userProfileLink");
+      userProfileLink.textContent = store ? store.name : "Sin Tienda";
+      userProfileLink.href        = `http://localhost:3000/perfil.html`; 
+
       loadEmails(1).then(() => {
         btnProcesables.click();
       });

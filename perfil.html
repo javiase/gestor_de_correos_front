@@ -891,14 +891,14 @@
   <header>
     <div class="header-container">
       <nav>
-        <a class="btn-secondary" href="correos.html">Correos</a>
+        <a class="btn-secondary" href="http://localhost:3000/principal.html">Correos</a>
         <button class="btn-secondary">Devoluciones</button>
         <button class="btn-secondary" id="btnAnaliticas">Análisis</button>
       </nav>
       <a class="btn" href="#" id="storeNameCorner"></a>
       <div class="dropdown-menu hidden" id="userDropdownMenu">
         <ul>
-          <li><a href="#" id="logoutLink">Cerrar sesión</a></li>
+          <li><a href="#" id="logoutBtn">Cerrar sesión</a></li>
         </ul>
       </div>
     </div>
@@ -1218,35 +1218,114 @@
     /***********************************************
      * 0) DETECCIÓN DE TIENDA Y CONFIGURACIONES
     ***********************************************/
-    document.addEventListener('DOMContentLoaded', async () => {
-      // 1) Traer datos del usuario
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "http://localhost:3000/iniciar_sesion.html";
+    }
+    function mostrarModalSesionCaducada() {
+      const modal = document.getElementById("session-expired-modal");
+      modal.style.display = "flex";
+
+      document.getElementById("cerrar-modal-sesion").onclick = () => {
+        modal.style.display = "none";
+        // Puedes redirigir si quieres
+        window.location.href = "http://localhost:3000/iniciar_sesion.html";
+      };
+    }
+    function tokenExpiraEnMenosDe(minutos = 10) {
+      if (!token) return true;
+
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const expMs = payload.exp * 1000;
+        return expMs - Date.now() < minutos * 60 * 1000;
+      } catch {
+        return true;  // si el token está corrupto, asumimos que expira pronto
+      }
+    }
+    async function renovarToken() {
+      const oldToken = localStorage.getItem("token");
+      if (!oldToken) throw new Error("No hay token para renovar");
+
+      const res = await fetch("https://sincere-musical-squid.ngrok-free.app/api/auth/refresh_token", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${oldToken}` },
+      });
+
+      if (!res.ok) {
+        throw new Error("No se pudo renovar el token");
+      }
+
+      const { access_token } = await res.json();
+      localStorage.setItem("token", access_token);
+      console.log("🔁 Token renovado");
+    }
+
+    async function fetchWithAuth(input, init = {}) {
+      // 1. Comprobar si el token está cerca de caducar
+      if (tokenExpiraEnMenosDe(10)) {
+        try {
+          await renovarToken();  // Intenta renovar token
+        } catch (err) {
+          console.error("⚠️ Error renovando token:", err);
+          mostrarModalSesionCaducada();  // Mostrar modal personalizado
+          return Promise.reject("Sesión caducada");
+        }
+      }
+
+      // 2. Obtener token actualizado
       const token = localStorage.getItem("token");
-      const headers = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+      if (!token) {
+        mostrarModalSesionCaducada();
+        return Promise.reject("No hay token");
+      }
+
+      // 3. Agregar el token a los headers
+      init.headers = {
+        ...(init.headers || {}),
+        "Authorization": `Bearer ${token}`,
       };
 
-      const userRes = await fetch("https://sincere-musical-squid.ngrok-free.app/api/auth/me", {
+      // 4. Hacer la petición
+      const res = await fetch(input, init);
+
+      // 5. Si el token ya estaba caducado o inválido
+      if (res.status === 401) {
+        mostrarModalSesionCaducada();
+        return Promise.reject("Sesión caducada");
+      }
+
+      // 6. Devolver la respuesta si todo fue bien
+      return res;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1) Traer datos del usuario
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      const userRes = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/auth/me", {
         method: "GET",
         headers: headers
       });
       const user     = await userRes.json();
-      console.log(user);
+      localStorage.setItem("user", JSON.stringify(user));
       // 2) Traer datos de su tienda (si existe y está autenticada)
-      const storeRes = await fetch(`https://sincere-musical-squid.ngrok-free.app/api/stores/me`, {
+      const storeRes = await fetchWithAuth(`https://sincere-musical-squid.ngrok-free.app/api/stores/me`, {
         method: "GET",
         headers: headers
       });
       const store    = storeRes.ok 
                       ? await storeRes.json()
                       : null;
-      console.log(store);
-
+      localStorage.setItem("store", JSON.stringify(store));
       const deleteStoreBtn = document.getElementById('deleteStoreBtn');
 
         // 3) Inicializar UI con los datos traídos:
       const hasStore = !!store;
       console.log(hasStore);
+      document.body.dataset.hasStore = hasStore.toString();
 
       // 3.1 — Poner nombre de usuario en el menú:
       document.getElementById('storeNameCorner')
@@ -1285,10 +1364,9 @@
           }
 
           try {
-            const response = await fetch("https://sincere-musical-squid.ngrok-free.app/api/stores/eliminar_tienda/", { // Ajusta el endpoint según tu backend
+            const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/stores/eliminar_tienda/", { // Ajusta el endpoint según tu backend
               method: "DELETE",
               headers: { "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
               }
             });
 
@@ -1388,10 +1466,9 @@
         };
 
         try {
-          const resp = await fetch("https://sincere-musical-squid.ngrok-free.app/api/stores/crear_tienda/", {
+          const resp = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/stores/crear_tienda/", {
             method: "POST",
             headers: { "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(data)
           });
@@ -1417,9 +1494,20 @@
     ****************************************/
     const connectGoogleBtn = document.getElementById('connectGoogleBtn');
     if (connectGoogleBtn) {
-      connectGoogleBtn.addEventListener('click', () => {
-        // Redirigimos a la vista que inicia el OAuth
-        window.location.href = "https://sincere-musical-squid.ngrok-free.app/api/google/auth/start/";
+      connectGoogleBtn.addEventListener('click', async () => {
+
+        const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/google/auth/start", {
+          headers: {
+          }
+        });
+
+        if (!response.ok) {
+          alert("Error al iniciar la conexión con Google");
+          return;
+        }
+        const data = await response.json();
+        console.log(data);
+        window.location.href = data.auth_url;  // ← Rediriges al login de Google
       });
     }
 
@@ -1431,7 +1519,7 @@
     const formPage   = document.getElementById('formPage');
 
     arrowRight.addEventListener('click', () => {
-      const hasStore = (document.body.dataset.hasStore === 'true');
+      const hasStore = document.body.dataset.hasStore === 'true';
       if (!hasStore) {
         showTooltip(event, "Añade una tienda primero para acceder a esta sección");
         return;
@@ -1464,11 +1552,10 @@
         }
         if (!card.classList.contains('expanded')) {
           try{
-            const response = await fetch(`https://sincere-musical-squid.ngrok-free.app//api/policies/get?policy_name=${encodeURIComponent(policyTitle)}`, {
+            const response = await fetchWithAuth(`https://sincere-musical-squid.ngrok-free.app/api/policies/get?policy_name=${policyTitle}`, {
                 method: "GET",
                 headers: {
                   "Content-Type": "application/json",
-                  "Authorization": `Bearer ${token}`
                 }
               })
               .then(response => response.json())
@@ -1850,18 +1937,21 @@
     ****************************************/
     const userMenuButton   = document.getElementById('storeNameCorner');
     const userDropdownMenu = document.getElementById('userDropdownMenu');
-    const logoutLink       = document.getElementById('logoutLink');
+    const logoutBtn       = document.getElementById('logoutBtn');
 
     userMenuButton.addEventListener('click', (event) => {
       event.preventDefault();
       userDropdownMenu.classList.toggle('hidden');
     });
-    if (logoutLink) {
-      logoutLink.addEventListener('click', (event) => {
-        console.log("logoutLink");
-        event.preventDefault();
-        // Redirigir a /cerrar_sesion/
-        window.location.href = "/cerrar_sesion/";
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+        // Elimina el token guardado
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("store");
+
+        // Redirige al login
+        window.location.href = `${window.location.origin}/iniciar_sesion.html`;
       });
     }
     document.addEventListener('click', (event) => {
@@ -2004,11 +2094,10 @@
           // Limpiamos el contenedor de resultados
           resultContainer.innerHTML = "";
 
-          const response = await fetch("https://sincere-musical-squid.ngrok-free.app/api/policies/process", {
+          const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/policies/process", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
               policy_type: policyTitle,
@@ -2140,11 +2229,10 @@
           resultContainer.innerHTML = "";
 
           // Enviar los datos al backend, enviando policyTitle y la lista de FAQ
-          const response = await fetch("https://sincere-musical-squid.ngrok-free.app/api/policies/process", {
+          const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/policies/process", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
               policy_type: policyTitle,
@@ -2182,6 +2270,15 @@
       });
     }
   </script>
-  
+  <div id="session-expired-modal" style="display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: rgb(42 42 42); padding: 2rem; border-radius: 8px; text-align: center; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
+      <h2>Sesión caducada</h2>
+      <p>Tu sesión ha expirado. Por favor, vuelve a iniciar sesión para continuar.</p>
+      <button id="cerrar-modal-sesion" style="margin-top: 1rem; padding: 0.5rem 1rem; border: none; background: #20ab7a; color: white; border-radius: 5px; cursor: pointer;">
+        Entendido
+      </button>
+    </div>
+  </div>
 </body>
 </html>

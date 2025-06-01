@@ -334,6 +334,21 @@
 
   <!-- CONTENEDOR PRINCIPAL -->
   <div class="main-container">
+     <!-- ── Google Sign-In ── -->
+    <div id="g_id_onload"
+    data-client_id="TU_GOOGLE_CLIENT_ID"
+    data-callback="handleGoogleCredentialResponse"
+    data-auto_prompt="false">
+  </div>
+
+  <div class="g_id_signin"
+    data-type="standard"
+    data-shape="pill"
+    data-theme="outline"
+    data-text="signup_with"
+    data-size="large"
+    data-logo_alignment="left">
+  </div>
     <!-- FORMULARIO DE REGISTRO -->
     <form class="form" id="registerForm">
       <p id="heading">Registrarse</p>
@@ -557,6 +572,29 @@
         alert("Error en el servidor: " + err.message);
       }
     });
+  </script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    async function handleGoogleCredentialResponse(response) {
+      const connectGoogleBtn = document.getElementById('connectGoogleBtn');
+    if (connectGoogleBtn) {
+      connectGoogleBtn.addEventListener('click', async () => {
+
+        const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/google/auth/start", {
+          headers: {
+          }
+        });
+
+        if (!response.ok) {
+          alert("Error al iniciar la conexión con Google");
+          return;
+        }
+        const data = await response.json();
+        console.log(data);
+        window.location.href = data.auth_url;  // ← Rediriges al login de Google
+      });
+    }
+    }
   </script>
 </body>
 </html>
