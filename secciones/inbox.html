@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Inbox</title>
+    <link rel="stylesheet" href="../css/inbox.css">
+    <link rel="stylesheet" href="../css/menulateral.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="sidebarContainer"></div>
+    <div class="main-content" id="mainContent">
+        <div class="inbox-container">
+            <!-- Search Header -->
+            <div class="search-header">
+                <div class="search-bar">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="Search or ask..." id="searchInput">
+                </div>
+                <div class="pagination">
+                    <span class="page-info" id="pageInfo">1 of 22</span>
+                    <button class="pagination-btn" id="prevBtn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="pagination-btn" id="nextBtn">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Email List -->
+            <div class="email-list" id="emailList">
+                <!-- Today Section -->
+                <div class="date-section">
+                    <h3 class="date-header">Today</h3>
+                    <div class="email-group" data-date="today">
+                        <!-- Today's emails will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Yesterday Section -->
+                <div class="date-section">
+                    <h3 class="date-header">Yesterday</h3>
+                    <div class="email-group" data-date="yesterday">
+                        <!-- Yesterday's emails will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- January 2025 Section -->
+                <div class="date-section">
+                    <h3 class="date-header">January 2025</h3>
+                    <div class="email-group" data-date="january2025">
+                        <!-- January 2025 emails will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/menulateral.js"></script>
+    <script src="../js/inbox.js"></script>
+
+</body>
+</html>

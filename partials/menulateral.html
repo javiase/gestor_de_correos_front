@@ -1,0 +1,100 @@
+<!-- /partials/sidebar.html -->
+<nav class="sidebar" id="sidebar">
+  <!-- Top Actions -->
+  <div class="sidebar-top">
+    <div class="action-item create-email">
+      <div class="action-icon">
+        <i class="fas fa-edit"></i>
+      </div>
+      <span class="action-text">Redactar Mail</span>
+    </div>
+  </div>
+
+  <!-- Your Inbox Section -->
+  <div class="sidebar-section">
+    <div class="section-header">Bandeja de Entrada</div>
+    <ul class="sidebar-menu">
+      <li class="menu-item" data-section="inbox">
+        <a href="#" class="menu-link">
+          <i class="fas fa-inbox"></i>
+          <span class="menu-text">Bandeja de Entrada</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- More Section -->
+  <div class="sidebar-section">
+    <div class="section-header">Más</div>
+    <ul class="sidebar-menu">
+      <li class="menu-item" data-section="sent">
+        <a href="#" class="menu-link">
+          <i class="fas fa-paper-plane"></i>
+          <span class="menu-text">Enviados</span>
+        </a>
+      </li>
+      <li class="menu-item" data-section="drafts">
+        <a href="#" class="menu-link">
+          <i class="fas fa-file-alt"></i>
+          <span class="menu-text">Borradores</span>
+        </a>
+      </li>
+      <li class="menu-item" data-section="deleted">
+        <a href="#" class="menu-link">
+          <i class="fas fa-trash"></i>
+          <span class="menu-text">Eliminados</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Settings Section -->
+  <div class="sidebar-section settings-section">
+    <div class="section-header expandable" id="settingsHeader">
+      <span>Configuración</span>
+      <i class="fas fa-chevron-up expand-icon"></i>
+    </div>
+    <ul class="sidebar-menu" id="settingsMenu">
+      <li class="menu-item" data-section="rules">
+        <a href="#" class="menu-link">
+          <i class="fas fa-list"></i>
+          <span class="menu-text">Reglas</span>
+        </a>
+      </li>
+      <li class="menu-item" data-section="categories">
+        <a href="#" class="menu-link">
+          <i class="fas fa-th"></i>
+          <span class="menu-text">Categorías</span>
+        </a>
+      </li>
+      <li class="menu-item" data-section="feedback">
+        <a href="#" class="menu-link">
+          <i class="fas fa-paper-plane"></i>
+          <span class="menu-text">Feedback</span>
+        </a>
+      </li>
+      <li class="menu-item" data-section="toggle">
+        <a href="#" class="menu-link" id="toggleSidebar">
+          <i class="fas fa-bars"></i>
+          <span class="menu-text">Alternar Menú</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- User Profile -->
+  <div class="sidebar-footer">
+    <div class="user-profile" id="userProfile">
+      <div class="profile-avatar">
+        <img src="/image.png" alt="Avatar del usuario" />
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">Fryderyk Wiatrowski</div>
+        <div class="profile-email">fryderyk@example.com</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Opcional: si quieres que el overlay vaya siempre junto al sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>

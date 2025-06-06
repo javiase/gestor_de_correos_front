@@ -1,0 +1,517 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #3a3a3a;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 28vh;            
+  height: 100vh;
+  background-color: #2a2a2a;
+  color: #ffffff;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar.collapsed {
+  width: 9vh;             /* 70px ≈ 7vh */
+}
+
+/* Top Actions */
+.sidebar-top {
+  padding: 1.6vh;         /* 16px ≈ 1.6vh */
+  border-bottom: 0.1vh solid rgba(255, 255, 255, 0.1); /* 1px ≈ 0.1vh */
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  /* Altura fija idéntica a menu-link */
+  height: 6vh;              
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 0.8vh;      /* 8px aprox. */
+  padding-bottom: 1vh;        /* 10px aprox. */
+  position: relative;
+}
+
+.action-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.action-icon {
+  width: 4vh;              
+  height: 4vh;             
+  border-radius: 0.8vh;      
+  display: flex;
+  margin-left: 0.9vh;
+  margin-top: 1.1vh;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4vh;          
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.create-email .action-icon {
+  background-color: #e879f9;
+  color: #ffffff;
+}
+
+.chat .action-icon {
+  background-color: #6b7280;
+  color: #ffffff;
+}
+
+.action-text {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  width: auto;
+  max-width: 15vh;   /* mismo valor que ya tenías */
+  opacity: 1;
+  margin-top: 1.1vh;
+  margin-left:1.5vh;
+  transition: width 0.3s ease, opacity 0.3s ease;
+  font-size: 1.4vh;          
+  font-weight: 400;
+}
+
+/* Sidebar.collapsed for Top Actions */
+.sidebar.collapsed .action-item {
+  height: 6vh;
+
+}
+
+.sidebar.collapsed .action-text {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden; /* opcional, para asegurarnos de que no ocupe nada */
+
+}
+
+/* Sidebar Sections */
+.sidebar-section {
+  margin-bottom: 2.4vh;    /* 24px ≈ 2.4vh */
+}
+
+.section-header {
+  padding: 0.8vh 1.6vh;     /* 8px 16px ≈ 0.8vh 1.6vh */
+  font-size: 1.2vh;         /* 12px ≈ 1.2vh */
+  font-weight: 500;
+  height: 4vh;
+  white-space: nowrap;
+  overflow: hidden;
+  color: #9ca3af;
+  letter-spacing: 0.05vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.section-header:hover {
+  color: #ffffff;
+}
+
+.expand-icon {
+  font-size: 1vh;            /* 10px ≈ 1vh */
+  transition: transform 0.3s ease;
+}
+
+.section-header.collapsed .expand-icon {
+  transform: rotate(180deg);
+}
+
+.sidebar.collapsed .section-header {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Sidebar Menu */
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+}
+.sidebar-menu .menu-item.active .menu-link{
+  background-color: rgba(255, 255, 255, 0.1);
+  /* O usa un color más claro, p.ej. rgba(255,255,255,0.2),
+     según tu paleta. */
+  
+  /* Aseguramos que el texto sea legible */
+  color: #ffffff; 
+}
+
+.menu-item {
+  position: relative;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  /* Fijamos altura de 4vh sin padding vertical */
+  height: 4vh;              
+  padding: 0 0 0 3vh;  /* padding-top/bottom = 0; padding-right = 1.6vh; padding-left = 3.5vh */
+  color: #d1d5db;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+}
+
+
+.menu-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.menu-link i {
+  font-size: 1.8vh;          
+  width: 3vh;                
+  text-align: center;
+  margin-right: 1.5vh;       
+  color: #9ca3af;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+
+}
+
+.menu-link:hover i,
+.menu-item.active .menu-link i {
+  color: #ffffff;
+}
+
+.menu-text {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  width: auto;
+  max-width: 20vh;     /* sigue limitando el ancho máximo a 20vh tal como ya tenías */
+  opacity: 1;        
+  opacity: 1;
+  transition: width 0.3s ease, opacity 0.3s ease;
+  font-size: 1.4vh;         
+  font-weight: 400;
+}
+
+/* Sidebar.collapsed for Menu Items */
+.sidebar.collapsed .menu-link {
+  /* Conserva exactamente la misma altura y padding-left */
+  height: 4vh;             
+  padding: 0 0 0 3vh;    /* padding-top=0; padding-right=0; padding-bottom=0; padding-left=3.5vh */
+}
+
+.sidebar.collapsed .menu-text {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.menu-item.active .menu-link {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* Collapsible Menu */
+.sidebar-menu.collapsed {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.sidebar-menu:not(.collapsed) {
+  max-height: 50vh;        /* 500px ≈ 50vh */
+  transition: max-height 0.3s ease;
+}
+
+/* User Profile */
+.sidebar-footer {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background-color: #2a2a2a;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  /* Altura fija igual a 4vh */
+  height: 9vh;              
+  padding: 0 0 0 1.8vh;  /* padding-top/bottom=0; padding-right=3.5vh; padding-left=1.6vh */
+  border-radius: 0.8vh;      
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.user-profile:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.profile-avatar {
+  width: 5vh;               /* 40px ≈ 4vh */
+  height: 5vh;              /* 40px ≈ 4vh */
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 1.2vh;      /* 12px ≈ 1.2vh */
+  flex-shrink: 0;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.profile-name {
+  font-size: 1.4vh;         /* 14px ≈ 1.4vh */
+  font-weight: 500;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-email {
+  font-size: 1.2vh;         /* 12px ≈ 1.2vh */
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-expand {
+  font-size: 1.2vh;         /* 12px ≈ 1.2vh */
+  color: #9ca3af;
+  margin-left: 0.8vh;       /* 8px ≈ 0.8vh */
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.sidebar.collapsed .profile-info,
+.sidebar.collapsed .profile-expand {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Main Content */
+.main-content {
+  margin-left: 28vh;        /* 280px ≈ 28vh */
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #3a3a3a;
+  color: #ffffff;
+}
+
+.sidebar.collapsed + .main-content {
+  margin-left: 7vh;         /* 70px ≈ 7vh */
+}
+
+.content-container {
+  padding: 4vh;             /* 40px ≈ 4vh */
+  max-width: 120vh;
+  margin: 0 auto;
+}
+
+.content-section {
+  display: none;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.content-section.active {
+  display: block;
+}
+
+.content-section h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2vh;       /* 20px ≈ 2vh */
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.content-section p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #d1d5db;
+  margin-bottom: 3vh;       /* 30px ≈ 3vh */
+}
+
+/* Email List */
+.email-list {
+  margin-top: 3vh;          /* 30px ≈ 3vh */
+}
+
+.email-item {
+  background: #3a3a3a;
+  padding: 2vh;             /* 20px ≈ 2vh */
+  border-radius: 0.8vh;     /* 8px ≈ 0.8vh */
+  margin-bottom: 1.2vh;     /* 12px ≈ 1.2vh */
+  border: 0.1vh solid rgba(255, 255, 255, 0.1); /* 1px ≈ 0.1vh */
+  transition: all 0.2s ease;
+}
+
+.email-item:hover {
+  background: #404040;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.email-sender {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.4vh;     /* 4px ≈ 0.4vh */
+}
+
+.email-subject {
+  font-weight: 500;
+  color: #e5e7eb;
+  margin-bottom: 0.8vh;     /* 8px ≈ 0.8vh */
+}
+
+.email-preview {
+  color: #9ca3af;
+  font-size: 1.4vh;         /* 14px ≈ 1.4vh */
+  line-height: 1.4;
+}
+
+.settings-section {
+  margin-top: auto;
+}
+
+/* Sidebar Overlay for Mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(1vh); /* 10px ≈ 1vh */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tooltip for collapsed state */
+.menu-item::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 0.8vh 1.2vh;       /* 8px 12px ≈ 0.8vh 1.2vh */
+  border-radius: 0.6vh;       /* 6px ≈ 0.6vh */
+  font-size: 1.2vh;           /* 12px ≈ 1.2vh */
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-left: 1vh;           /* 10px ≈ 1vh */
+  z-index: 1002;
+}
+
+.sidebar.collapsed .menu-item:hover::after {
+  opacity: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 76.8vh) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 28vh; /* sigue 280px ≈ 28vh */
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 28vh;
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .sidebar.collapsed + .main-content {
+    margin-left: 0;
+  }
+
+  .content-container {
+    padding: 2vh; /* 20px ≈ 2vh */
+  }
+
+  .content-section h1 {
+    font-size: 2rem;
+  }
+}
+
+/* Performance Optimizations */
+.sidebar,
+.main-content,
+.menu-link {
+  will-change: transform;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
