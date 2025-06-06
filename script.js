@@ -114,3 +114,36 @@ style.innerHTML = `
   }
 `;
 document.head.appendChild(style); 
+
+// --- Botón “Iniciar sesión” (lanza el flujo de Google OAuth) ---
+const loginBtn = document.getElementById('loginBtn');
+if (loginBtn) {
+  loginBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    try {
+      // Llamada a tu endpoint que devuelve { auth_url: "..." }
+      const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/google/auth/start", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al iniciar la conexión con Google (status ${response.status})`);
+      }
+
+      const data = await response.json();
+      if (!data.auth_url) {
+        throw new Error("No se recibió auth_url en la respuesta");
+      }
+
+      // Redirige al usuario al URL proporcionado por Google
+      window.location.href = data.auth_url;
+    } catch (err) {
+      console.error("Error al solicitar flujo de Google:", err);
+      alert("No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.");
+    }
+  });
+}
