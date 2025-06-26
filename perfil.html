@@ -892,7 +892,7 @@
     <div class="header-container">
       <nav>
         <a class="btn-secondary" href="http://localhost:3000/principal.html">Correos</a>
-        <button class="btn-secondary">Devoluciones</button>
+        <a class="btn-secondary" href="http://localhost:3000/plans.html">Planes</a>
         <button class="btn-secondary" id="btnAnaliticas">Análisis</button>
       </nav>
       <a class="btn" href="#" id="storeNameCorner"></a>
@@ -917,21 +917,8 @@
             incluyendo todas las políticas y informacion extra que se te va a pedir
           </p>
         </div>
-
-        <!-- Cuadro sin tienda (si no hay) -->
-        <div class="no-store-container" id="noStoreContainer">
-          <div class="no-store-box" id="noStoreBox">
-            <h2>No tienes ninguna tienda añadida, ¡añade una!</h2>
-            <svg class="plus-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
-                 stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                 viewBox="0 0 24 24">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </div>
-        </div>
         <!-- info-container (tarjetas) si hay tienda -->
-        <div class="info-container" id="infoContainer">
+        <div class="info-container" id="infoContainer" style="display: block;">
           <div class="cards-grid" id="cardsGrid">
             <!-- Card 1 -->
             <div class="card" data-policy-type="devoluciones">
@@ -1092,49 +1079,37 @@
         </div>
         <!-- Primer \"cuadrado\" => Datos de Usuario -->
         <div class="form-container">
-          <h2>Datos de Usuario</h2>
-          <div class="form-group">
-            <label for="nombre">Nombre</label>
-            <input type="text" id="nombre" value="{{ user_data.name|default_if_none:'' }}" />
-          </div>
-          <div class="form-group">
-            <label for="apellidos">Apellidos</label>
-            <input type="text" id="apellidos" value="{{ user_data.surname|default_if_none:'' }}" />
-          </div>
-          <div class="form-group">
-            <label for="correo">Correo Electrónico</label>
-            <input type="email" id="correo" value="{{ user_data.email|default_if_none:'' }}" />
-          </div>
-          <div class="form-group">
-            <label for="telefono">Número de Teléfono</label>
-            <input type="tel" id="telefono" value="{{ user_data.phone|default_if_none:'' }}" />
-          </div>
-          <button class="save-button">Guardar Usuario</button>
-        </div>
-
+  
         <!-- Segundo \"cuadrado\" => Información de la Tienda -->
         <div class="form-container">
           <h2>Información de la Tienda</h2>
+
           <div class="form-group">
             <label for="tiendaName">Nombre de la Tienda</label>
-            <input type="text" id="tiendaName" value="{{ store_data.name|default_if_none:'' }}" />
+            <input type="text" id="tiendaName" value="" />
           </div>
+
           <div class="form-group">
             <label for="tiendaUrl">URL</label>
-            <input type="text" id="tiendaUrl" value="{{ store_data.url|default_if_none:'' }}" />
+            <input type="text" id="tiendaUrl" value="" />
           </div>
+
           <div class="form-group">
             <label for="tiendaEmail">Email</label>
-            <input type="email" id="tiendaEmail" value="{{ store_data.email|default_if_none:'' }}" />
+            <input type="email" id="tiendaEmail" value="" />
           </div>
+
           <div class="form-group">
             <label for="tiendaPhone">Teléfono</label>
-            <input type="tel" id="tiendaPhone" value="{{ store_data.phone|default_if_none:'' }}" />
+            <input type="tel" id="tiendaPhone" value="" />
           </div>
+
           <div class="form-group buttons-container">
             <button class="save-button" id="saveStoreBtn">Guardar Tienda</button>
             <button class="delete-button" id="deleteStoreBtn">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                   width="20" height="20" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6L18.335 19.03A2 2 0 0 1 16.34 21H7.66a2 2 0 0 1-1.994-1.97L5 6"></path>
                 <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path>
@@ -1142,85 +1117,49 @@
                 <line x1="14" y1="11" x2="14" y2="17"></line>
               </svg>
             </button>
-          </div>          
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- FORM-PAGE 2: formulario para AÑADIR TIENDA -->
-    <div class="form-page slide-out-right hidden" id="newStoreFormPage">
-      <div class="form-container">
-        <h2>Añadir Tienda</h2>
-
-        <div class="form-group">
-          <label for="storeName">Nombre de la Tienda</label>
-          <input type="text" id="storeName" placeholder="Mi tienda" />
-        </div>
-        <div class="form-group">
-          <label for="storeUrl">URL</label>
-          <input type="text" id="storeUrl" placeholder="https://example.com" />
-        </div>
-        <div class="form-group">
-          <label for="storeEmail">Email</label>
-          <input type="email" id="storeEmail" placeholder="tienda@ejemplo.com" />
-        </div>
-
-        <div class="form-group">
-          <label for="onlyOnline">Solo venta online</label>
-          <input type="checkbox" id="onlyOnline" checked />
-        </div>
-
-        <!-- Dirección -->
-        <div id="addressFields">
-          <div class="form-group">
-            <label for="calle">Calle</label>
-            <input type="text" id="calle" placeholder="Calle" />
-          </div>
-          <div class="form-group">
-            <label for="numero">Número</label>
-            <input type="text" id="numero" placeholder="Número" />
-          </div>
-          <div class="form-group">
-            <label for="ciudad">Ciudad</label>
-            <input type="text" id="ciudad" placeholder="Ciudad" />
-          </div>
-          <div class="form-group">
-            <label for="codigoPostal">Código Postal</label>
-            <input type="text" id="codigoPostal" placeholder="00000" />
-          </div>
-          <div class="form-group">
-            <label for="pais">País</label>
-            <input type="text" id="pais" placeholder="País" />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="timetable">Horario</label>
-          <input type="text" id="timetable" value="L-V 9-18, S 10-14"/>
-        </div>
-        <div class="form-group">
-          <label for="phone">Teléfono</label>
-          <input type="tel" id="phone" value="123456789"/>
-        </div>
-
-        <button class="save-button" id="saveNewStoreBtn">Guardar Tienda</button>
-      </div>
-    </div>
-    <!-- AHORA: Contenedor de Google está FUERA de storePage -->
-    <div class="connect-google-container hidden" id="connectGoogleContainer">
-      <h2>¡Tu tienda ha sido creada!</h2>
-      <p>Ahora puedes conectar tu tienda con Google para acceder a todas las funcionalidades:</p>
-      <button class="save-button" id="connectGoogleBtn">Conectar tienda con Google</button>
     </div>
   </div>
+  <script>
+    (function() {
+      const params   = new URLSearchParams(window.location.search);
+      const token    = params.get("token");
+      const tiendaId = params.get("tienda_id");
+      const nombre   = params.get("nombre");
+      const email    = params.get("email");
 
+      if (token && tiendaId) {
+        // Guardamos TODO en localStorage, con la clave unificada "token"
+        localStorage.setItem("token", token);
+        localStorage.setItem("tienda_id", tiendaId);
+        localStorage.setItem("tienda_nombre", nombre);
+        localStorage.setItem("tienda_email", email);
+        // Limpiamos la URL para que no se vean los parámetros
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      } else {
+        // Si no vengo con token en la URL, chequear localStorage:
+        const storedToken = localStorage.getItem("token");
+        const storedTiendaId = localStorage.getItem("tienda_id");
+
+        if (!storedToken || !storedTiendaId) {
+          // Si no hay nada en localStorage, redirijo a login
+          window.location.href = "http://localhost:3000/index.html";
+        }
+      }
+    })();
+  </script>
   <script>
     /***********************************************
      * 0) DETECCIÓN DE TIENDA Y CONFIGURACIONES
     ***********************************************/
     const token = localStorage.getItem("token");
-    if (!token) {
-      window.location.href = "http://localhost:3000/iniciar_sesion.html";
+    const tiendaId = localStorage.getItem("tienda_id");
+
+    if (!token || !tiendaId) {
+      window.location.href = "http://localhost:3000/index.html";
     }
     function mostrarModalSesionCaducada() {
       const modal = document.getElementById("session-expired-modal");
@@ -1229,7 +1168,7 @@
       document.getElementById("cerrar-modal-sesion").onclick = () => {
         modal.style.display = "none";
         // Puedes redirigir si quieres
-        window.location.href = "http://localhost:3000/iniciar_sesion.html";
+        window.location.href = "http://localhost:3000/index.html";
       };
     }
     function tokenExpiraEnMenosDe(minutos = 10) {
@@ -1264,6 +1203,7 @@
     async function fetchWithAuth(input, init = {}) {
       // 1. Comprobar si el token está cerca de caducar
       if (tokenExpiraEnMenosDe(10)) {
+        
         try {
           await renovarToken();  // Intenta renovar token
         } catch (err) {
@@ -1299,99 +1239,68 @@
       return res;
     }
 
+    // —— Bloque III: Cargar URL y Teléfono de la tienda (si ya existen) ——  
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1) Traer datos del usuario
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      const userRes = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/auth/me", {
-        method: "GET",
-        headers: headers
-      });
-      const user     = await userRes.json();
-      localStorage.setItem("user", JSON.stringify(user));
-      // 2) Traer datos de su tienda (si existe y está autenticada)
-      const storeRes = await fetchWithAuth(`https://sincere-musical-squid.ngrok-free.app/api/stores/me`, {
-        method: "GET",
-        headers: headers
-      });
-      const store    = storeRes.ok 
-                      ? await storeRes.json()
-                      : null;
-      localStorage.setItem("store", JSON.stringify(store));
-      const deleteStoreBtn = document.getElementById('deleteStoreBtn');
-
-        // 3) Inicializar UI con los datos traídos:
-      const hasStore = !!store;
-      console.log(hasStore);
-      document.body.dataset.hasStore = hasStore.toString();
-
-      // 3.1 — Poner nombre de usuario en el menú:
-      document.getElementById('storeNameCorner')
-              .textContent = hasStore ? store.name : 'Sin Tienda';
-
-      // 3.2 — Mostrar u ocultar secciones según si tiene tienda:
-      const noStoreContainer = document.getElementById('noStoreContainer');
-      const infoContainer    = document.getElementById('infoContainer');
-
-      if (hasStore) {
-        // — Mostrar la UI de edición de políticas:
-        infoContainer.style.display   = 'block';
-        noStoreContainer.style.display= 'none';
-
-        // — Rellenar “Datos de Usuario”:
-        document.getElementById('nombre').value    = user.name      || '';
-        document.getElementById('apellidos').value = user.surname   || '';
-        document.getElementById('correo').value    = user.email     || '';
-        document.getElementById('telefono').value  = user.phone     || '';
-
-        // — Rellenar “Información de la Tienda”:
-        document.getElementById('tiendaName').value  = store.name  || '';
-        document.getElementById('tiendaUrl').value   = store.url   || '';
-        document.getElementById('tiendaEmail').value = store.email || '';
-        document.getElementById('tiendaPhone').value = store.phone || '';
-      } else {
-        // — Mostrar el formulario “crear tienda”:
-        infoContainer.style.display   = 'none';
-        noStoreContainer.style.display= 'block';
+      try {
+        const storeRes = await fetchWithAuth(
+          "https://sincere-musical-squid.ngrok-free.app/api/stores/me",
+          { method: "GET" }
+        );
+        if (storeRes.ok) {
+          const store = await storeRes.json();
+          // Pre-llenar URL y Teléfono (los otros dos ya vienen por la URL)
+          document.getElementById("tiendaName").value  = store.name  || "";
+          document.getElementById("tiendaEmail").value = store.email || "";
+          document.getElementById("tiendaUrl").value   = store.url   || "";
+          document.getElementById("tiendaPhone").value = store.phone || "";
+        }
+      } catch (err) {
+        console.warn("No hubo datos previos de tienda:", err);
+        // Si no existe, dejamos los campos en blanco para crear/editar
       }
+    });
 
-      if (deleteStoreBtn) {
-        deleteStoreBtn.addEventListener('click', async () => {
-          if (!confirm("¿Estás seguro de que deseas eliminar la tienda? Esta acción no se puede deshacer.")) {
-            return;
-          }
-
-          try {
-            const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/stores/eliminar_tienda/", { // Ajusta el endpoint según tu backend
-              method: "DELETE",
-              headers: { "Content-Type": "application/json",
-              }
-            });
-
-            if (!response.ok) {
-              alert("Error al eliminar la tienda.");
-              return;
-            }
-
-            alert("Tienda eliminada correctamente.");
-            window.location.reload(); // Recargar la página para reflejar los cambios
-          } catch (error) {
-            alert("Hubo un problema al eliminar la tienda: " + error.message);
-          }
-        });
+    // —— Bloque IV: Guardar y Eliminar tienda desde el formulario derecho ——  
+    document.getElementById('saveStoreBtn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const tiendaId = localStorage.getItem("tienda_id");
+        const data = {
+          name:  document.getElementById("tiendaName").value.trim(),
+          url:   document.getElementById("tiendaUrl").value.trim(),
+          email: document.getElementById("tiendaEmail").value.trim(),
+          phone: document.getElementById("tiendaPhone").value.trim()
+        };
+        const resp = await fetchWithAuth(
+          `https://sincere-musical-squid.ngrok-free.app/api/tiendas/editar_tienda/${tiendaId}`,
+          { method: "PUT", body: JSON.stringify(data) }
+        );
+        if (!resp.ok) {
+          const err = await resp.json();
+          alert("Error al guardar la tienda: " + (err.detail || resp.status));
+          return;
+        }
+        alert("Tienda guardada correctamente");
+      } catch (error) {
+        console.error("Error guardando tienda:", error);
+        alert("Hubo un error al guardar la tienda");
       }
-      // Bloquear botones superiores si no hay tienda
-      const topButtons = document.querySelectorAll('.btn-secondary');
-      topButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          if (!hasStore) {
-            e.preventDefault();
-            showTooltip(e, "Añade una tienda primero para acceder a esta sección");
-          }
-        });
-      });
+    });
+
+    document.getElementById('deleteStoreBtn').addEventListener('click', async () => {
+      if (!confirm("¿Estás seguro de que deseas eliminar la tienda?")) return;
+      try {
+        const resp = await fetchWithAuth(
+          "https://sincere-musical-squid.ngrok-free.app/api/stores/eliminar_tienda/",
+          { method: "DELETE" }
+        );
+        if (!resp.ok) throw new Error("Error al eliminar tienda");
+        alert("Tienda eliminada");
+        window.location.href = "http://localhost:3000/index.html";
+      } catch (error) {
+        console.error("Error eliminando tienda:", error);
+        alert("No se pudo eliminar la tienda");
+      }
     });
 
     function showTooltip(event, message) {
@@ -1442,75 +1351,6 @@
       addressFields.style.display = onlyOnline.checked ? 'none' : 'block';
     }
 
-    /***********************************************
-     * 3) GUARDAR TIENDA (botón "Guardar Tienda")
-    ***********************************************/
-    const saveNewStoreBtn = document.getElementById('saveNewStoreBtn');
-    if (saveNewStoreBtn) {
-      saveNewStoreBtn.addEventListener('click', async (evt) => {
-        evt.preventDefault();
-        const data = {
-          name: document.getElementById('storeName').value,
-          url:  document.getElementById('storeUrl').value,
-          email:document.getElementById('storeEmail').value,
-          direccion: {
-            only_online: document.getElementById('onlyOnline').checked,
-            calle: document.getElementById('calle').value,
-            numero: document.getElementById('numero').value,
-            ciudad: document.getElementById('ciudad').value,
-            codigo_postal: document.getElementById('codigoPostal').value,
-            pais: document.getElementById('pais').value
-          },
-          timetable: document.getElementById('timetable').value,
-          phone: document.getElementById('phone').value
-        };
-
-        try {
-          const resp = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/stores/crear_tienda/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data)
-          });
-          if (!resp.ok) {
-            const err = await resp.json();
-            alert("Error: " + (err.error || "No se pudo crear la tienda"));
-            return;
-          }
-          // 1) Ocultar el formulario "newStoreFormPage"
-          const newStoreFormPage = document.getElementById('newStoreFormPage');
-          newStoreFormPage.classList.add('hidden');
-
-          // 2) Mostrar el recuadro con botón de Google
-          const connectGoogleContainer = document.getElementById('connectGoogleContainer');
-          connectGoogleContainer.classList.remove('hidden');
-        } catch (error) {
-          alert("Error al crear la tienda: " + error.message);
-        }
-      });
-    }
-    /****************************************
-     * 3.5) BOTÓN "Conectar tienda con Google"
-    ****************************************/
-    const connectGoogleBtn = document.getElementById('connectGoogleBtn');
-    if (connectGoogleBtn) {
-      connectGoogleBtn.addEventListener('click', async () => {
-
-        const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/google/auth/start", {
-          headers: {
-          }
-        });
-
-        if (!response.ok) {
-          alert("Error al iniciar la conexión con Google");
-          return;
-        }
-        const data = await response.json();
-        console.log(data);
-        window.location.href = data.auth_url;  // ← Rediriges al login de Google
-      });
-    }
-
     /****************************************
      * 4) Flecha DERECHA => DESLIZAR formPage
     ****************************************/
@@ -1519,11 +1359,6 @@
     const formPage   = document.getElementById('formPage');
 
     arrowRight.addEventListener('click', () => {
-      const hasStore = document.body.dataset.hasStore === 'true';
-      if (!hasStore) {
-        showTooltip(event, "Añade una tienda primero para acceder a esta sección");
-        return;
-      }
       storePage.classList.add('slide-out-left');
       formPage.classList.remove('slide-out-right');
       formPage.classList.add('slide-in-left');
@@ -1933,7 +1768,7 @@
     }
 
     /****************************************
-     * 6) Menú desplegable (usuario)
+     * 6) Logout (usuario)
     ****************************************/
     const userMenuButton   = document.getElementById('storeNameCorner');
     const userDropdownMenu = document.getElementById('userDropdownMenu');
@@ -1951,7 +1786,7 @@
         localStorage.removeItem("store");
 
         // Redirige al login
-        window.location.href = `${window.location.origin}/iniciar_sesion.html`;
+        window.location.href = `${window.location.origin}/index.html`;
       });
     }
     document.addEventListener('click', (event) => {

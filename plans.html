@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Respondize – Elige tu plan</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Navbar idéntica a la landing -->
+  <header class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-left">
+        <span class="logo-text">Respondize</span>
+      </div>
+      <nav class="navbar-center">
+        <a href="#features">Características</a>
+        <a href="#how-it-works">Cómo funciona</a>
+        <a href="#pricing">Planes</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="navbar-right">
+        <a href="#" id="logoutBtn" class="login-btn">Cerrar sesión</a>
+      </div>
+      <button class="mobile-menu-btn">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main style="padding-top: 8rem;">
+    <section id="pricing" class="pricing-section">
+      <h2>Elige tu plan</h2>
+      <div id="plans-loading">Cargando planes…</div>
+
+      <div id= "pricing-grid" class="pricing-grid hidden">
+
+        <div id="packCard" class="pricing-card hidden">
+            <div class="pricing-header">
+              <h3>Pack 100 correos</h3>
+              <span class="price">12,99 €</span>
+            </div>
+            <ul class="pricing-features">
+              <li><i class="fas fa-check"></i> +100 correos adicionales</li>
+              <li><i class="fas fa-check"></i> Cobro inmediato</li>
+            </ul>
+            <button class="cta-btn" id="buyPackBtn">Comprar pack</button>
+        </div>
+
+        <!-- Free Plan -->
+        <div class="pricing-card free">
+          <div class="pricing-header">
+            <h3>Free Plan</h3>
+            <span class="price">0 €<span class="period">/mes</span></span>
+          </div>
+          <ul class="pricing-features">
+            <li><i class="fas fa-check"></i> Automatización de respuestas</li>
+            <li><i class="fas fa-check"></i> Soporte básico por email</li>
+            <li><i class="fas fa-check"></i> Límite: 50 correos/mes</li>
+          </ul>
+          <a href="#" class="cta-btn" id="freeBtn"></a>
+        </div>
+
+        <!-- Starter Plan -->
+        <div class="pricing-card popular">
+          <div class="popular-badge">Más popular</div>
+          <div class="pricing-header">
+            <h3>Starter Plan</h3>
+            <span class="price">75 €<span class="period">/mes</span></span>
+          </div>
+          <ul class="pricing-features">
+            <li><i class="fas fa-check"></i> Free Plan</li>
+            <li><i class="fas fa-check"></i> Insights de correos (próximamente)</li>
+            <li><i class="fas fa-check"></i> Límite: 500 correos/mes</li>
+          </ul>
+          <a href="#" class="cta-btn" id="starterBtn"></a>
+        </div>
+
+        <!-- Advanced Plan -->
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>Advanced Plan</h3>
+            <span class="price">135 €<span class="period">/mes</span></span>
+          </div>
+          <ul class="pricing-features">
+            <li><i class="fas fa-check"></i> Starter Plan</li>
+            <li><i class="fas fa-check"></i> Automatizaciones con Shopify (devoluciones, descuentos…)</li>
+            <li><i class="fas fa-check"></i> Límite: 1 000 correos/mes</li>
+          </ul>
+          <a href="#" class="cta-btn" id="advancedBtn"></a>
+        </div>
+
+        <!-- Custom Plan -->
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>Custom Plan</h3>
+            <span class="price">Personalizado</span>
+          </div>
+          <ul class="pricing-features">
+            <li><i class="fas fa-check"></i> Advanced Plan</li>
+            <li><i class="fas fa-check"></i> WhatsApp Business API</li>
+            <li><i class="fas fa-check"></i> Reglas personalizadas para el bot</li>
+            <li><i class="fas fa-check"></i> Límite: + 1 000 correos/mes</li>
+          </ul>
+          <a href="#" class="cta-btn">Contacta con nosotros</a>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer idéntico al de landing -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-brand">
+        <span class="logo-text">Respondize</span>
+        <p>Transformando la atención al cliente con IA</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-column">
+          <h4>Producto</h4>
+          <a href="#features">Características</a>
+          <a href="#pricing">Planes</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <div class="footer-column">
+          <h4>Legal</h4>
+          <a href="#privacy">Privacidad</a>
+          <a href="#terms">Términos</a>
+        </div>
+        <div class="footer-column">
+          <h4>Social</h4>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-linkedin"></i></a>
+            <a href="#"><i class="fab fa-github"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 Respondize. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="plans.js"></script>
+
+</body>
+</html>

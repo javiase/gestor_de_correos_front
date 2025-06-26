@@ -61,18 +61,21 @@ faqItems.forEach(item => {
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function (e) {
     e.preventDefault();
-    const target = document.querySelector(this.getAttribute('href'));
-    
-    if (target) {
-      target.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-      
-      // Close mobile menu if open
-      navbarCenter.classList.remove('active');
-      mobileMenuBtn.classList.remove('active');
+    const selector = this.getAttribute('href');
+
+    // Evita errores si el href es solo "#"
+    if (selector.length > 1) {
+      const target = document.querySelector(selector);
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     }
+
+    navbarCenter.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
   });
 });
 
@@ -116,34 +119,37 @@ style.innerHTML = `
 document.head.appendChild(style); 
 
 // --- Botón “Iniciar sesión” (lanza el flujo de Google OAuth) ---
+async function iniciarOAuth() {
+  try {
+    // Llamada a tu endpoint que devuelve { auth_url: "..." }
+    const response = await fetch("https://sincere-musical-squid.ngrok-free.app/api/google/auth/start", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error al iniciar la conexión con Google (status ${response.status})`);
+    }
+
+    const data = await response.json();
+    if (!data.auth_url) {
+      throw new Error("No se recibió auth_url en la respuesta");
+    }
+
+    // Redirige al usuario al URL proporcionado por Google
+    window.location.href = data.auth_url;
+  } catch (err) {
+    console.error("Error al solicitar flujo de Google:", err);
+    alert("No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.");
+  }
+}
 const loginBtn = document.getElementById('loginBtn');
 if (loginBtn) {
-  loginBtn.addEventListener('click', async (e) => {
+  loginBtn.addEventListener('click', (e) => {
     e.preventDefault();
-
-    try {
-      // Llamada a tu endpoint que devuelve { auth_url: "..." }
-      const response = await fetchWithAuth("https://sincere-musical-squid.ngrok-free.app/api/google/auth/start", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error al iniciar la conexión con Google (status ${response.status})`);
-      }
-
-      const data = await response.json();
-      if (!data.auth_url) {
-        throw new Error("No se recibió auth_url en la respuesta");
-      }
-
-      // Redirige al usuario al URL proporcionado por Google
-      window.location.href = data.auth_url;
-    } catch (err) {
-      console.error("Error al solicitar flujo de Google:", err);
-      alert("No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.");
-    }
+    iniciarOAuth();
   });
 }
+

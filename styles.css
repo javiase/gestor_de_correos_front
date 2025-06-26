@@ -497,6 +497,13 @@ body {
   display: block;
 }
 
+#plans-loading{
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
+
 /* CTA Section */
 .cta-section {
   padding: 6rem 2rem;
@@ -528,6 +535,12 @@ body {
 
 .cta-section .cta-btn:hover {
   background: #047857;
+}
+
+.cta-btn.disabled {
+  background: var(--border);
+  color: var(--text-secondary);
+  cursor: not-allowed;
 }
 
 /* Footer */
@@ -609,6 +622,9 @@ footer {
   color: var(--text-secondary);
 }
 
+.hidden{
+  display: none !important;
+}
 /* Responsive Design */
 @media (max-width: 1024px) {
   .hero {
