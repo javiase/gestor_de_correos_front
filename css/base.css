@@ -1,0 +1,35 @@
+/* 1. Reset + Box-Sizing + Variables */
+:root {
+  --color-bg: #3a3a3a;
+  --color-surface: #2a2a2a;
+  --color-on-surface: #ffffff;
+  --color-primary: #059669;
+  --color-primary-dark: #05815a;
+  --color-muted: #9ca3af;
+  --space-xs: 0.5vh;
+  --space-s: 1vh;
+  --space-m: 2vh;
+  --space-l: 4vh;
+  --radius: 1vh;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-on-surface);
+}

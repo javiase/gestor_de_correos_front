@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>Redactar Correo – Email App</title>
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/layout.css" />
+    <link rel="stylesheet" href="../css/components.css" />
+    <link rel="stylesheet" href="../css/pages/sidebar.css" />
+    <link rel="stylesheet" href="../css/pages/redactar.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="sidebarContainer"></div>
+    <div class="main-content" id="mainContent">
+      <div class="compose-container">
+        <h1>Redactar Correo</h1>
+        <form id="composeForm">
+          <div class="form-group">
+            <label for="toInput">Para</label>
+            <input type="email" id="toInput" placeholder="destinatario@ejemplo.com" required />
+          </div>
+          <div class="form-group">
+            <label for="subjectInput">Asunto</label>
+            <input type="text" id="subjectInput" placeholder="Asunto del correo" />
+          </div>
+          <div class="toolbar">
+            <button type="button" data-cmd="bold"><i class="fas fa-bold"></i></button>
+            <button type="button" data-cmd="italic"><i class="fas fa-italic"></i></button>
+            <button type="button" data-cmd="underline"><i class="fas fa-underline"></i></button>
+            <select data-cmd="fontSize">
+              <option value="1">Tamaño</option>
+              <option value="2">Pequeño</option>
+              <option value="3">Medio</option>
+              <option value="4">Grande</option>
+              <option value="5">Muy grande</option>
+            </select>
+          </div>
+          <div
+            id="messageInput"
+            class="rich-editor"
+            contenteditable="true"
+            placeholder="Escribe tu mensaje aquí…"
+            required
+          ></div>
+          <button type="submit" class="btn btn-primary btn-send">
+            <i class="fas fa-paper-plane"></i> Enviar
+          </button>
+        </form>
+      </div>
+    </div>
+    <script type="module" src="../js/config.js"></script>
+    <script type="module" src="../js/utils/api.js"></script>
+    <script type="module" src="../js/components/sidebar.js"></script>
+    <script type="module" src="../js/pages/redactar.js"></script>
+  </body>
+</html>

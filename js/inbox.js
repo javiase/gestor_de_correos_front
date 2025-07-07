@@ -1,297 +1,287 @@
+// js/pages/inbox.js
+import { initSidebar } from '/js/components/sidebar.js';
+import { fetchWithAuth } from '/js/utils/api.js';
+
 class EmailInbox {
-    constructor() {
-        this.currentPage = 1;
-        this.totalPages = 22;
-        this.emailsPerPage = 20;
-        this.allEmails = [];
-        this.filteredEmails = [];
-        this.searchTerm = '';
-        
-        this.init();
-    }
-    
-    init() {
-        this.generateSampleEmails();
-        this.bindEvents();
-        this.renderEmails();
-        this.updatePagination();
-    }
-    
-    generateSampleEmails() {
-        const senders = [
-            'Rafal Szlendak', 'Alice Johnson', 'Emma Smith', 'Sophia Williams',
-            'Rafal, Fryderyk Wiatrowski', 'Vadym Petrychenko', 'J K, Fryderyk Wiatrowski',
-            'Team Lunch Tomorrow', 'Google Support', 'Conference Team', 'Project Manager',
-            'Marketing Team', 'HR Department', 'IT Support', 'Sales Team'
-        ];
-        
-        const subjects = [
-            'Team Lunch Tomorrow',
-            'CRUCIAL: Invitation to Discuss Project Timeline',
-            'CRUCIAL: Clarification on Innovation Initiative',
-            'CRUCIAL: Compliance Update Inquiry - 8856',
-            'Re: Google Cloud Support 56746929: Webhook',
-            'Re: Conference invite',
-            'What\'s your typical hourly cost for client projects?',
-            'Re: Test',
-            'Test',
-            'Re: Tidemark\'s Blueprint for Vertical SaaS Growth',
-            'Re: Assistance requested',
-            'Re: Fryderyk',
-            'Possible artificial intelligence opportunity',
-            'Weekly Team Meeting',
-            'Project Status Update',
-            'Budget Review Meeting',
-            'New Feature Release',
-            'Client Feedback Summary',
-            'Security Update Required',
-            'Performance Review Schedule'
-        ];
-        
-        const previews = [
-            'Team lunch tomorrow • 12:30 PM • With Georg Mc...',
-            'Discuss project timeline • New procedures • Timeline...',
-            'Innovation Initiative 2024 • Clarification provided • I...',
-            'Compliance update progress • Urgent call required...',
-            'Webhook delay issue • No payload, Jan 21 • Meet...',
-            'Austin AI Conference • Fryderyk interested • Talk o...',
-            'Inquiry on hourly cost • Services: content, web, PR...',
-            'Test email exchange • January 21, 2025 • Informal...',
-            'Subject: Test • Sender: Vadym Petrychenko • Rece...',
-            'Partnership interest for 2025 • New investments, Co...',
-            'Need assistance with project setup and configuration...',
-            'Felix Capital: $1.2bn AUM • Interested in Zeta Labs...',
-            'Potential candidate for Zeta Labs • Experience in AI...',
-            'Weekly sync meeting scheduled for tomorrow at 2 PM...',
-            'Current project status and next milestones review...',
-            'Q4 budget review and planning for next quarter...',
-            'New feature rollout scheduled for next week...',
-            'Summary of client feedback from last month...',
-            'Critical security update needs to be applied...',
-            'Annual performance review schedule released...'
-        ];
-        
-        const times = ['2:05 PM', '11:43 AM', '11:43 AM', '11:31 AM', 'Yesterday', 'Monday'];
-        const dates = ['today', 'today', 'today', 'today', 'yesterday', 'yesterday', 'yesterday', 'yesterday', 'yesterday', 'yesterday', 'january2025', 'january2025'];
-        
-        // Generate 440 emails (22 pages * 20 emails per page)
-        for (let i = 0; i < 440; i++) {
-            const dateCategory = dates[i % dates.length];
-            const email = {
-                id: i + 1,
-                sender: senders[i % senders.length],
-                subject: subjects[i % subjects.length],
-                preview: previews[i % previews.length],
-                time: times[i % times.length],
-                date: dateCategory,
-                isDraft: Math.random() > 0.7, // 30% chance of being a draft
-                hasAttachment: Math.random() > 0.8, // 20% chance of having attachment
-                isUnread: Math.random() > 0.6, // 40% chance of being unread
-                hasAvatar: Math.random() > 0.7 // 30% chance of having avatar placeholder
-            };
-            this.allEmails.push(email);
-        }
-        
-        this.filteredEmails = [...this.allEmails];
-    }
-    
-    bindEvents() {
-        const searchInput = document.getElementById('searchInput');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        
-        // Search functionality
-        searchInput.addEventListener('input', (e) => {
-            this.searchTerm = e.target.value.toLowerCase();
-            this.filterEmails();
-        });
-        
-        // Pagination
-        prevBtn.addEventListener('click', () => this.previousPage());
-        nextBtn.addEventListener('click', () => this.nextPage());
-        
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                searchInput.blur();
-            }
-            if (e.key === 'ArrowLeft' && e.ctrlKey) {
-                this.previousPage();
-            }
-            if (e.key === 'ArrowRight' && e.ctrlKey) {
-                this.nextPage();
-            }
-        });
-    }
-    
-    filterEmails() {
-        if (!this.searchTerm) {
-            this.filteredEmails = [...this.allEmails];
-        } else {
-            this.filteredEmails = this.allEmails.filter(email => 
-                email.sender.toLowerCase().includes(this.searchTerm) ||
-                email.subject.toLowerCase().includes(this.searchTerm) ||
-                email.preview.toLowerCase().includes(this.searchTerm)
-            );
-        }
-        
-        this.currentPage = 1;
-        this.totalPages = Math.ceil(this.filteredEmails.length / this.emailsPerPage);
-        this.renderEmails();
-        this.updatePagination();
-    }
-    
-    getCurrentPageEmails() {
-        const startIndex = (this.currentPage - 1) * this.emailsPerPage;
-        const endIndex = startIndex + this.emailsPerPage;
-        return this.filteredEmails.slice(startIndex, endIndex);
-    }
-    
-    renderEmails() {
-        const emailGroups = {
-            today: document.querySelector('[data-date="today"]'),
-            yesterday: document.querySelector('[data-date="yesterday"]'),
-            january2025: document.querySelector('[data-date="january2025"]')
-        };
-        
-        // Clear all groups
-        Object.values(emailGroups).forEach(group => {
-            group.innerHTML = '';
-        });
-        
-        const currentEmails = this.getCurrentPageEmails();
-        
-        // Group emails by date
-        const groupedEmails = {
-            today: currentEmails.filter(email => email.date === 'today'),
-            yesterday: currentEmails.filter(email => email.date === 'yesterday'),
-            january2025: currentEmails.filter(email => email.date === 'january2025')
-        };
-        
-        // Render each group
-        Object.entries(groupedEmails).forEach(([dateKey, emails]) => {
-            const group = emailGroups[dateKey];
-            if (emails.length === 0) {
-                group.parentElement.style.display = 'none';
-                return;
-            }
-            
-            group.parentElement.style.display = 'block';
-            emails.forEach(email => {
-                group.appendChild(this.createEmailElement(email));
-            });
-        });
-        
-        // Show empty state if no emails
-        if (currentEmails.length === 0) {
-            this.showEmptyState();
-        }
-    }
-    
-    createEmailElement(email) {
-        const emailItem = document.createElement('div');
-        emailItem.className = `email-item ${email.isUnread ? 'unread' : ''} ${email.hasAvatar ? 'has-avatar' : ''}`;
-        emailItem.setAttribute('tabindex', '0');
-        
-        let avatarHtml = '';
-        if (email.hasAvatar) {
-            const avatarClass = Math.random() > 0.5 ? 'large' : 'small';
-            avatarHtml = `<div class="email-avatar ${avatarClass}"></div>`;
-        }
-        
-        const attachmentIcon = email.hasAttachment ? '<i class="fas fa-paperclip attachment-icon"></i>' : '';
-        const unreadIndicator = email.isUnread ? '<div class="unread-indicator"></div>' : '';
-        const draftBadge = email.isDraft ? '<span class="draft-badge">Draft</span>' : '';
-        
-        emailItem.innerHTML = `
-            ${avatarHtml}
-            <div class="email-sender">${email.sender}</div>
-            <div class="email-content">
-                <div class="email-subject">${email.subject}</div>
-                <div class="email-preview">${email.preview}</div>
-            </div>
-            <div class="email-meta">
-                <div class="email-status">
-                    ${attachmentIcon}
-                    ${unreadIndicator}
-                    ${draftBadge}
-                </div>
-            </div>
-            <div class="email-time">${email.time}</div>
-        `;
-        
-        // Add click event
-        emailItem.addEventListener('click', () => this.openEmail(email));
-        
-        return emailItem;
-    }
-    
-    showEmptyState() {
-        const emailList = document.getElementById('emailList');
-        emailList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <h3>No emails found</h3>
-                <p>Try adjusting your search terms</p>
-            </div>
-        `;
-    }
-    
-    openEmail(email) {
-        console.log('Opening email:', email);
-        // Implement email opening logic here
-        // This could navigate to a detailed view or open a modal
-    }
-    
-    previousPage() {
-        if (this.currentPage > 1) {
-            this.currentPage--;
-            this.renderEmails();
-            this.updatePagination();
-            this.scrollToTop();
-        }
-    }
-    
-    nextPage() {
-        if (this.currentPage < this.totalPages) {
-            this.currentPage++;
-            this.renderEmails();
-            this.updatePagination();
-            this.scrollToTop();
-        }
-    }
-    
-    updatePagination() {
-        const pageInfo = document.getElementById('pageInfo');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        
-        pageInfo.textContent = `${this.currentPage} of ${this.totalPages}`;
-        
-        prevBtn.disabled = this.currentPage === 1;
-        nextBtn.disabled = this.currentPage === this.totalPages;
-    }
-    
-    scrollToTop() {
-        const emailList = document.getElementById('emailList');
-        emailList.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-}
+  constructor() {
+    this.currentPage    = 1;
+    this.emailsPerPage  = 20;
+    this.allEmails      = [];
+    this.filteredEmails = [];
+    this.allLoaded      = false;
+    this.searchTerm     = '';
 
-// Initialize the inbox when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const inbox = new EmailInbox();
-    
-    // Make inbox globally accessible for debugging
-    window.emailInbox = inbox;
-    
-    console.log('Email Inbox initialized with', inbox.allEmails.length, 'emails');
-});
+    this.spinner = document.getElementById('loadingIndicator');
+    this.init();
+  }
 
-// Add some performance optimizations
-if ('requestIdleCallback' in window) {
-    requestIdleCallback(() => {
-        // Preload next page emails for better performance
-        console.log('Preloading next page data...');
+  async init() {
+    // monta la sidebar
+    initSidebar('#sidebarContainer');
+
+    // carga correos y después inicializa eventos, paginación y render
+    await this.loadEmails(1);
+    this.bindEvents();
+    this.updatePagination();
+    this.renderEmails();
+  }
+  showSpinner() {
+  this.spinner.style.display = 'flex';
+  }
+
+  hideSpinner() {
+    this.spinner.style.display = 'none';
+  }
+
+  // helper para decidir en qué grupo de fecha va cada email
+  getGroupKey(email) {
+    const dt  = new Date(email.date);
+    const now = new Date();
+
+    const isSameDay = (a, b) =>
+      a.getDate() === b.getDate() &&
+      a.getMonth() === b.getMonth() &&
+      a.getFullYear() === b.getFullYear();
+
+    if (isSameDay(dt, now)) {
+      return 'hoy';
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (isSameDay(dt, yesterday)) {
+      return 'ayer';
+    }
+    // p.ej. "january2025"
+    const month = dt.toLocaleString('en', { month: 'long' }).toLowerCase();
+    return `${month}${dt.getFullYear()}`;
+  }
+
+  // formatea la fecha para la columna de tiempo
+  formatEmailDate(dateString) {
+    const now = new Date();
+    const emailDate = new Date(dateString);
+    if (isNaN(emailDate.getTime())) {
+      return dateString;
+    }
+    const diffMs = now - emailDate;
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    const hh = emailDate.getHours().toString().padStart(2, '0');
+    const mm = emailDate.getMinutes().toString().padStart(2, '0');
+
+    if (diffDays < 1 && now.getDate() === emailDate.getDate()) {
+      return `${hh}:${mm}`;
+    }
+    const ayer = new Date(now);
+    ayer.setDate(ayer.getDate() - 1);
+    if (
+      ayer.getDate() === emailDate.getDate() &&
+      ayer.getMonth() === emailDate.getMonth() &&
+      ayer.getFullYear() === emailDate.getFullYear()
+    ) {
+      return `Ayer, ${hh}:${mm}`;
+    }
+    if (diffDays < 7) {
+      const diasSemana = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
+      return `${diasSemana[emailDate.getDay()]}, ${hh}:${mm}`;
+    }
+    const d  = emailDate.getDate().toString().padStart(2, '0');
+    const mo = (emailDate.getMonth() + 1).toString().padStart(2, '0');
+    const y  = emailDate.getFullYear();
+    return `${d}/${mo}/${y}, ${hh}:${mm}`;
+  }
+
+  // trae correos del backend
+  async loadEmails(page = 1) {
+    this.showSpinner();
+    try {
+      const res = await fetchWithAuth(`/emails/get?page=${page}`, {
+        method: 'GET',
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const { emails, total, pages } = await res.json();
+      this.allEmails      = emails;
+      this.filteredEmails = [...emails];
+      this.currentPage    = page;
+      this.totalEmails    = total;                        
+      this.totalPages     = pages;                         
+      this.allLoaded      = false; 
+    } catch (err) {
+      console.error('Error cargando correos:', err);
+      // opcionalmente mostrar un mensaje de error al usuario
+    }finally{
+      this.hideSpinner();
+    }
+  }
+
+  // listeners de búsqueda, paginación y atajos
+  bindEvents() {
+    document.getElementById('searchInput')
+      .addEventListener('input', e => {
+        this.searchTerm = e.target.value.toLowerCase();
+        this.filterEmails();
+      });
+
+    document.getElementById('prevBtn')
+      .addEventListener('click', () => this.changePage(-1));
+    document.getElementById('nextBtn')
+      .addEventListener('click', () => this.changePage(1));
+
+    document.addEventListener('keydown', e => {
+      if      (e.key === 'Escape')                    document.getElementById('searchInput').blur();
+      else if (e.ctrlKey && e.key === 'ArrowLeft')   this.changePage(-1);
+      else if (e.ctrlKey && e.key === 'ArrowRight')  this.changePage(1);
     });
+  }
+
+  // filtra según el término de búsqueda
+  async filterEmails() {
+    this.showSpinner();
+    if (!this.searchTerm) {
+      this.allLoaded = false;                  
+      await this.loadEmails(1);
+    } else {
+      // búsqueda global: carga todas las páginas sólo la primera vez
+      if (!this.allLoaded) {
+        let all = [];
+        for (let p = 1; p <= this.totalPages; p++) {
+          const resp = await fetchWithAuth(`/emails/get?page=${p}`);
+          const { emails } = await resp.json();
+          all = all.concat(emails);
+        }
+        this.allEmails = all;
+        this.allLoaded = true;
+      }
+      // ahora filtra sobre el conjunto completo
+      this.filteredEmails = this.allEmails.filter(mail =>
+        (mail.sender  || '').toLowerCase().includes(this.searchTerm) ||
+        (mail.subject || '').toLowerCase().includes(this.searchTerm) ||
+        // si usas snippet/body para preview:
+        ((mail.snippet || mail.body || '').toLowerCase().includes(this.searchTerm))
+      );
+    }
+    this.currentPage = 1;
+    this.updatePagination();
+    this.renderEmails();
+    this.hideSpinner();
+  }
+
+  // emails de la página actual
+  getCurrentPageEmails() {
+    // Si no hay búsqueda activa, usamos directamente los 20 correos que el backend ya paginó
+    if (!this.searchTerm) {
+      return this.filteredEmails;
+    }
+    // En modo búsqueda (front-end pagination) sí hacemos slice
+    const start = (this.currentPage - 1) * this.emailsPerPage;
+    return this.filteredEmails.slice(start, start + this.emailsPerPage);
+  }
+  
+
+  // renderiza la lista, agrupada por fecha
+  renderEmails() {
+    const listContainer = document.getElementById('emailList');
+    listContainer.innerHTML = '';
+
+    const pageEmails = this.getCurrentPageEmails();
+
+    if (pageEmails.length === 0) {
+      listContainer.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <h3>No emails found</h3>
+          <p>Try adjusting your search terms</p>
+        </div>`;
+      return;
+    }
+
+    pageEmails.forEach(email =>
+      listContainer.appendChild(this.createEmailElement(email))
+    );
+  }
+
+  // construye el DOM de cada email
+  createEmailElement(email) {
+    const div = document.createElement('div');
+    div.className = `email-item ${email.read ? 'read' : 'unread'}`;
+    div.tabIndex  = 0;
+    console.log('|'+email.subject+'|')
+    div.innerHTML = `
+      <div class="email-sender">${email.return_mail}</div>
+      <div class="email-content">
+      <div class="email-subject">
+        ${
+          // si viene vacío, solo espacios o el literal "<no subject>"
+          !email.subject ||
+          !email.subject.trim() ||
+          email.subject.trim() === '<no subject>'
+            ? '(sin asunto)'
+            : email.subject
+        }
+      </div>
+        <div class="email-preview">${((email.body || "").split(/\s+/).slice(0,15).join(" ") + "...") }</div>
+      </div>
+      <div class="email-meta">
+        ${email.hasAttachment ? '<i class="fas fa-paperclip"></i>' : ''}
+        ${email.isDraft      ? '<span class="draft-badge">Draft</span>' : ''}
+      </div>
+      <div class="email-time">${this.formatEmailDate(email.date)}</div>
+    `;
+    div.addEventListener('click', () => this.openEmail(email));
+    return div;
+  }
+
+  // navega a la página de detalle
+  async openEmail(email) {
+    try {
+      await fetchWithAuth('/emails/mark_read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email_id: email.id })
+      });
+      // opcional: actualizar en memoria para que cambie el estilo sin recargar
+      email.read = true;
+      // refresca la lista
+      this.renderEmails();
+    } catch (err) {
+      console.error('No se pudo marcar leído:', err);
+    }
+    // luego navegas
+    window.location.href = `/email.html?id=${encodeURIComponent(email.id)}`;
+  }  
+
+  // actualiza los botones y contador de páginas
+  updatePagination() {
+      const totalPages = this.searchTerm
+      ? Math.ceil(this.filteredEmails.length / this.emailsPerPage) || 1
+      : (this.totalPages || 1);    document.getElementById('pageInfo').textContent   = `${this.currentPage} of ${totalPages}`;
+    document.getElementById('prevBtn').disabled       = this.currentPage <= 1;
+    document.getElementById('nextBtn').disabled       = this.currentPage >= totalPages;
+  }
+
+  // cambia de página
+  async changePage(direction) {
+    // en búsqueda, paginación local; si no, usa totalPages del back
+    const totalPages = this.searchTerm
+      ? Math.ceil(this.filteredEmails.length / this.emailsPerPage) || 1
+      : (this.totalPages || 1);
+
+    const nextPage = this.currentPage + direction;
+    if (nextPage < 1 || nextPage > totalPages) return;
+
+    // Solo recargar del backend cuando NO hay búsqueda activa
+    if (!this.searchTerm) {
+      await this.loadEmails(nextPage);
+    }
+
+    // En ambos casos, actualizamos currentPage y refrescamos UI
+    this.currentPage = nextPage;
+    this.renderEmails();
+    this.updatePagination();
+    document.querySelector('.email-list')
+      .scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  new EmailInbox();
+});

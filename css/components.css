@@ -1,0 +1,56 @@
+/* 3. Componentes reutilizables */
+
+/* Links reset */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Botones genéricos */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-on-surface);
+  padding: var(--space-s) var(--space-m);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-on-surface);
+  background: var(--color-surface);
+  border: 0.1vh solid #555;
+  border-radius: 0.6vh;
+}
+
+/* Toolbar */
+.toolbar button,
+.toolbar select {
+  background: var(--color-surface);
+  border: 0.1vh solid #555;
+  border-radius: 0.6vh;
+  padding: var(--space-xs) var(--space-s);
+  cursor: pointer;
+  color: var(--color-on-surface);
+  font-size: 1.4vh;
+}
+
+.toolbar button:hover,
+.toolbar select:hover {
+  background: #4a4a4a;
+}

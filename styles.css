@@ -464,6 +464,10 @@ body {
   overflow: hidden;
 }
 
+.hidden{
+  display: none !important;
+}
+
 .faq-question {
   width: 100%;
   padding: 1.5rem;

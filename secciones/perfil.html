@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Settings</title>
+    <link rel="stylesheet" href="../css/perfil.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="sidebarContainer"></div>
+    <div class="main-content" id="mainContent">
+        <div class="profile-container">
+            <!-- Header -->
+            <div class="profile-header">
+                <div class="header-content">
+                    <div class="user-avatar">
+                        <img src="../image.png?height=80&width=80" alt="User Avatar" id="userAvatar">
+                        <button class="avatar-edit-btn" id="avatarEditBtn">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    <div class="user-info">
+                        <h1 class="user-name" id="displayUserName">Fryderyk Wiatrowski</h1>
+                        <p class="user-email" id="displayUserEmail">fryderyk@example.com</p>
+                        <span class="user-status">Active</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button class="btn btn-primary" id="saveBtn">Save Changes</button>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="profile-content">
+                <!-- Store Information Section -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>Store Information</h2>
+                        <p>Manage your store details and settings</p>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="storeName">Store Name *</label>
+                            <input type="text" id="storeName" class="form-input" value="My Awesome Store" required>
+                            <span class="form-hint">This is how your store will appear to customers</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeEmail">Store Email *</label>
+                            <input type="email" id="storeEmail" class="form-input" value="store@example.com" required>
+                            <span class="form-hint">Primary contact email for your store</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeUrl">Store URL</label>
+                            <div class="input-group">
+                                <span class="input-prefix">https://</span>
+                                <input type="text" id="storeUrl" class="form-input" placeholder="mystore.com">
+                            </div>
+                            <span class="form-hint">Your store's website URL</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeDescription">Store Description</label>
+                            <textarea id="storeDescription" class="form-textarea" rows="3" placeholder="Tell customers about your store...">Premium quality products with exceptional customer service. We specialize in unique items that bring value to your everyday life.</textarea>
+                            <span class="form-hint">Brief description of your store (optional)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Store Hours Section -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>Opening Hours</h2>
+                        <p>Set your store's operating schedule</p>
+                    </div>
+                    
+                    <div class="hours-container">
+                        <div class="hours-day" data-day="monday">
+                            <div class="day-label">Monday</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="time" class="time-input" value="09:00">
+                                <span class="time-separator">to</span>
+                                <input type="time" class="time-input" value="17:00">
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="tuesday">
+                            <div class="day-label">Tuesday</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="time" class="time-input" value="09:00">
+                                <span class="time-separator">to</span>
+                                <input type="time" class="time-input" value="17:00">
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="wednesday">
+                            <div class="day-label">Wednesday</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="time" class="time-input" value="09:00">
+                                <span class="time-separator">to</span>
+                                <input type="time" class="time-input" value="17:00">
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="thursday">
+                            <div class="day-label">Thursday</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="time" class="time-input" value="09:00">
+                                <span class="time-separator">to</span>
+                                <input type="time" class="time-input" value="17:00">
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="friday">
+                            <div class="day-label">Friday</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="time" class="time-input" value="09:00">
+                                <span class="time-separator">to</span>
+                                <input type="time" class="time-input" value="17:00">
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="saturday">
+                            <div class="day-label">Saturday</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="time" class="time-input" value="10:00">
+                                <span class="time-separator">to</span>
+                                <input type="time" class="time-input" value="16:00">
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="sunday">
+                            <div class="day-label">Sunday</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="time" class="time-input" value="10:00" disabled>
+                                <span class="time-separator">to</span>
+                                <input type="time" class="time-input" value="16:00" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physical Location Section -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>Physical Location</h2>
+                        <p>Configure your store's physical presence</p>
+                    </div>
+                    
+                    <div class="location-toggle">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="hasPhysicalLocation" checked>
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">My store has a physical location</span>
+                        </label>
+                    </div>
+                    
+                    <div class="location-fields" id="locationFields">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="storeAddress">Street Address *</label>
+                                <input type="text" id="storeAddress" class="form-input" value="123 Main Street" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storeCity">City *</label>
+                                <input type="text" id="storeCity" class="form-input" value="New York" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storeState">State/Province</label>
+                                <input type="text" id="storeState" class="form-input" value="NY">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storeZip">ZIP/Postal Code</label>
+                                <input type="text" id="storeZip" class="form-input" value="10001">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storeCountry">Country *</label>
+                                <select id="storeCountry" class="form-select" required>
+                                    <option value="US" selected>United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="UK">United Kingdom</option>
+                                    <option value="DE">Germany</option>
+                                    <option value="FR">France</option>
+                                    <option value="ES">Spain</option>
+                                    <option value="IT">Italy</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="JP">Japan</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storePhone">Phone Number</label>
+                                <input type="tel" id="storePhone" class="form-input" value="+1 (555) 123-4567">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>Personal Information</h2>
+                        <p>Your personal account details</p>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="firstName">First Name *</label>
+                            <input type="text" id="firstName" class="form-input" value="Fryderyk" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lastName">Last Name *</label>
+                            <input type="text" id="lastName" class="form-input" value="Wiatrowski" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="personalEmail">Email Address *</label>
+                            <input type="email" id="personalEmail" class="form-input" value="fryderyk@example.com" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="personalPhone">Phone Number</label>
+                            <input type="tel" id="personalPhone" class="form-input" value="+1 (555) 987-6543">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="timezone">Timezone</label>
+                            <select id="timezone" class="form-select">
+                                <option value="UTC-5" selected>Eastern Time (UTC-5)</option>
+                                <option value="UTC-6">Central Time (UTC-6)</option>
+                                <option value="UTC-7">Mountain Time (UTC-7)</option>
+                                <option value="UTC-8">Pacific Time (UTC-8)</option>
+                                <option value="UTC+0">Greenwich Mean Time (UTC+0)</option>
+                                <option value="UTC+1">Central European Time (UTC+1)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="language">Preferred Language</label>
+                            <select id="language" class="form-select">
+                                <option value="en" selected>English</option>
+                                <option value="es">Español</option>
+                                <option value="fr">Français</option>
+                                <option value="de">Deutsch</option>
+                                <option value="it">Italiano</option>
+                                <option value="pt">Português</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Preferences -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>Notification Preferences</h2>
+                        <p>Choose how you want to receive updates</p>
+                    </div>
+                    
+                    <div class="notification-options">
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Email Notifications</h4>
+                                <p>Receive updates about orders, promotions, and account activity</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="emailNotifications" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>SMS Notifications</h4>
+                                <p>Get text messages for urgent updates and order status</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="smsNotifications">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Marketing Communications</h4>
+                                <p>Receive promotional offers and marketing updates</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="marketingNotifications" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div class="message-container" id="messageContainer"></div>
+        </div>
+    </div>
+    
+
+    <!-- Hidden file input for avatar upload -->
+    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+    <script type="module" src="../js/config.js"></script>
+    <script type="module" src="../js/components/sidebar.js"></script>
+    <script type="module" src="../js/perfil.js"></script>
+</body>
+</html>

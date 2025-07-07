@@ -1,0 +1,20 @@
+/* 2. Layout global: sidebar + main-content flex en todo el body */
+body {
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+#sidebarContainer {
+  flex: 0 0 auto; /* ancho fijo del sidebar */
+}
+
+.main-content {
+  flex: 1 1 auto;       /* ocupa resto de espacio */
+  display: flex;        /* para centrar internamente */
+  align-items: center;  /* vertical */
+  justify-content: center; /* horizontal */
+  overflow-y: auto;
+  background: var(--color-bg);
+  padding: var(--space-m);
+}

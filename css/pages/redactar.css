@@ -1,0 +1,65 @@
+/* 5. Página “Redactar” */
+
+.compose-container {
+  width: 95vw;
+  max-width: 800px;
+  height: 95vh;
+  background: var(--color-surface);
+  padding: var(--space-l);
+  border-radius: var(--radius);
+  box-shadow: 0 0.5vh 2vh rgba(0,0,0,0.5);
+  overflow: auto;
+}
+
+.compose-container h1 {
+  color: var(--color-on-surface);
+  font-size: 2.4vh;
+  margin-bottom: var(--space-m);
+  font-weight: 600;
+}
+
+form#composeForm {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 3.5vh - var(--space-m)); /* ajusta según h1 + margen */
+}
+
+.form-group {
+  margin-bottom: var(--space-m);
+}
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  color: #ccc;
+  font-size: 1.4vh;
+  font-weight: 500;
+}
+.form-group input {
+  width: 100%;
+  padding: var(--space-s) var(--space-m);
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--space-s);
+  margin-bottom: var(--space-s);
+}
+
+.rich-editor {
+  flex: 1; 
+  padding: var(--space-s);
+  border: 0.1vh solid #555;
+  border-radius: 0.6vh;
+  overflow-y: auto;
+  color: var(--color-on-surface);
+  font-size: 1.4vh;
+}
+.rich-editor:empty:before {
+  content: attr(placeholder);
+  color: #777;
+}
+
+.btn-send {
+  align-self: flex-end;
+  margin-top: var(--space-m);
+}
