@@ -145,11 +145,10 @@ async function iniciarOAuth() {
     alert("No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.");
   }
 }
-const loginBtn = document.getElementById('loginBtn');
-if (loginBtn) {
-  loginBtn.addEventListener('click', (e) => {
+document.querySelectorAll(".auth-google").forEach(el => {
+  el.addEventListener('click', (e) => {
     e.preventDefault();
     iniciarOAuth();
   });
-}
+});
 

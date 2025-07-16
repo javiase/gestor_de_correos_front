@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Detalle de Correo</title>
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/components/sidebar.css" />
+  <link rel="stylesheet" href="../css/pages/email.css" />
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body>
+    <div id="sidebarContainer"></div>
+    <div class="main-content" id="mainContent">
+        <div class="left-container">
+            <div id="chatContainer" class="chat-container">
+                <div id="historyContainer"></div>
+                <div class="grid-container">
+                    <div class="mail-container client actual">
+                        <h2>Ultimo mensaje recibido</h2>
+
+                        <!-- PANEL RECIBIDO -->
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-header-content" style="justify-content: space-between;">
+                                    <p id="emailFrom">De: ---</p>
+                                    <span id="emailDate">--:--</span>
+                                </div>
+                                <p class="panel-subject" id="emailSubject">Asunto: ---</p>
+                            </div>
+                            <div class="panel-scroll">
+                                <div class="panel-content" id="receivedContent"></div>
+                            </div>
+                            <div class="panel-footer"></div>
+                        </div>
+                    </div>
+                    <div class="mail-container bot actual">
+                        <h2>Respuesta del bot</h2>
+                        <!-- PANEL RESPUESTA -->
+                        <div class="panel ">
+                            <div class="panel-header">
+                                <div class="panel-header-content">
+                                    <strong>Asunto:&nbsp;&nbsp;</strong>
+                                    <!-- aquí podrá editarse el asunto -->
+                                    <div
+                                        id="responseSubject"
+                                        class="panel-subject response-subject"
+                                        contenteditable="true"
+                                        data-placeholder="Escribe el asunto…"
+                                    ></div>
+                                </div>
+                            </div>
+                            <div class="panel-scroll">
+                                <!-- idem: placeholder y siempre editable -->
+                                <div
+                                    class="panel-content response-body"
+                                    id="responseContent"
+                                    contenteditable="true"
+                                    data-placeholder="Escribe tu respuesta…"
+                                ></div>
+                            </div>
+                            <div class="panel-footer">
+                                <!-- Acciones -->
+                                <button id = "sendReply" class="send-button">Enviar</button>
+                                <button id = "deleteEmail" class="trash-button" aria-label="Borrar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6" stroke="currentColor"></polyline>
+                                    <path d="M19 6l-1.35 14.11A2 2 0 0 1 15.66 22H8.34
+                                            A2 2 0 0 1 6.35 20.11L5 6" stroke="currentColor"></path>
+                                    <path d="M14 10v6" stroke="currentColor"></path>
+                                    <path d="M10 10v6" stroke="currentColor"></path>
+                                    <line x1="9" y1="6" x2="9" y2="4" stroke="currentColor"></line>
+                                    <line x1="15" y1="6" x2="15" y2="4" stroke="currentColor"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pagination">
+                <!-- Navegación -->
+                <button id="prevEmail" class="pagination-btn prev-btn">
+                    <i class="fas fa-chevron-left"></i>&nbsp;&nbsp;&nbsp;&nbsp;Anterior
+                </button>
+                <button id="nextEmail" class="pagination-btn next-btn">
+                    Siguiente&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+  </div>
+
+  <script type="module" src="../js/config.js"></script>
+  <script type="module" src="../js/utils/api.js"></script>
+  <script type="module" src="../js/components/sidebar.js"></script>
+  <script type="module" src="../js/pages/email.js"></script>
+</body>
+</html>

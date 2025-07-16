@@ -23,6 +23,7 @@
 
 html,
 body {
+  background-color: var(--color-bg);
   height: 100%;
   overflow-x: hidden;
 }

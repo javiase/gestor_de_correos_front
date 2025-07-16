@@ -1,0 +1,259 @@
+.chat-container {
+  position: relative;       
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  padding: var(--space-m);
+  width: 90%;
+  height: 100%;
+  overflow-y: auto;
+  justify-content: space-around;
+}
+
+#historyContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+  padding: var(--space-s);
+  border-radius: var(--radius);
+  padding-bottom: 8vh;
+}
+
+.history-note{
+    margin-top: 10vh;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-s) var(--space-m);
+  background: var(--color-surface);
+  border-bottom: 0.1vh solid rgba(255,255,255,0.1);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-s);
+}
+
+.chat-header-left,
+.chat-header-center,
+.chat-header-right {
+  font-size: 1.4vh;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-header-center {
+  font-weight: 500;
+}
+
+.grid-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8vh;
+    margin-bottom: 12vh;
+}
+
+.mail-container.client{
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    align-self: flex-start;
+    min-width: 70vh;
+    max-width: 100vh;
+}
+
+.mail-container.bot{
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    align-self: flex-end;
+    align-items: flex-end;
+    min-width: 70vh;
+    max-width: 100vh;
+}
+.panel {
+  background-color:var(--color-surface);
+  border-radius: 1.6vh;
+  box-shadow: 0 0.4vh 0.8vh rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;  
+  width: 100%;
+}
+
+.panel-header {
+  padding: 2.5vh;
+  border-bottom: 0.1vh solid #333333;
+  flex-shrink: 0;
+}
+.panel-header-content {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+}
+.panel-header-content p,
+.panel-header-content span,
+.panel-subject,
+.panel-content p {
+  font-size: 2vh;
+  line-height: 2.3vh;
+  color: #e5e5e5;
+}
+.panel-subject {
+  color: #d4d4d8;
+}
+.panel-scroll {
+  flex: 1;
+  padding: 2.5vh;
+  overflow-y: auto;
+  position: relative;
+}
+.panel-scroll::-webkit-scrollbar {
+  width: 0.6vh;
+}
+.panel-scroll::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 0.3vh;
+}
+.panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+  color: #e5e5e5;
+}
+.panel-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 2.5vh;
+  flex-shrink: 0;
+}
+
+.conversation-message {
+  background-color: var(--color-surface);
+  border-radius: 1.2vh;
+  padding: 1vh;
+  margin-bottom: 1vh;
+  white-space: pre-wrap;
+  font-size: 2vh;
+  line-height: 2.3vh;
+  color: #e5e5e5;
+  max-width: 70%;
+}
+.conversation-message.client { align-self: flex-start; }
+.conversation-message.bot    { align-self: flex-end; }
+
+.response-subject {
+  display: block;          /* para que ocupe toda la línea */
+  width: 100%;             /* o un ancho concreto si lo prefieres */
+  min-height: 2.5vh;       /* para que siempre tenga “clicable” algo */
+  padding: 0.2vh 0;        /* un pelín de padding vertical */
+  cursor: text;            /* fuerza el cursor I-beam */
+  outline: none;           /* quita el outline por defecto al hacer focus */
+}
+
+/* 3) Quita el borde blanco al enfocar */
+.response-subject:focus,
+.response-body:focus {
+  outline: none;
+}
+
+/* 2) Placeholder cuando están vacíos */
+.response-subject:empty::before,
+.response-body:empty::before {
+  content: attr(data-placeholder);
+  color: #888;
+}
+
+/* 4) Fondo transparente (hereda el del panel) */
+.response-subject,
+.response-body {
+  background: transparent;
+}
+
+
+.send-button {
+    background-color:var(--color-primary);
+    border: none;
+    color: #fff;
+    padding: 1.4vh 1.8vh;
+    font-size: 1.8vh;
+    border-radius: 0.6vh;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.send-button:hover {
+    background-color: var(--color-primary-dark);
+}
+.trash-button {
+    background-color: #2A2A2A;
+    border: 0.2vh solid #d4d4d8;
+    width: 4vh;
+    height: 4vh;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.trash-button svg {
+    width: 1.8vh;
+    height: 1.8vh;
+    color: #d4d4d8;
+    stroke: #d4d4d8;
+}
+.trash-button:hover {
+    background-color: #ec2929;
+    border-color: #666666;
+}
+.trash-button:hover svg {
+    stroke: #666666;
+}
+/* 2. Añade estas reglas al principio de email.css */
+.left-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90%;
+  height: 100%;
+}
+
+.pagination {
+  flex-shrink: 0;        /* que no crezca ni se encoja */
+}
+
+.pagination-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 1vh;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pagination-btn.prev-btn {
+  position: absolute;
+  bottom: var(--space-m);
+  left: var(--space-s);
+}
+.pagination-btn.next-btn {
+  position: absolute;
+  bottom: var(--space-m);
+  right: var(--space-s);
+}

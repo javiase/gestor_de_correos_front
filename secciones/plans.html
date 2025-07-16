@@ -4,31 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Respondize – Elige tu plan</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/css/styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-<script>
-  console.log("⚙️ plans.html arrancado: compruebo si config.js se carga…");
-</script>
-<script type="module" src="../js/config.js"></script>
-<script>
-  console.log("⚙️ después de invocar config.js");
-</script>
-<script type="module" src="plans.js"></script>
   <!-- Navbar idéntica a la landing -->
   <header class="navbar">
     <div class="navbar-content">
       <div class="navbar-left">
         <span class="logo-text">Respondize</span>
       </div>
-      <nav class="navbar-center">
-        <a href="#features">Características</a>
-        <a href="#how-it-works">Cómo funciona</a>
-        <a href="#pricing">Planes</a>
-        <a href="#faq">FAQ</a>
-      </nav>
       <div class="navbar-right">
         <a href="#" id="logoutBtn" class="login-btn">Cerrar sesión</a>
       </div>
@@ -43,18 +29,20 @@
       <h2>Elige tu plan</h2>
       <div id="plans-loading">Cargando planes…</div>
 
-      <div id= "pricing-grid" class="pricing-grid hidden">
+      <div id="pricing-grid" class="pricing-grid hidden">
 
         <div id="packCard" class="pricing-card hidden">
             <div class="pricing-header">
               <h3>Pack 100 correos</h3>
-              <span class="price">12,99 €</span>
+              <span class="price">29,99 €</span>
             </div>
             <ul class="pricing-features">
               <li><i class="fas fa-check"></i> +100 correos adicionales</li>
               <li><i class="fas fa-check"></i> Cobro inmediato</li>
             </ul>
-            <button class="cta-btn" id="buyPackBtn">Comprar pack</button>
+            <div class="buttons-container">
+              <button class="cta-btn" id="buyPackBtn">Comprar pack</button>
+            </div>
         </div>
 
         <!-- Free Plan -->
@@ -66,53 +54,83 @@
           <ul class="pricing-features">
             <li><i class="fas fa-check"></i> Automatización de respuestas</li>
             <li><i class="fas fa-check"></i> Soporte básico por email</li>
-            <li><i class="fas fa-check"></i> Límite: 50 correos/mes</li>
+            <li><i class="fas fa-check"></i> Límite: 30 correos/mes</li>
           </ul>
-          <a href="#" class="cta-btn" id="freeBtn"></a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn" id="freeBtn"></a>
+          </div>
         </div>
 
         <!-- Starter Plan -->
-        <div class="pricing-card popular">
+        <div class="pricing-card starter">
           <div class="popular-badge">Más popular</div>
           <div class="pricing-header">
             <h3>Starter Plan</h3>
-            <span class="price">75 €<span class="period">/mes</span></span>
+            <span class="price">79,99 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
             <li><i class="fas fa-check"></i> Free Plan</li>
-            <li><i class="fas fa-check"></i> Insights de correos (próximamente)</li>
-            <li><i class="fas fa-check"></i> Límite: 500 correos/mes</li>
+            <li><i class="fas fa-check"></i> Personalizar respuestas con info de la tienda</li>
+            <li><i class="fas fa-check"></i> Métricas limitadas</li>
+            <li><i class="fas fa-check"></i> Límite: 300 correos/mes</li>
           </ul>
-          <a href="#" class="cta-btn" id="starterBtn"></a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn" id="starterBtn"></a>
+          </div>
         </div>
 
         <!-- Advanced Plan -->
-        <div class="pricing-card">
+        <div class="pricing-card advanced">
           <div class="pricing-header">
             <h3>Advanced Plan</h3>
-            <span class="price">135 €<span class="period">/mes</span></span>
+            <span class="price">159,99 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
             <li><i class="fas fa-check"></i> Starter Plan</li>
-            <li><i class="fas fa-check"></i> Automatizaciones con Shopify (devoluciones, descuentos…)</li>
-            <li><i class="fas fa-check"></i> Límite: 1 000 correos/mes</li>
+            <li><i class="fas fa-check"></i> Conectar tienda con Shopify</li>
+            <li><i class="fas fa-check"></i> Posibilidad de añadir 2 reglas personalizadas al bot</li>
+            <li><i class="fas fa-check"></i> Posibilidad de añadir 2 buzones personalizados</li>
+            <li><i class="fas fa-check"></i> Límite: 600 correos/mes</li>
           </ul>
-          <a href="#" class="cta-btn" id="advancedBtn"></a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn" id="advancedBtn"></a>
+          </div>
+        </div>
+
+        <!-- Professional Plan -->
+        <div class="pricing-card professional">
+          <div class="pricing-header">
+            <h3>Professional Plan</h3>
+            <span class="price">319,99 €<span class="period">/mes</span></span>
+          </div>
+          <ul class="pricing-features">
+            <li><i class="fas fa-check"></i> Advanced Plan</li>
+            <li><i class="fas fa-check"></i> Instagram Business
+            <li><i class="fas fa-check"></i> WhatsApp Business</li>
+            <li><i class="fas fa-check"></i> Creación de clases propias para clasificación de correos</li>
+            <li><i class="fas fa-check"></i> Posibilidad de añadir 6 reglas personalizadas al bot</li>
+            <li><i class="fas fa-check"></i> Posibilidad de añadir 5 buzones personalizados</li>
+            <li><i class="fas fa-check"></i> Límite: 1200 correos/mes</li>
+          </ul>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn" id="professionalBtn"></a>
+          </div>
         </div>
 
         <!-- Custom Plan -->
-        <div class="pricing-card">
+        <div class="pricing-card custom">
           <div class="pricing-header">
             <h3>Custom Plan</h3>
             <span class="price">Personalizado</span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> Advanced Plan</li>
-            <li><i class="fas fa-check"></i> WhatsApp Business API</li>
-            <li><i class="fas fa-check"></i> Reglas personalizadas para el bot</li>
-            <li><i class="fas fa-check"></i> Límite: + 1 000 correos/mes</li>
+            <li><i class="fas fa-check"></i> Professional Plan</li>
+            <li><i class="fas fa-check"></i> Todo lo anterior</li>
+            <li><i class="fas fa-check"></i> Contáctanos para personalización completa</li>
           </ul>
-          <a href="#" class="cta-btn">Contacta con nosotros</a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn">Contacta con nosotros</a>
+          </div>
         </div>
 
       </div>
@@ -152,8 +170,9 @@
       <p>&copy; 2024 Respondize. Todos los derechos reservados.</p>
     </div>
   </footer>
-  <script type="module" src="../js/config.js"></script>
-  <script type="module" src="plans.js"></script>
 
+  <!-- Scripts al final para asegurar el DOM cargado -->
+  <script type="module" src="../js/config.js"></script>
+  <script type="module" src="../js/pages/plans.js"></script>
 </body>
 </html>

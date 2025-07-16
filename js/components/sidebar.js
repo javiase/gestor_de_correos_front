@@ -1,8 +1,9 @@
+
 // Módulo sidebar.js
 export function initSidebar(containerSelector) {
   const container = document.querySelector(containerSelector);
   if (!container) return console.warn("No existe " + containerSelector);
-  fetch("/partials/sidebar.html")
+  return fetch("/partials/sidebar.html")
     .then((r) => {
       if (!r.ok) throw new Error("Error cargando sidebar: " + r.status);
       return r.text();
@@ -26,8 +27,41 @@ class EmailSidebar {
     this.userProfile = document.getElementById("userProfile");
     this.isMobile = window.innerWidth <= 768;
     this.isCollapsed = false;
+    this.userProfile = document.getElementById("userProfile");
+    this.loadUserProfile();
     this.bind();
   }
+
+  async loadUserProfile() {
+    try {
+      try {
+        await window.appUserPromise;
+      } catch {
+        throw new Error('usuario no autenticado');
+      }
+      const stored = localStorage.getItem("store");
+      if (!stored) throw new Error("no hay datos en localStorage");
+      const data = JSON.parse(stored);
+
+      const nameEl  = this.userProfile.querySelector(".profile-name");
+      const emailEl = this.userProfile.querySelector(".profile-email");
+      const avatar  = this.userProfile.querySelector(".profile-avatar img");
+      avatar.onload = () => avatar.classList.add("loaded");
+      avatar.onerror = () => avatar.src = "/image.png";
+      const firstName = data.firstName?.split(" ")[0] || "Sin nombre";
+      nameEl.textContent  = firstName;
+      emailEl.textContent = data.storeEmail;
+      console.log("Cargando perfil de usuario:", data);
+      // Avatar de Google si existe
+      if (data.picture_url) {
+        avatar.src = data.picture_url;
+      }
+    } catch (e) {
+      console.warn("No pude cargar perfil:", e);
+      this.userProfile.querySelector(".profile-name").textContent = "Sin nombre";
+    }
+  }
+
 
   bind() {
     this.items.forEach((item) =>
@@ -44,6 +78,14 @@ class EmailSidebar {
     this.createBtn?.addEventListener("click", () =>
       this.navigate("compose")
     );
+    this.userProfile?.addEventListener("click", () =>
+      this.navigate("perfil")
+    );
+    this.userProfile?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.navigate("profile");
+    });
+
     this.settingsHeader?.addEventListener("click", () =>
       this.settingsMenu.classList.toggle("collapsed")
     );
@@ -58,6 +100,8 @@ class EmailSidebar {
       sent: "/secciones/sent.html",
       drafts: "/secciones/drafts.html",
       deleted: "/secciones/deleted.html",
+      perfil: "/secciones/perfil.html",
+      info: "/secciones/info.html",
     };
     const url = map[section];
     if (url) window.location.href = url;
@@ -70,6 +114,10 @@ class EmailSidebar {
     } else {
       this.isCollapsed = !this.isCollapsed;
       this.sidebar.classList.toggle("collapsed", this.isCollapsed);
+      // además colapsamos el contenedor para que el main-content se desplace
+      document
+        .getElementById('sidebarContainer')
+        .classList.toggle('collapsed', this.isCollapsed);
     }
   }
 

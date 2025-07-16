@@ -360,7 +360,10 @@ body {
 
 /* Pricing Section */
 .pricing-section {
-  padding: 6rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2vh 3vh;
   background: transparent;
 }
 
@@ -369,7 +372,14 @@ body {
   font-size: 2.5rem;
   margin-bottom: 3rem;
 }
-
+.plan-notice {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
 .pricing-grid {
   max-width: 1200px;
   margin: 0 auto;
@@ -390,6 +400,25 @@ body {
 
 .pricing-card.popular {
   border: 2px solid var(--primary);
+}
+.cancel-change-btn {
+  background: #f87171;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.cancel-change-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.buttons-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1vh;
 }
 
 .popular-badge {

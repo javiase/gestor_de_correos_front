@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Respondize - Atención al cliente IA para e-commerce</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -21,8 +21,8 @@
         <a href="#faq">FAQ</a>
       </nav>
       <div class="navbar-right">
-        <a href="#" id="loginBtn" class="login-btn">Iniciar sesión</a>
-        <a href="#start" class="cta-btn">Únete gratis</a>
+        <a href="#" id="loginBtn" class="login-btn auth-google">Iniciar sesión</a>
+        <a href="#" id="joinBtn" class="cta-btn auth-google">Únete gratis</a>
       </div>
       <button class="mobile-menu-btn">
         <span></span>
@@ -96,7 +96,7 @@
         <div class="step">
           <div class="step-number">2</div>
           <h3>Borrador automático</h3>
-          <p>La IA genera respuestas en segundos</p>
+          <p>La IA genera respuestas basadas en tu información</p>
         </div>
         <div class="step">
           <div class="step-number">3</div>
@@ -109,44 +109,82 @@
     <section id="pricing" class="pricing-section">
       <h2>Planes adaptados a tu negocio</h2>
       <div class="pricing-grid">
+        <!-- Free Plan -->
         <div class="pricing-card free">
           <div class="pricing-header">
             <h3>Free</h3>
             <span class="price">0 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 50 consultas/mes</li>
-            <li><i class="fas fa-check"></i> Respuestas básicas</li>
-            <li><i class="fas fa-check"></i> Soporte por email</li>
+            <li><i class="fas fa-check"></i> 30 correos/mes</li>
+            <li><i class="fas fa-check"></i> Personalizar respuestas con info de tu tienda</li>
           </ul>
           <a href="#start" class="cta-btn">Empezar gratis</a>
         </div>
-        <div class="pricing-card popular">
+
+        <!-- Starter Plan -->
+        <div class="pricing-card starter">
           <div class="popular-badge">Más popular</div>
           <div class="pricing-header">
-            <h3>Pro</h3>
-            <span class="price">75 €<span class="period">/mes</span></span>
+            <h3>Starter</h3>
+            <span class="price">79,99 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 500 consultas/mes</li>
-            <li><i class="fas fa-check"></i> Respuestas avanzadas</li>
-            <li><i class="fas fa-check"></i> Integración Shopify</li>
-            <li><i class="fas fa-check"></i> Soporte prioritario</li>
+            <li><i class="fas fa-check"></i> 300 correos/mes</li>
+            <li><i class="fas fa-check"></i> Todo lo de Free</li>
+            <li><i class="fas fa-check"></i> Métricas limitadas</li>
           </ul>
-          <a href="#start" class="cta-btn">Elegir plan Pro</a>
+          <a href="#start" class="cta-btn" id="starterBtn">Elegir Starter</a>
         </div>
-        <div class="pricing-card">
+
+        <!-- Advanced Plan -->
+        <div class="pricing-card advanced">
           <div class="pricing-header">
-            <h3>Business</h3>
-            <span class="price">135 €<span class="period">/mes</span></span>
+            <h3>Advanced</h3>
+            <span class="price">159,99 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 1,000 consultas/mes</li>
-            <li><i class="fas fa-check"></i> Todas las características Pro</li>
-            <li><i class="fas fa-check"></i> WhatsApp Business API</li>
-            <li><i class="fas fa-check"></i> API personalizada</li>
+            <li><i class="fas fa-check"></i> 600 correos/mes</li>
+            <li><i class="fas fa-check"></i> Todo lo de Starter</li>
+            <li><i class="fas fa-check"></i> Acceso total a métricas</li>
+            <li><i class="fas fa-check"></i> Conectar tienda con Shopify</li>
+            <li><i class="fas fa-check"></i> Hasta 2 reglas personalizadas para el bot</li>
+            <li><i class="fas fa-check"></i> Hasta 2 buzones personalizados</li>
+            <li><i class="fas fa-check"></i> Instagram Business</li>
           </ul>
-          <a href="#start" class="cta-btn">Elegir plan Business</a>
+          <a href="#start" class="cta-btn" id="advancedBtn">Elegir Advanced</a>
+        </div>
+
+        <!-- Professional Plan -->
+        <div class="pricing-card professional">
+          <div class="pricing-header">
+            <h3>Professional</h3>
+            <span class="price">319,99 €<span class="period">/mes</span></span>
+          </div>
+          <ul class="pricing-features">
+            <li><i class="fas fa-check"></i> 1 200 correos/mes</li>
+            <li><i class="fas fa-check"></i> Todo lo de Advanced</li>
+            <li><i class="fas fa-check"></i> Creación de clases propias para clasificación de correos</li>
+            <li><i class="fas fa-check"></i> Hasta 6 reglas personalizadas para el bot</li>
+            <li><i class="fas fa-check"></i> Hasta 5 buzones personalizados</li>
+            <li><i class="fas fa-check"></i> Bot para consultas personalizadas a tu base de datos de métricas</li>
+            <li><i class="fas fa-check"></i> WhatsApp Business</li>
+          </ul>
+          <a href="#start" class="cta-btn" id="professionalBtn">Elegir Professional</a>
+        </div>
+
+        <!-- Custom Plan -->
+        <div class="pricing-card custom">
+          <div class="pricing-header">
+            <h3>Custom</h3>
+            <span class="price">Personalizado</span>
+          </div>
+          <ul class="pricing-features">
+            <li><i class="fas fa-check"></i> Todo lo de Professional</li>
+            <li><i class="fas fa-check"></i> Funcionalidades a medida</li>
+            <li><i class="fas fa-check"></i> Soporte y SLA premium</li>
+          </ul>
+          <a href="#contact" class="cta-btn">Contáctanos</a>
         </div>
       </div>
     </section>
@@ -170,6 +208,8 @@
           </button>
           <div class="faq-answer">
             <p>Puedes cambiar o cancelar tu plan en cualquier momento. El cobro es mensual y puedes actualizar tu plan según tus necesidades.</p>
+            <br>
+            <p>El cambio de plan gratis a uno de pago se realiza de manera inmediata, pero cualquier otro cambio se aplicará al siguiente ciclo de facturación.</p>
           </div>
         </div>
         <div class="faq-item">
@@ -178,7 +218,7 @@
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Sí, puedes cancelar tu suscripción en cualquier momento sin penalizaciones.</p>
+            <p>Sí, puedes cancelar tu suscripción y no se te realizará ningún cargo en el siguiente ciclo de facturación.</p>
           </div>
         </div>
       </div>
@@ -188,7 +228,7 @@
       <div class="cta-content">
         <h2>¿Listo para revolucionar tu atención al cliente?</h2>
         <p>Únete a cientos de tiendas que ya confían en Respondize</p>
-        <a href="#" class="cta-btn big">Únete gratis</a>
+        <a href="#" class="cta-btn big auth-google">Únete gratis</a>
       </div>
     </section>
   </main>
@@ -226,6 +266,6 @@
     </div>
   </footer>
 
-  <script type="module" src="script.js"></script>
+  <script type="module" src="../js/script.js"></script>
 </body>
 </html> 

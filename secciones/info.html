@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Store Settings + Formulario Deslizante + Expansión de tarjetas</title>
+    <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/layout.css" />
+    <link rel="stylesheet" href="../css/components.css" />
+    <link rel="stylesheet" href="../css/components/sidebar.css" />
+    <link rel="stylesheet" href="../css/pages/info.css" />
+    </head>
+<body id="app"> 
+    <div id="sidebarContainer"></div>
+      <div class="main-content">
+        <div class="info-container-main">
+            <!-- Texto Superior -->
+            <div class="main-heading" id="mainHeading">
+            <h1>Informacion sobre la tienda</h1>
+            <p>
+                En esta seccion tienes que añadir toda la informacion de la tienda que tengas,
+                incluyendo todas las políticas y informacion extra que se te va a pedir
+            </p>
+            </div>
+            <!-- info-container (tarjetas) si hay tienda -->
+            <div class="info-container" id="infoContainer" style="display: block;">
+                <div class="cards-grid" id="cardsGrid">
+                    <!-- Card 1 -->
+                    <div class="card" data-policy-type="devoluciones">
+                        <div class="arrow-collapse">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                viewBox="0 0 24 24">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                        </div>
+                        <h2>Politica de Devoluciones</h2>
+                        <div class="expand-content">
+                            <textarea placeholder="Escribe tu texto aqui..."></textarea>
+                            <button class="send-button">Enviar</button>
+                            <!-- Icono de carga (por defecto hidden) -->
+                            <div class="loading-spinner hidden">
+                            <div class="loader">
+                                <p>Estamos</p>
+                                <div class="words">
+                                <span class="word">comprobando que tus datos estén completos...</span>
+                                <span class="word">revisando que no falte nada...</span>
+                                <span class="word">comparando con nuestra base de datos...</span>
+                                <span class="word">preparando el feedback...</span>
+                                <span class="word">comprobando que tus datos estén completos...</span>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="card" data-policy-type="envios">
+                        <div class="arrow-collapse">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                viewBox="0 0 24 24">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                        </div>
+                        <h2>Politica de Envios</h2>
+                        <div class="expand-content">
+                            <textarea placeholder="Escribe tu texto aqui..."></textarea>
+                            <button class="send-button">Enviar</button>
+                            <!-- Icono de carga (por defecto hidden) -->
+                            <div class="loading-spinner hidden">
+                                <div class="loader">
+                                <p>Estamos</p>
+                                <div class="words">
+                                    <span class="word">comprobando que tus datos estén completos...</span>
+                                    <span class="word">revisando que no falte nada...</span>
+                                    <span class="word">comparando con nuestra base de datos...</span>
+                                    <span class="word">preparando el feedback...</span>
+                                    <span class="word">comprobando que tus datos estén completos...</span>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="card" data-policy-type="info">
+                        <div class="arrow-collapse">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                viewBox="0 0 24 24">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                        </div>
+                        <h2>Info general de la tienda</h2>
+                        <div class="expand-content">
+                            <textarea placeholder="Escribe tu texto aqui..."></textarea>
+                            <button class="send-button">Enviar</button>
+                            <!-- Icono de carga (por defecto hidden) -->
+                            <div class="loading-spinner hidden">
+                                <div class="loader">
+                                <p>Estamos</p>
+                                <div class="words">
+                                    <span class="word">comprobando que tus datos estén completos...</span>
+                                    <span class="word">revisando que no falte nada...</span>
+                                    <span class="word">comparando con nuestra base de datos...</span>
+                                    <span class="word">preparando el feedback...</span>
+                                    <span class="word">comprobando que tus datos estén completos...</span>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 4: Preguntas Frecuentes -->
+                    <div class="card" id="faqCard" faq="faq">
+                        <div class="arrow-collapse">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                viewBox="0 0 24 24">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                        </div>
+                        <h2>Preguntas Frecuentes</h2>
+                        <div class="expand-content">
+                            <p style="margin-bottom: 4vh;margin-top: 4vh;text-align: center;">
+                            En esta sección se encuentran preguntas frecuentes las cuales puedes responder
+                            para agilizar las respuestas del bot. También puedes añadir las tuyas propias.
+                            </p>
+                            <div id="faqContainer">
+                            <div id = "faqBlocks">
+                                <!-- Pregunta/Respuesta 1 -->
+                                <div class="faq-block" style="position: relative; margin-bottom: 3vh; padding-left: 1vh;">
+                                <div>
+                                    <p class="faq-question-text" style="width: fit-content;">¿Cómo rastrear mi pedido?</p>
+                                    <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
+                                    <button class="delete-faq-btn edit-title-btn" style="position:absolute; top:0; right:0; background-color:#b93030;">Eliminar</button>
+                                </div>
+                                <textarea class="faq-answer"
+                                    placeholder="Escribe tu respuesta aquí..."
+                                    style="margin-top: 2vh; min-height: 1vh; resize: none; overflow-y: hidden; line-height: 1; font-size: 1.5vh;"></textarea>
+                                </div>
+                            </div>
+                            <div id = "addFaqBtnContainer">
+                                <!-- Botón para añadir un nuevo bloque pregunta-respuesta -->
+                                <button class="añadir-faq-btn" id="addFaqBtn" style="margin-top: 2vh;">
+                                Añadir nueva pregunta-respuesta
+                                </button>
+                            </div>
+                            </div>
+                            <!-- Botón de enviar al final -->
+                            <button class="send-button" style="margin-top: 2vh;">Enviar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+    <script type="module" src="../js/config.js"></script>
+    <script type="module" src="../js/utils/api.js"></script>
+    <script type="module" src="../js/components/sidebar.js"></script>
+    <script type="module" src="../js/pages/info.js"></script>
+</body>
+</html>

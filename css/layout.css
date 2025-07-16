@@ -1,3 +1,4 @@
+/* File: css/layout.css */
 /* 2. Layout global: sidebar + main-content flex en todo el body */
 body {
   display: flex;
@@ -12,9 +13,16 @@ body {
 .main-content {
   flex: 1 1 auto;       /* ocupa resto de espacio */
   display: flex;        /* para centrar internamente */
-  align-items: center;  /* vertical */
-  justify-content: center; /* horizontal */
+  flex-direction: column; /* apila de arriba abajo */
+  justify-content: flex-start; /* arranca en la parte superior */
+  align-items: center;
   overflow-y: auto;
   background: var(--color-bg);
-  padding: var(--space-m);
+  margin-left: 28vh;
+  transition: margin-left 0.3s ease; /* suaviza el cambio de margen */
+}
+
+/* cuando collapsas, sidebarContainer recibe .collapsed: */
+#sidebarContainer.collapsed + .main-content {
+  margin-left: 9vh;            /* ancho de sidebar colapsada */
 }

@@ -188,8 +188,8 @@ class EmailInbox {
       listContainer.innerHTML = `
         <div class="empty-state">
           <i class="fas fa-inbox"></i>
-          <h3>No emails found</h3>
-          <p>Try adjusting your search terms</p>
+          <h3>No se han encontrado correos</h3>
+          <p>Intenta ajustar tus términos de búsqueda</p>
         </div>`;
       return;
     }
@@ -206,7 +206,7 @@ class EmailInbox {
     div.tabIndex  = 0;
     console.log('|'+email.subject+'|')
     div.innerHTML = `
-      <div class="email-sender">${email.return_mail}</div>
+      <div class="email-sender">${email.return_mail.replace(/^<(.+)>$/,'$1')}</div>
       <div class="email-content">
       <div class="email-subject">
         ${
@@ -242,11 +242,18 @@ class EmailInbox {
       email.read = true;
       // refresca la lista
       this.renderEmails();
+
     } catch (err) {
       console.error('No se pudo marcar leído:', err);
     }
-    // luego navegas
-    window.location.href = `/email.html?id=${encodeURIComponent(email.id)}`;
+      // Guarda la lista completa y el índice en sessionStorage
+      const allIds = this.filteredEmails.map(e => e.id);
+      const index  = allIds.indexOf(email.id);
+      sessionStorage.setItem('inbox_ids', JSON.stringify(allIds));
+      sessionStorage.setItem('inbox_index', index);
+      
+      // Redirige
+      window.location.href = `/secciones/email.html?id=${encodeURIComponent(email.id)}`;  
   }  
 
   // actualiza los botones y contador de páginas

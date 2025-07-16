@@ -3,19 +3,33 @@ import { API_BASE, setToken, logout } from '/js/utils/api.js';
 
 // 1) Si vengo con ?token=XXX en la URL, guardarlo y limpiarlo:
 (async function initConfig() {
+
   const params  = new URLSearchParams(window.location.search);
   const tk      = params.get("token");
+  let fetchNeeded       = false;
+
+  
   if (tk) {
     localStorage.setItem("token", tk);
     // Quitamos ?token=… de la URL
     params.delete("token");
-    const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
-    window.history.replaceState({}, document.title, clean);
+    localStorage.removeItem("store");
+    fetchNeeded = true;
   }
+
+  const stripeSession = params.get("session_id");
+  if (stripeSession) {
+    params.delete("session_id");
+    localStorage.removeItem("store");
+    fetchNeeded = true;
+  }
+  const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
+  window.history.replaceState({}, document.title, clean);
   
+  console.log("fetchNeeded:", fetchNeeded);
   // 3) Inicializar tienda: primero miro si ya la tengo en localStorage
   const stored = localStorage.getItem('store');
-  if (stored) {
+  if (stored && !fetchNeeded) {
     // ya la tengo: uso ese dato y creo una promesa resuelta
     window.appUser = JSON.parse(stored);
     window.appUserPromise = Promise.resolve(window.appUser);

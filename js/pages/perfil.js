@@ -1,15 +1,42 @@
+import { initSidebar } from '/js/components/sidebar.js';
+import { fetchWithAuth } from '/js/utils/api.js';
+
+const PLAN_LABEL = {
+  free:      "Plan Free",
+  starter:   "Plan Starter",
+  advanced:  "Plan Advanced",
+  professional: "Plan Professional"
+};
+
 /*perfil.js */
 class UserProfile {
     constructor() {
         this.originalData = {};
         this.currentData = {};
         this.hasUnsavedChanges = false;
-        
+        this.showCachedAvatar();
         this.init();
     }
-    
-    init() {
-        this.loadInitialData();
+    showCachedAvatar() { //Para mostrar el avatar antes de hacer la llamada al /me, asi evitamos el flasheo de la imagen sin cargar
+        const cached = JSON.parse(localStorage.getItem('store') || '{}');
+        if (cached.picture_url) {
+        const img = document.getElementById('userAvatar');
+        img.src = cached.picture_url;
+        img.onload  = () => img.classList.add('loaded');
+        img.onerror = () => (img.src = '/image.png');
+        }
+    }
+    async init() {
+        await this.loadInitialData();
+
+        const params = new URLSearchParams(window.location.search);
+        const msg    = params.get('msg');
+        if (msg) {
+            this.showMessage(decodeURIComponent(msg), 'success');
+            // limpiamos la URL para que al recargar no vuelva a mostrarlo
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+
         this.bindEvents();
         this.setupFormValidation();
         this.updateDisplayInfo();
@@ -17,51 +44,21 @@ class UserProfile {
         console.log('User Profile initialized');
     }
     
-    loadInitialData() {
-        // Simulate loading data from API or localStorage
-        this.originalData = {
-            // Store Information
-            storeName: 'My Awesome Store',
-            storeEmail: 'store@example.com',
-            storeUrl: 'mystore.com',
-            storeDescription: 'Premium quality products with exceptional customer service. We specialize in unique items that bring value to your everyday life.',
-            
-            // Store Hours
-            storeHours: {
-                monday: { open: true, start: '09:00', end: '17:00' },
-                tuesday: { open: true, start: '09:00', end: '17:00' },
-                wednesday: { open: true, start: '09:00', end: '17:00' },
-                thursday: { open: true, start: '09:00', end: '17:00' },
-                friday: { open: true, start: '09:00', end: '17:00' },
-                saturday: { open: true, start: '10:00', end: '16:00' },
-                sunday: { open: false, start: '10:00', end: '16:00' }
-            },
-            
-            // Physical Location
-            hasPhysicalLocation: true,
-            storeAddress: '123 Main Street',
-            storeCity: 'New York',
-            storeState: 'NY',
-            storeZip: '10001',
-            storeCountry: 'US',
-            storePhone: '+1 (555) 123-4567',
-            
-            // Personal Information
-            firstName: 'Fryderyk',
-            lastName: 'Wiatrowski',
-            personalEmail: 'fryderyk@example.com',
-            personalPhone: '+1 (555) 987-6543',
-            timezone: 'UTC-5',
-            language: 'en',
-            
-            // Notifications
-            emailNotifications: true,
-            smsNotifications: false,
-            marketingNotifications: true
-        };
-        
-        this.currentData = { ...this.originalData };
-        this.populateForm();
+    async loadInitialData() {
+        try{
+            const res = await fetchWithAuth('/stores/me');
+            if (!res.ok) throw new Error('Error fetching profile');
+            const data = await res.json();
+            localStorage.setItem('store', JSON.stringify(data));
+            console.log('Profile data loaded:', data);
+            this.originalData = data;
+            this.currentData = { ...data };
+            this.populateForm();
+            this.toggleHoursFields();
+            //this.updateProfileProgress();
+        }catch (err) {
+            console.error('Load error:', err);
+        }
     }
     
     populateForm() {
@@ -93,9 +90,11 @@ class UserProfile {
         document.getElementById('smsNotifications').checked = this.currentData.smsNotifications;
         document.getElementById('marketingNotifications').checked = this.currentData.marketingNotifications;
         
+        const hasOpeningHours = this.currentData.storeHours || {};
         // Store Hours
-        Object.entries(this.currentData.storeHours).forEach(([day, hours]) => {
+        Object.entries(hasOpeningHours).forEach(([day, hours]) => {
             const dayElement = document.querySelector(`[data-day="${day}"]`);
+            if (!dayElement) return; // si no existe el día, salta
             const toggle = dayElement.querySelector('.day-toggle');
             const timeInputs = dayElement.querySelectorAll('.time-input');
             
@@ -105,8 +104,45 @@ class UserProfile {
             timeInputs[0].disabled = !hours.open;
             timeInputs[1].disabled = !hours.open;
         });
-        
+        const avatar = document.getElementById('userAvatar');
+        if (this.currentData.picture_url) {
+            avatar.src = this.currentData.picture_url;
+        }
+        avatar.onerror = () => {
+            // si falla la carga, pon una imagen genérica
+            avatar.src = '/image.png';
+            };
+            if (this.currentData.picture_url) {
+                avatar.src = this.currentData.picture_url;
+            } else {
+                // si no viene picture_url, también pon el placeholder
+                avatar.src = '/image.png';
+        }
+        // Si el backend trae businessCategory
+        if (this.currentData.businessCategory) {
+            document.getElementById('businessCategory').value = this.currentData.businessCategory;
+            const isOther = this.currentData.businessCategory === 'other';
+            document.getElementById('businessCategoryOtherContainer')
+                    .classList.toggle('hidden', !isOther);
+            if (isOther) {
+                document.getElementById('businessCategoryOther').value =
+                this.currentData.businessCategoryOther || '';
+            }
+        }
+        //this.updateProfileProgress();
         this.toggleLocationFields();
+    }
+    // Toggle opening hours fields based on checkbox
+    toggleHoursFields() {
+        const checkbox  = document.getElementById('hasOpeningHours');
+        const container = document.getElementById('openingHoursFields');
+        if (!container) return;            // evita el null
+        const show = checkbox.checked;
+        // show/hide y habilita inputs
+        container.classList.toggle('hidden', !show);
+        container.querySelectorAll('input').forEach(inp => {
+            inp.disabled = !show;
+        });
     }
     
     bindEvents() {
@@ -127,6 +163,7 @@ class UserProfile {
         document.getElementById('hasPhysicalLocation').addEventListener('change', () => {
             this.toggleLocationFields();
             this.markAsChanged();
+            //this.updateProfileProgress();
         });
         
         // Store hours toggles
@@ -134,6 +171,7 @@ class UserProfile {
             toggle.addEventListener('change', (e) => {
                 this.handleDayToggle(e);
                 this.markAsChanged();
+                //this.updateProfileProgress();
             });
         });
         
@@ -150,6 +188,35 @@ class UserProfile {
                 e.preventDefault();
                 e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
             }
+        });
+        
+
+        document.getElementById('logoutBtn')
+        .addEventListener('click', async () => {
+            const ok = await this.confirmModal('¿Quieres cerrar la sesión?', {
+                        okText:'Sí, salir', okClass:'btn btn-danger'
+                        });
+            if (ok){
+                localStorage.removeItem('token');
+                localStorage.removeItem('store');
+                window.location.href = '/index.html';
+            }
+        });
+
+        document.getElementById('hasOpeningHours').addEventListener('change', () => {
+            this.toggleHoursFields();
+            this.markAsChanged();
+        });
+
+        document.getElementById('businessCategory').addEventListener('change', () => {
+            const isOther = document.getElementById('businessCategory').value === 'other';
+            document.getElementById('businessCategoryOtherContainer')
+                    .classList.toggle('hidden', !isOther);
+            this.markAsChanged();
+        });
+
+        document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+            this.showDeleteModal();
         });
         
         // Keyboard shortcuts
@@ -236,7 +303,7 @@ class UserProfile {
             reader.onload = (e) => {
                 document.getElementById('userAvatar').src = e.target.result;
                 this.markAsChanged();
-                this.showMessage('Avatar updated successfully', 'success');
+                this.showMessage('Avatar actualizado', 'success');
             };
             reader.readAsDataURL(file);
         }
@@ -280,10 +347,28 @@ class UserProfile {
     updateDisplayInfo() {
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
-        const email = document.getElementById('personalEmail').value;
+        const email = document.getElementById('storeEmail').value;
         
         document.getElementById('displayUserName').textContent = `${firstName} ${lastName}`;
         document.getElementById('displayUserEmail').textContent = email;
+
+        /* 👉 NOMBRE DEL PLAN */
+        const planKey = this.currentData?.plan || "free";
+        document.getElementById('displayUserPlan').textContent = PLAN_LABEL[planKey] ?? "Plan desconocido";
+
+        // — Usos y créditos extra —
+        const usedEl   = document.getElementById('usedEmails');
+        const extraEl  = document.getElementById('extraCredits');
+        const totalEl  = document.getElementById('totalLimit');
+
+        const used  = this.currentData.usage       || 0;
+        const extra = this.currentData.extra_usage || 0;
+        const limit = (this.currentData.limit     || 0);
+
+        usedEl.textContent  = used;
+        extraEl.textContent = extra;
+        totalEl.textContent = limit + extra;
+
     }
     
     collectFormData() {
@@ -321,20 +406,44 @@ class UserProfile {
         };
         
         // Collect store hours
-        document.querySelectorAll('.hours-day').forEach(dayElement => {
-            const day = dayElement.dataset.day;
-            const toggle = dayElement.querySelector('.day-toggle');
+        if ( document.getElementById('hasOpeningHours').checked ) {
+            formData.storeHours = {};
+            document.querySelectorAll('.hours-day').forEach(dayElement => {
+            const day        = dayElement.dataset.day;
+            const toggle     = dayElement.querySelector('.day-toggle');
             const timeInputs = dayElement.querySelectorAll('.time-input');
-            
             formData.storeHours[day] = {
-                open: toggle.checked,
+                open:  toggle.checked,
                 start: timeInputs[0].value,
-                end: timeInputs[1].value
+                end:   timeInputs[1].value
             };
-        });
+            });
+        } else {
+            formData.storeHours = {};
+        }
+        formData.businessCategory = document.getElementById('businessCategory').value;
+        if (formData.businessCategory === 'other') {
+        formData.businessCategoryOther =
+            document.getElementById('businessCategoryOther').value.trim();
+        }
+
         
         return formData;
     }
+    /**updateProfileProgress() {
+        const requiredFields = Array.from(
+            document.querySelectorAll('.form-input[required], .form-select[required]')
+        );
+        const totalFields = requiredFields.length;
+        const filled = requiredFields
+            .filter(f => f.value.trim() !== '')
+            .length;
+        const pct = totalFields
+            ? Math.round((filled / totalFields) * 100)
+            : 0;
+        document.getElementById('profileProgressBar').style.width = pct + '%';
+    }**/
+
     
     validateForm() {
         const requiredFields = document.querySelectorAll('[required]');
@@ -366,45 +475,56 @@ class UserProfile {
             const formData = this.collectFormData();
             
             // Simulate API call
-            await this.simulateApiCall(formData);
-            
-            // Update stored data
-            this.currentData = { ...formData };
-            this.originalData = { ...formData };
+            // 2) Llamada al endpoint PUT /stores/me
+            const res = await fetchWithAuth('/stores/me', {
+                method: 'PUT',
+                body: JSON.stringify(formData)
+            });
+            if (!res.ok) throw new Error('Error actualizando la tienda');
+
+            const updated = await res.json();
+
+            localStorage.setItem('store', JSON.stringify(updated));
+
+            this.currentData  = { ...updated };
+            this.originalData = { ...updated };
             this.hasUnsavedChanges = false;
-            
-            // Update display
+
+            this.populateForm();
+            this.toggleHoursFields();
             this.updateDisplayInfo();
-            
+            //this.updateProfileProgress();
+
             // Reset button states
             saveBtn.style.background = '#8b5cf6';
             document.getElementById('cancelBtn').style.display = 'none';
-            
-            this.showMessage('Profile updated successfully!', 'success');
+            this.showMessage('Perfil actualizado!', 'success');
             
         } catch (error) {
             console.error('Save error:', error);
-            this.showMessage('Failed to save changes. Please try again.', 'error');
+            this.showMessage('Error al guardar los cambios. Por favor, inténtalo de nuevo.', 'error');
         } finally {
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
         }
     }
     
-    cancelChanges() {
-        if (this.hasUnsavedChanges) {
-            if (confirm('Are you sure you want to discard your changes?')) {
-                this.currentData = { ...this.originalData };
-                this.populateForm();
-                this.hasUnsavedChanges = false;
-                
-                // Reset button states
-                document.getElementById('saveBtn').style.background = '#8b5cf6';
-                document.getElementById('cancelBtn').style.display = 'none';
-                
-                this.showMessage('Changes discarded', 'warning');
-            }
-        }
+    async cancelChanges() {
+        if (!this.hasUnsavedChanges) return;
+        
+        const ok = await this.confirmModal(
+                    '¿Seguro que quieres descartar los cambios?',
+                    { okText:'Descartar', okClass:'btn btn-danger' }
+                    );
+        if (!ok) return;
+
+        this.currentData = { ...this.originalData };
+        this.populateForm();
+        this.hasUnsavedChanges = false;
+
+        document.getElementById('saveBtn').style.background = '#8b5cf6';
+        document.getElementById('cancelBtn').style.display  = 'none';
+        this.showMessage('Cambios descartados', 'warning');
     }
     
     simulateApiCall(data) {
@@ -449,16 +569,112 @@ class UserProfile {
             message.remove();
         });
     }
+    confirmModal(
+        text             = '¿Estás seguro?',
+        {
+            okText     = 'Sí',
+            cancelText = 'No',
+            okClass    = 'btn btn-primary',
+            cancelClass= 'btn btn-secondary'
+        } = {}
+        ) {
+        return new Promise(resolve => {
+            // Overlay
+            const ov = Object.assign(document.createElement('div'), {className:'modal-overlay'});
+            Object.assign(ov.style, {
+            position:'fixed', inset:0, background:'rgba(0,0,0,.5)',
+            display:'flex', justifyContent:'center', alignItems:'center', zIndex:10000
+            });
+
+            // Caja
+            const box = Object.assign(document.createElement('div'), {className:'modal-box'});
+            Object.assign(box.style, {
+            background:'#2a2a2a', color:'#fff', padding:'1.5rem',
+            borderRadius:'8px', maxWidth:'90%', width:'320px', textAlign:'center'
+            });
+            box.innerHTML = `
+            <p style="margin-bottom:1rem">${text}</p>
+            <div class="modal-actions" style="display:flex;justify-content:center;gap:.75rem">
+                <button class="${okClass}"    id="modalOk">${okText}</button>
+                <button class="${cancelClass}" id="modalCancel">${cancelText}</button>
+            </div>
+            `;
+            ov.appendChild(box);
+            document.body.appendChild(ov);
+
+            // Eventos
+            box.querySelector('#modalOk').onclick = () => { cleanup(); resolve(true); };
+            box.querySelector('#modalCancel').onclick = () => { cleanup(); resolve(false); };
+            ov.onclick = e => (e.target === ov) && (cleanup(), resolve(false)); // clic fuera
+
+            function cleanup(){ ov.remove(); }
+        });
+    }
+
+
+    showDeleteModal() {
+        // overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        // modal box
+        const modal = document.createElement('div');
+        modal.className = 'modal-box';
+        modal.innerHTML = `
+            <p>¿Estás seguro de que quieres eliminar tu cuenta?</p>
+            <div class="modal-actions">
+            <button id="confirmDelete" class="btn btn-secondary">Sí, eliminar</button>
+            <button id="cancelDelete" class="btn btn-danger">No</button>
+            </div>
+        `;
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // estilos mínimos (puedes pasarlos a CSS)
+        Object.assign(overlay.style, {
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 10000
+        });
+        Object.assign(modal.style, {
+            background: '#444', padding: '1.5rem', borderRadius: '8px',
+            maxWidth: '90%', width: '320px', textAlign: 'center'
+        });
+        modal.querySelector('.modal-actions').style.marginTop = '1rem';
+        modal.querySelector('.modal-actions').style.display = 'flex';
+        modal.querySelector('.modal-actions').style.justifyContent = 'center';
+        modal.querySelectorAll('.btn').forEach(b => {
+            b.style.margin = '0 0.5rem';
+        });
+
+        // listeners
+        overlay.querySelector('#cancelDelete').addEventListener('click', () => {
+            overlay.remove();
+        });
+        overlay.querySelector('#confirmDelete').addEventListener('click', async () => {
+            try {
+                const res = await fetchWithAuth('/stores/eliminar_tienda', { method: 'DELETE' });
+                if (!res.ok) throw new Error('Error eliminando');
+                // limpieza y logout
+                localStorage.clear();
+                window.location.href = '/index.html';
+            } catch (err) {
+                overlay.remove();
+                this.showMessage('No pude eliminar tu cuenta', 'error');
+            }
+        });
+    }
 }
 
 // Initialize the profile when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const userProfile = new UserProfile();
-    
-    // Make profile globally accessible for debugging
-    window.userProfile = userProfile;
-    
-    console.log('User Profile page loaded successfully');
+document.addEventListener('DOMContentLoaded', async () => {
+    try{
+        await initSidebar('#sidebarContainer');
+        const userProfile = new UserProfile();
+        window.userProfile = userProfile;
+    }catch (err) {
+        // Make profile globally accessible for debugging
+        console.error('No pude inicializar la sidebar:', err);
+    }
 });
 
 // Add some CSS for error states
