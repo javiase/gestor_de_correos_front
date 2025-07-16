@@ -3,7 +3,7 @@
 // 1) Base URL de tu API
 export const API_BASE = window.location.hostname.includes("localhost")
   ? "http://localhost:8085/api"
-  : "https://sincere-musical-squid.ngrok-free.app/api";
+  : "https://api-backend-738955559708.europe-west1.run.app";
 
 // 2) Guardar / leer / borrar token
 const TOKEN_KEY = "token";
