@@ -1,3 +1,4 @@
+import { API_BASE } from '../utils/api.js';
 // Animation observer for sections and elements
 const observerOptions = {
   root: null,
@@ -122,7 +123,7 @@ document.head.appendChild(style);
 async function iniciarOAuth() {
   try {
     // Llamada a tu endpoint que devuelve { auth_url: "..." }
-    const response = await fetch("https://sincere-musical-squid.ngrok-free.app/api/google/auth/start", {
+    const response = await fetch(`${API_BASE}/google/auth/start`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
