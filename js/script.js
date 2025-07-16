@@ -1,4 +1,4 @@
-import { API_BASE } from '../utils/api.js';
+import { API_BASE } from '/js/utils/api.js';
 // Animation observer for sections and elements
 const observerOptions = {
   root: null,
