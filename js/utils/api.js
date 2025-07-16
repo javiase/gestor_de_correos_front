@@ -3,7 +3,7 @@
 // 1) Base URL de tu API
 export const API_BASE = window.location.hostname.includes("localhost")
   ? "http://localhost:8080/api"
-  : "https://TU_BACKEND_DOMAIN/api";
+  : "http://localhost:8080/api";
 
 // 2) Guardar / leer / borrar token
 const TOKEN_KEY = "token";
