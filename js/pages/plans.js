@@ -233,7 +233,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     body: JSON.stringify({ packs: 1 })
                 });
                 const {url} = await res.json();
-                window.location,href = url;
+                window.location.href = url;
             }catch{
                 const info = encodeURIComponent(`❌ Error al comprar el pack`);
                 window.location.href = `/secciones/perfil.html?msg=${info}`;
