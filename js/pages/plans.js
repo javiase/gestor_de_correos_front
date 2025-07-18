@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gridEl    = document.getElementById("pricing-grid");
 
     const pendingPlan             = data.pendingPlan;            // puede ser undefined o "free"/"starter"/"advanced", "professional"
-    const pendingPlanEffective    = data.pendingPlanEffective;
+    const pendingPlanEffective    = data.pendingPlanEffective || data.period_end;
 
     if (currentPlan && currentPlan !== 'free') {
         const notice = document.createElement('div');
@@ -232,8 +232,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     headers: {"Content-Type":  "application/json"},
                     body: JSON.stringify({ packs: 1 })
                 });
-                const {url} = await res.json();
-                window.location.href = url;
+                const data = await res.json();
+                window.location.href = data.url;
             }catch{
                 const info = encodeURIComponent(`❌ Error al comprar el pack`);
                 window.location.href = `/secciones/perfil.html?msg=${info}`;
