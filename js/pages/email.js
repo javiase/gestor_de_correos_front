@@ -10,7 +10,10 @@ class EmailView {
     this.nextBtn   = null;
     this.ids       = JSON.parse(sessionStorage.getItem('inbox_ids') || '[]');
     this.index     = parseInt(sessionStorage.getItem('inbox_index') || '0', 10);
-    this.page      = 1;       // cuántos batches has cargado
+    this.page = parseInt(sessionStorage.getItem('inbox_page') || '1', 10);
+    this.loadedPages = new Set();
+    this.emailsPerPage = 20; // emails por batch
+    this.prefetchThreshold = 5;
     this.pages     = 1;       // total de batches disponibles (se rellena al primer fetch)
     this.cache     = [];      // aquí replicaremos ids → datos
     this.sendBtn   = null;
@@ -23,9 +26,43 @@ class EmailView {
     this.buildNavButtons();
 
     // 2) Precarga el batch que contiene tu índice actual
-    const batchIndex = Math.floor(this.index / 20) + 1;
-    this.page = batchIndex;
-    await this.loadBatch(batchIndex);
+    await this.loadBatch(this.page, { replace: true });
+    this.loadedPages.add(this.page);
+
+    sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
+
+    // **PRE‑FETCH** de siguiente batch si entraste directamente en un correo >=15
+    let localPos = this.index % this.emailsPerPage;
+    const nextPage = this.page + 1;
+    if (
+      localPos >= this.emailsPerPage - 5 && // posiciones 15–19
+      nextPage <= this.pages &&
+      !this.loadedPages.has(nextPage)
+    ) {
+      console.log(`init(): prefetch page ${nextPage}`);
+      await this.loadBatch(nextPage, { replace: false });
+      this.loadedPages.add(nextPage);
+    }
+
+    // **PRE‑FETCH anterior** si index < 5
+    const prevPage = this.page - 1;
+    if (
+      localPos < 5 &&
+      prevPage >= 1 &&
+      !this.loadedPages.has(prevPage)
+    ) {
+      console.log(`init(): prefetch prev page ${prevPage}`);
+      // prepend para no desordenar índices
+      await this.loadBatch(prevPage, { replace: false, prepend: true });
+      this.loadedPages.add(prevPage);
+      // desplazamos el índice para seguir apuntando al mismo email
+      this.index += this.emailsPerPage;
+      // recalculamos posición local (opcional)
+      localPos = this.index % this.emailsPerPage;
+    }
+
+    this.page = Math.floor(this.index / this.emailsPerPage) + 1;
+    sessionStorage.setItem('inbox_page', this.page);
 
     // 3) Renderiza
     this.renderCurrent();
@@ -51,33 +88,97 @@ class EmailView {
     if (this.deleteBtn) this.deleteBtn.addEventListener('click', () => this.deleteEmail());
     }
 
-  async loadBatch(page) {
+  async loadBatch(page, { replace = false, prepend = false } = {}) {
+    console.log(`[loadBatch] page=${page} replace=${replace} prepend=${prepend}`);
+
+    if (!replace && this.loadedPages.has(page)) {
+      console.log(`  ↳ página ${page} ya cargada → skip`);
+      return;
+    }
+
+    console.log(`  ↳ fetch /emails/get?page=${page}…`);
     const res = await fetchWithAuth(`/emails/get?page=${page}`);
     const { emails, pages } = await res.json();
     this.pages = pages;
-    // concatena solo los emails de este lote en cache
-    this.cache = this.cache.concat(emails);
+
+    const normalized = emails.map(e => ({
+      ...e,
+      id: e.id ?? e._id
+    }));
+
+    console.log(`  ↳ normalized IDs de la página ${page}:`, normalized.map(e => e.id));
+
+    if (replace) {
+      this.cache = normalized;
+      this.ids   = normalized.map(e => e.id);
+    } else if (prepend) {
+      this.cache = normalized.concat(this.cache);
+      this.ids   = normalized.map(e => e.id).concat(this.ids);
+    } else {
+      this.cache = this.cache.concat(normalized);
+      this.ids   = this.ids.concat(normalized.map(e => e.id));
+    }
+
+    sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
+    this.loadedPages.add(page);
   }
 
   async navigate(dir) {
+    // 1) Calcula el nuevo índice y evita salirte de rango
     const newIndex = this.index + dir;
-    // índice fuera de rango?
+    console.log(`[navigate] dir=${dir} ⇒ newIndex=${newIndex}`);
     if (newIndex < 0 || newIndex >= this.ids.length) return;
     this.index = newIndex;
+    console.log(`  ↳ index=${this.index}`);
 
-    // si queda <5 emails disponibles en cache, precarga próximo batch
-    const localPos    = this.index % 20;
-    const currentPage = Math.floor(this.index / 20) + 1;
-    if (localPos >= 15 && currentPage < this.pages) {
-      this.page = currentPage + 1;
-      this.loadBatch(this.page);
+    // 2) Calcula posición local y páginas
+    const localPos    = this.index % this.emailsPerPage;
+    const currentPage = Math.floor(this.index / this.emailsPerPage) + 1;
+    const prevPage    = currentPage - 1;
+    const nextPage    = currentPage + 1;
+    console.log(`  ↳ localPos=${localPos}, currentPage=${currentPage}`);
+
+    // 3) On‑demand: carga la página actual si no se había cargado
+    if (!this.loadedPages.has(currentPage)) {
+      console.log(`  ↳ loading page ${currentPage} on demand`);
+      await this.loadBatch(currentPage, { replace: false });
     }
 
+    // 4) Pre‑fetch siguiente si estás en las últimas 5 posiciones
+    if (
+      localPos >= this.emailsPerPage - 5 &&
+      nextPage <= this.pages &&
+      !this.loadedPages.has(nextPage)
+    ) {
+      console.log(`  ↳ prefetch next page ${nextPage}`);
+      await this.loadBatch(nextPage, { replace: false });
+    }
+
+    // 5) Pre‑fetch anterior si estás en las primeras 5 posiciones
+    if (
+      localPos < 5 &&
+      prevPage >= 1 &&
+      !this.loadedPages.has(prevPage)
+    ) {
+      console.log(`  ↳ prefetch prev page ${prevPage}`);
+      await this.loadBatch(prevPage, { replace: false, prepend: true });
+      // Ajusta el índice para mantener el mismo email “activo”
+      this.index += this.emailsPerPage;
+      console.log(`  ↳ adjusted index after prepend=${this.index}`);
+    }
+    console.log(
+      `  ↳ READY TO RENDER: index=${this.index}`,
+      `this.ids[${this.index - 2}…${this.index + 2}]=`,
+      this.ids.slice(this.index - 2, this.index + 3)
+    );
+    // 6) Renderiza el correo calculado
     this.renderCurrent();
-    // actualiza la URL y el sessionStorage
-    const id = this.ids[this.index];
-    history.replaceState({}, '', `?id=${encodeURIComponent(id)}`);
+
+    // 7) Actualiza this.page y sessionStorage, y sustituye la URL
+    this.page = Math.floor(this.index / this.emailsPerPage) + 1;
+    sessionStorage.setItem('inbox_page', this.page);
     sessionStorage.setItem('inbox_index', this.index);
+    history.replaceState({}, '', `?id=${encodeURIComponent(this.ids[this.index])}`);
   }
 
   renderCurrent() {
@@ -229,34 +330,162 @@ class EmailView {
       const y  = emailDate.getFullYear();
       return `${d}/${mo}/${y}, ${hh}:${mm}`;
     }
+
+    async reloadAroundIndex() {
+      console.log(`\n[reload] ▶ Starting reloadAroundIndex (index=${this.index})`);
+
+      // 1) Calcula la página actual en función del this.index
+      this.page = Math.floor(this.index / this.emailsPerPage) + 1;
+      console.log(`[reload] 1) Calculated page=${this.page}`);
+
+      // 2) Reinicia cache y loadedPages
+      this.cache = [];
+      this.loadedPages.clear();
+      console.log(`[reload] 2) Cleared cache & loadedPages`);
+
+      // 3) Carga replace de la página actual
+      console.log(`[reload] 3) loadBatch page=${this.page} replace=true`);
+      await this.loadBatch(this.page, { replace: true });
+      this.loadedPages.add(this.page);
+      console.log(
+        `[reload]    → after loadBatch ids.length=${this.ids.length}, cache.length=${this.cache.length}`
+      );
+
+      // 4) Guarda nuevo inbox_ids y inbox_page
+      sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
+      sessionStorage.setItem('inbox_page', this.page);
+      console.log(
+        `[reload] 4) sessionStorage -> inbox_ids (${this.ids.length} items), inbox_page=${this.page}`
+      );
+
+      // 5) Pre‑fetch de siguiente batch si toca
+      const localPos = this.index % this.emailsPerPage;
+      const nextPage = this.page + 1;
+      console.log(`[reload] 5) localPos=${localPos}, prefetchThreshold=${this.prefetchThreshold}`);
+      if (
+        localPos >= this.emailsPerPage - this.prefetchThreshold &&
+        nextPage <= this.pages
+      ) {
+        console.log(`[reload]    → prefetch nextPage=${nextPage}`);
+        await this.loadBatch(nextPage, { replace: false });
+        this.loadedPages.add(nextPage);
+        console.log(
+          `[reload]    → after prefetch next ids.length=${this.ids.length}, cache.length=${this.cache.length}`
+        );
+      }
+
+      // 6) Pre‑fetch de page anterior si toca
+      const prevPage = this.page - 1;
+      if (
+        localPos < this.prefetchThreshold &&
+        prevPage >= 1
+      ) {
+        console.log(`[reload] 6) prefetch prevPage=${prevPage}`);
+        await this.loadBatch(prevPage, { replace: false, prepend: true });
+        this.loadedPages.add(prevPage);
+        this.index += this.emailsPerPage;
+        console.log(
+          `[reload]    → after prepend prev ids.length=${this.ids.length}, cache.length=${this.cache.length}, index now=${this.index}`
+        );
+      }
+
+      console.log(`[reload] ◀ Finished reloadAroundIndex\n`);
+
+    }
+
+
+
     async sendReply() {
-        const emailId = this.ids[this.index];
-        const email = this.cache.find(e => e.id === emailId);
-        if (!email) return console.error('Email no encontrado en cache');
-        
-        // Extrae destinatario, asunto y cuerpo editables
-        const recipient = (email.return_mail || email.sender || '').replace(/^<(.+)>$/, '$1');
-        const subject   = document.getElementById('responseSubject').textContent.trim();
-        const message   = document.getElementById('responseContent').innerHTML.trim();
-        const body = document.getElementById('responseContent').innerHTML;
-        await fetchWithAuth('/emails/send', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ emailId, recipient, subject, message })
+      const emailId = this.ids[this.index];
+      const pageForEmail = Math.floor(this.index / this.emailsPerPage) + 1;
+
+      // Asegurarnos de que el batch esté cargado
+      if (!this.loadedPages.has(pageForEmail)) {
+        await this.loadBatch(pageForEmail, { replace: false });
+      }
+
+      const email = this.cache.find(e => e.id === emailId);
+      if (!email) return console.error('Email no encontrado en cache');
+
+      // Extraer datos del DOM
+      const recipient = (email.return_mail || email.sender || '').replace(/^<(.+)>$/, '$1');
+      const subject   = document.getElementById('responseSubject').textContent.trim();
+      const message   = document.getElementById('responseContent').innerHTML.trim();
+
+      try {
+        const res = await fetchWithAuth('/emails/send', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ emailId, recipient, subject, message })
         });
-        // aquí recarga lista o avanza al siguiente
-        this.navigate(1);
+        if (!res.ok) {
+          const err = await res.json();
+          console.error('Error al enviar la respuesta:', res.status, err);
+          return;
+        }
+
+        // 1) Quitarlo igual que delete
+        const removedId = this.ids.splice(this.index, 1)[0];
+        this.cache = this.cache.filter(e => e.id !== removedId);
+
+        // 2) Ajustar índice por si lo eliminas
+        if (this.index >= this.ids.length) {
+          this.index = this.ids.length - 1;
+        }
+
+        // 3) Re-guardar en sessionStorage
+        sessionStorage.setItem('inbox_index', this.index);
+
+        // 4) Recarga toda la caché alrededor de this.index
+        if (this.ids.length > 0) {
+          await this.reloadAroundIndex();
+          this.renderCurrent();
+        } else {
+          window.location.href = '/secciones/inbox.html';
+          return;
+        }
+
+      } catch (e) {
+        console.error('Error al enviar la respuesta:', e);
+      }
     }
 
     async deleteEmail() {
+      try {
         const emailId = this.ids[this.index];
-        await fetchWithAuth(`/emails/delete?email_id=${emailId}`, {
-            method: 'DELETE'
+        const res = await fetchWithAuth(`/emails/delete?email_id=${emailId}`, {
+          method: 'DELETE'
         });
-        // elimina de cache y renderiza siguiente
-        this.ids.splice(this.index,1);
-        if (this.index >= this.ids.length) this.index = this.ids.length-1;
-        this.renderCurrent();
+        if (!res.ok) {
+          const err = await res.json();
+          console.error('Error al borrar el email:', res.status, err);
+          return;
+        }
+
+        // 1) Eliminar de ids y cache
+        const removedId = this.ids.splice(this.index, 1)[0];
+        this.cache = this.cache.filter(e => e.id !== removedId);
+
+        // 2) Ajustar índice si es necesario
+        if (this.index >= this.ids.length) {
+          this.index = this.ids.length - 1;
+        }
+
+        // 3) Re-guardar en sessionStorage
+        sessionStorage.setItem('inbox_index', this.index);
+
+        // 3) Si quedan correos, recarga todo alrededor de this.index
+        if (this.ids.length > 0) {
+          await this.reloadAroundIndex();
+          this.renderCurrent();
+        } else {
+          // Si no quedan, vuelve al inbox
+          window.location.href = '/secciones/inbox.html';
+        }
+
+      } catch (e) {
+        console.error('Error al borrar el email:', e);
+      }
     }
 }
 

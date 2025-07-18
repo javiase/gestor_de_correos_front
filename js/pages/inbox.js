@@ -251,7 +251,8 @@ class EmailInbox {
       const index  = allIds.indexOf(email.id);
       sessionStorage.setItem('inbox_ids', JSON.stringify(allIds));
       sessionStorage.setItem('inbox_index', index);
-      
+      sessionStorage.setItem('inbox_page', this.currentPage);
+
       // Redirige
       window.location.href = `/secciones/email.html?id=${encodeURIComponent(email.id)}`;  
   }  
