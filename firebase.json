@@ -6,14 +6,24 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
-    {
-      "source": "/api/**",
-      "run": {
-        "serviceId": "api-backend",
-        "region": "europe-west1"
+
+    "redirects": [
+      {
+        "source": "/**",
+        "destination": "https://www.respondize.com/:splat",
+        "type": 301
       }
-    }
-  ]
+    ],
+
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "api-backend",
+          "region": "europe-west1"
+        }
+      }
+    ]
   }
 }
+
