@@ -151,7 +151,9 @@
       <ul>
         <li>Contenido de correos (y procesamientos): 1 mes desde recepción o envío.</li>
         <li>Datos de perfil (nombre, imagen): conservados mientras exista la cuenta.</li>
-        <li>Métricas de uso: indefinido salvo que el usuario solicite eliminación o se elimine la cuenta.</li>
+        <li>Métricas de uso: 12 meses tras última actividad o hasta que el usuario solicite eliminación.</li>
+        <li>Tras 4 meses de inactividad de la cuenta, <strong>TODOS</strong> los datos se eliminan automáticamente.</li>
+        <li>Datos de facturación: según normativa fiscal, mínimo 5 años.</li>
       </ul>
 
       <h2>7. Derechos de los Usuarios</h2>
@@ -167,6 +169,7 @@
         <li>Autenticación a través de OAuth 2.0 y tokens de sesión.</li>
         <li>Cifrado en tránsito (TLS) y en reposo (AES‑256) proporcionado por MongoDB Atlas y Google Cloud.</li>
         <li>Cifrado adicional de cierta información mediante la librería <code>cryptography</code> con claves gestionadas por el servicio.</li>
+        <li>Las credenciales y claves están en Secret Manager, cifradas en reposo (AES‑256) y accesibles solo vía IAM roles mínimos</li>
         <li>Control de accesos internos basado en roles.</li>
         <li>Auditorías regulares y monitorización de logs.</li>
       </ul>
