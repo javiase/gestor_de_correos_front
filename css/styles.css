@@ -623,7 +623,16 @@ footer {
 .footer-column a:hover {
   color: var(--primary);
 }
-
+.footer-legal {
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.footer-legal a {
+  color: var(--primary);
+  text-decoration: underline;
+}
 .social-links {
   display: flex;
   gap: 1rem;
