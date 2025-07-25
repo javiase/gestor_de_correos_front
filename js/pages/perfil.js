@@ -64,7 +64,6 @@ class UserProfile {
     populateForm() {
         // Store Information
         document.getElementById('storeName').value = this.currentData.storeName;
-        document.getElementById('storeEmail').value = this.currentData.storeEmail;
         document.getElementById('storeUrl').value = this.currentData.storeUrl;
         document.getElementById('storeDescription').value = this.currentData.storeDescription;
         
@@ -347,7 +346,7 @@ class UserProfile {
     updateDisplayInfo() {
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
-        const email = document.getElementById('storeEmail').value;
+        const email = this.currentData.storeEmail;
         
         document.getElementById('displayUserName').textContent = `${firstName} ${lastName}`;
         document.getElementById('displayUserEmail').textContent = email;
@@ -375,7 +374,6 @@ class UserProfile {
         const formData = {
             // Store Information
             storeName: document.getElementById('storeName').value,
-            storeEmail: document.getElementById('storeEmail').value,
             storeUrl: document.getElementById('storeUrl').value,
             storeDescription: document.getElementById('storeDescription').value,
             
