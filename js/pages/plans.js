@@ -36,11 +36,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = store ? JSON.parse(store) : null;
     if (!data) return;
 
+    const isActive  = data.active;   // true / false
     const currentPlan = data.plan; // null, "free", "starter", "advanced", "professional"
+
+    const usedFreeStarter     = data.used_free_trial_starter;
+    const usedFreeAdvanced    = data.used_free_trial_advanced;
+    const usedFreeProfessional= data.used_free_trial_professional;
 
     // ➊ — Ajustar botón de la derecha (“Cerrar sesión” → “Volver al perfil” o ocultar)
     const logoutLink = document.getElementById('logoutBtn');
-    if (currentPlan) {
+    if (isActive) {
         logoutLink.textContent = 'Volver al perfil';
         logoutLink.removeAttribute('onclick');
         logoutLink.addEventListener('click', () => {
@@ -58,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const logo = document.querySelector('.logo-text');
     logo.style.cursor = 'pointer';
     logo.addEventListener('click', () => {
-        if (currentPlan && currentPlan !== 'free') {
+        if (isActive && currentPlan !== 'free') {
             window.location.href = '/secciones/inbox.html';
         } else {
             window.location.href = '/index.html';
@@ -71,15 +76,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const pendingPlan             = data.pendingPlan;            // puede ser undefined o "free"/"starter"/"advanced", "professional"
     const pendingPlanEffective    = data.pendingPlanEffective || data.period_end;
-
-    if (currentPlan && currentPlan !== 'free') {
+    console.log("acive:", isActive)
+    if (isActive && currentPlan !== 'free') {
         const notice = document.createElement('div');
         notice.className = 'plan-notice';
         notice.textContent = `⚠️ Los cambios de plan se harán efectivos al final del ciclo de facturación, el ${new Date(pendingPlanEffective).toLocaleDateString()} ⚠️`;
         // Inserta antes del grid
         document.getElementById('pricing').prepend(notice);
     }
-    if (currentPlan) {
+    if (isActive) {
         const cardToHide = document.querySelector(`.pricing-card.${currentPlan}`);
         if (cardToHide) cardToHide.classList.add('hidden');
     }
@@ -99,87 +104,96 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log(planKey, currentPlan, pendingPlan);
         const btn = document.getElementById(btnId);
         if (!btn) return;
-        if (planKey === currentPlan) {
-
-            btn.disabled    = true;
-            btn.textContent = "Plan actual";
-        } else if (pendingPlan === planKey) {
-            btn.disabled    = true;
-            const date = new Date(pendingPlanEffective);
-            btn.textContent = `Cambio programado`;
-
-            const cancelBtn = document.createElement('button');
-            cancelBtn.textContent = 'Cancelar cambio';
-            cancelBtn.className = 'cancel-change-btn';
-
-            const card = btn.closest('.pricing-card');
-            const buttonsHolder = card?.querySelector('.buttons-container') || btn.parentNode;
-            buttonsHolder.appendChild(cancelBtn);
-
-            cancelBtn.addEventListener('click', async () => {
-                cancelBtn.disabled = true;
-                try {
-                await fetchWithAuth('/billing/cancel-change-plan', { method: 'POST' });
-                // le mandamos al perfil
-                const text = encodeURIComponent('Cambio de plan cancelado');
-                window.location.href = `/secciones/perfil.html?msg=${text}`;
-
-                } catch {
-                showNotification('No se pudo cancelar el cambio', 'error');
-                cancelBtn.disabled = false;
-                }
-            });
-        } else {
-            btn.textContent = currentPlan
-
-                ? "Cambiar a este plan"
-                : planKey === "free"
-                ? "Comienza Gratis!"
-                : "Empieza tu prueba gratuita";
-
-            btn.addEventListener("click", async () => {
+        if (isActive) {
+            if (planKey === currentPlan) {
                 btn.disabled    = true;
-                btn.textContent = "Procesando...";
-                
-                try {
-                    let res, data;
+                btn.textContent = "Plan actual";
+            } else if (pendingPlan === planKey) {
+                btn.disabled    = true;
+                const date = new Date(pendingPlanEffective);
+                btn.textContent = `Cambio programado`;
 
-                    // 1) Usuario nuevo (currentPlan == null)
-                    if (!currentPlan) {
-                        if (planKey === "free") {
-                            try{
-                                const res =await fetchWithAuth("/billing/select-free-plan", { method: "POST" });
-                                if (res.ok) {                       // ✅ Free plan creado
-                                    window.location.href = "/secciones/inbox.html";
-                                    return;
-                                }
-                        
-                                if (res.status === 403) {           // ⛔ Ya tenía un ciclo Free activo
-                                    const msg = encodeURIComponent("Ya disfrutaste de un periodo free este mes.");
-                                    window.location.href = `/index.html?msg=${msg}`;
-                                    return;
-                                }
-                            } catch (error) {
-                                console.error(error);
-                                showNotification("Error al seleccionar el plan gratuito", "error");
-                                btn.disabled    = false;
-                                btn.textContent = "Comienza Gratis!";
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Cancelar cambio';
+                cancelBtn.className = 'cancel-change-btn';
+
+                const card = btn.closest('.pricing-card');
+                const buttonsHolder = card?.querySelector('.buttons-container') || btn.parentNode;
+                buttonsHolder.appendChild(cancelBtn);
+
+                cancelBtn.addEventListener('click', async () => {
+                    cancelBtn.disabled = true;
+                    try {
+                    await fetchWithAuth('/billing/cancel-change-plan', { method: 'POST' });
+                    // le mandamos al perfil
+                    const text = encodeURIComponent('Cambio de plan cancelado');
+                    window.location.href = `/secciones/perfil.html?msg=${text}`;
+
+                    } catch {
+                    showNotification('No se pudo cancelar el cambio', 'error');
+                    cancelBtn.disabled = false;
+                    }
+                });
+            } else {
+                btn.disabled = false;
+                btn.textContent = "Cambiar a este plan";
+            }
+        } else {
+            let label;
+            // → Usuario inactivo: lo mandamos a elegir un plan
+            if (planKey === "free") {
+                label = "Comienza Gratis!";
+            } else {
+                // ¿Ya usó el trial de este plan?
+                const usedTrial = ({
+                    starter:     usedFreeStarter,
+                    advanced:    usedFreeAdvanced,
+                    professional:usedFreeProfessional
+                })[planKey];
+
+                if (!usedTrial) {
+                    label = "Empieza tu prueba gratuita";
+                } else {
+                    // ya gastó trial → sale “Contratar <Plan>”
+                    const names = { starter: "Starter", advanced: "Avanzado", professional: "Profesional" };
+                    label = `Contratar ${names[planKey]}`;
+                }
+            }
+            
+            btn.textContent = label;
+            btn.disabled = false;
+        }
+        btn.addEventListener("click", async () => {
+            btn.disabled    = true;
+            btn.textContent = "Procesando...";
+            
+            try {
+                let res, data;
+
+                // 1) Usuario nuevo (isActive == null)
+                if (!isActive) {
+                    if (planKey === "free") {
+                        try{
+                            const res =await fetchWithAuth("/billing/select-free-plan", { method: "POST" });
+                            if (res.ok) {                       // ✅ Free plan creado
+                                window.location.href = "/secciones/inbox.html";
                                 return;
                             }
-                        } else {
-                            // Checkout inmediato para plan de pago
-                            res = await fetchWithAuth("/billing/create-checkout-session", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ plan: planKey })
-                            });
-                            data = await res.json();
-                            window.location.href = data.url;
+                    
+                            if (res.status === 403) {           // ⛔ Ya tenía un ciclo Free activo
+                                const msg = encodeURIComponent("Ya disfrutaste de un periodo free este mes.");
+                                window.location.href = `/index.html?msg=${msg}`;
+                                return;
+                            }
+                        } catch (error) {
+                            console.error(error);
+                            showNotification("Error al seleccionar el plan gratuito", "error");
+                            btn.disabled    = false;
+                            btn.textContent = "Comienza Gratis!";
                             return;
                         }
-                    }
-                    // 2) Upgrade de Free -> Paid (inmediato)
-                    if (currentPlan === "free" && planKey !== "free") {
+                    } else {
+                        // Checkout inmediato para plan de pago
                         res = await fetchWithAuth("/billing/create-checkout-session", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
@@ -189,37 +203,54 @@ document.addEventListener("DOMContentLoaded", async () => {
                         window.location.href = data.url;
                         return;
                     }
-                    // 3) De Paid -> Paid o Paid -> Free (programado al fin de ciclo)
-                    res = await fetchWithAuth("/billing/change-plan", {
+                }
+                // 2) Upgrade de Free -> Paid (inmediato)
+                if (currentPlan === "free" && planKey !== "free") {
+                    res = await fetchWithAuth("/billing/create-checkout-session", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ plan: planKey })
                     });
                     data = await res.json();
-                    
-                    const info = encodeURIComponent(`Cambio al plan ${planKey} programado con éxito`);
-                    window.location.href = `/secciones/perfil.html?msg=${info}`;
-
-
-                } catch (error) {
-                    console.error(error);
-                    const info = encodeURIComponent(`❌ Error al cambiar el plan`);
-                    window.location.href = `/secciones/perfil.html?msg=${info}`;
-                    btn.disabled    = false;
-                    // Restauramos el texto original tras el fallo
-                    if (!currentPlan) {
-                        btn.textContent = planKey === "free"
-                            ? "Comienza Gratis!"
-                            : "Empieza tu prueba gratuita";
-                    } else {
-                        btn.textContent = "Cambiar a este plan";
-                    }
+                    window.location.href = data.url;
+                    return;
                 }
-            });
-        }
+                // 3) De Paid -> Paid o Paid -> Free (programado al fin de ciclo)
+                res = await fetchWithAuth("/billing/change-plan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan: planKey })
+                });
+                data = await res.json();
+                
+                // Si el backend devuelve una URL, es un UPGRADE (toca pasar por Stripe Checkout)
+                if (data.url) {
+                window.location.href = data.url;
+                return;
+                }
+
+                const info = encodeURIComponent(`Cambio al plan ${planKey} programado con éxito`);
+                window.location.href = `/secciones/perfil.html?msg=${info}`;
+
+
+            } catch (error) {
+                console.error(error);
+                const info = encodeURIComponent(`❌ Error al cambiar el plan`);
+                window.location.href = `/secciones/perfil.html?msg=${info}`;
+                btn.disabled    = false;
+                // Restauramos el texto original tras el fallo
+                if (!isActive) {
+                    btn.textContent = planKey === "free"
+                        ? "Comienza Gratis!"
+                        : "Empieza tu prueba gratuita";
+                } else {
+                    btn.textContent = "Cambiar a este plan";
+                }
+            }
+        });
     });
     // 6) Pack extra (solo si ya tiene plan distinto de free)
-    if (currentPlan && currentPlan !== "free") {
+    if (isActive && currentPlan !== "free") {
         const packCard   = document.getElementById("packCard");
         const buyPackBtn = document.getElementById("buyPackBtn");
         packCard.classList.remove("hidden");

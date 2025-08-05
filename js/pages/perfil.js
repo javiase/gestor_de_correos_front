@@ -366,7 +366,7 @@ class UserProfile {
 
         usedEl.textContent  = used;
         extraEl.textContent = extra;
-        totalEl.textContent = limit + extra;
+        totalEl.textContent = limit;
 
     }
     
