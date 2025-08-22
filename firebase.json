@@ -1,29 +1,55 @@
 {
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-
-    "redirects": [
-      {
-        "source": "/**",
-        "destination": "https://www.respondize.com/:splat",
-        "type": 301
-      }
-    ],
-
-    "rewrites": [
-      {
-        "source": "/api/**",
-        "run": {
-          "serviceId": "api-backend",
-          "region": "europe-west1"
+  "hosting": [
+    {
+      "target": "prod",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "**/.*",
+        "**/node_modules/**",
+        ".github/**",
+        "README.md",
+        "firebase-debug.log"
+      ],
+      "redirects": [
+        {
+          "source": "/**",
+          "destination": "https://www.respondize.com/:splat",
+          "type": 301
         }
-      }
-    ]
-  }
+      ],
+      "rewrites": [
+        {
+          "source": "/api/**",
+          "run": {
+            "serviceId": "api-backend",
+            "region": "europe-west1"
+          }
+        }
+      ]
+    },
+    {
+      "target": "pre",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "**/.*",
+        "**/node_modules/**",
+        ".github/**",
+        "README.md",
+        "firebase-debug.log"
+      ],
+      "rewrites": [
+        {
+          "source": "/api/**",
+          "run": {
+            "serviceId": "pre-api-backend",
+            "region": "europe-west1"
+          }
+        }
+      ]
+    }
+  ]
 }
-

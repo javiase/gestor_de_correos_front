@@ -1,5 +1,23 @@
 {
   "projects": {
-    "default": "gmailapi-443221"
-  }
+    "prod": "gmailapi-443221",
+    "pre": "gmailapi-pre"
+  },
+  "targets": {
+    "gmailapi-443221": {
+      "hosting": {
+        "prod": [
+          "api-443221"
+        ]
+      }
+    },
+    "gmailapi-pre": {
+      "hosting": {
+        "pre": [
+          "api-pre"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
