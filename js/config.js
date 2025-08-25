@@ -1,5 +1,6 @@
 // config.js
 import { API_BASE, setToken, logout } from '/js/utils/api.js';
+export const LIMITS = { policies: 5000, faq_q: 200, faq_a: 1200, email_body: 2000, profile_field: 1000 };
 
 // 1) Si vengo con ?token=XXX en la URL, guardarlo y limpiarlo:
 (async function initConfig() {

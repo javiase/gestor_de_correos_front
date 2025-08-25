@@ -1,6 +1,24 @@
 // js/pages/email.js
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth } from '/js/utils/api.js';
+import { LIMITS } from '/js/config.js?v=1';
+
+
+function enforceContentEditableMax(el, max) {
+  el.addEventListener('input', () => {
+    const plain = (el.textContent || '');
+    if (plain.length > max) {
+      // recorta manteniendo caret al final
+      const sel = window.getSelection();
+      const range = document.createRange();
+      el.textContent = plain.slice(0, max);
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
+}
 
 class EmailView {
   constructor() {
@@ -274,6 +292,18 @@ class EmailView {
         .map(p => `<p>${p}</p>`)
         .join('');
 
+    const respEl = document.getElementById('responseContent');
+    // Si es contentEditable, aplica límite; si fuera <textarea>, usa maxLength
+    if (respEl) {
+      if (respEl.getAttribute('contenteditable') === 'true' || respEl.isContentEditable) {
+        enforceContentEditableMax(respEl, LIMITS.email_body); // 2000
+      } else if (respEl.tagName === 'TEXTAREA') {
+        respEl.maxLength = LIMITS.email_body;
+        // Si traes texto precargado, recórtalo por si acaso
+        respEl.value = (respEl.value || '').slice(0, LIMITS.email_body);
+      }
+    }
+
     // habilita/deshabilita botones
     this.prevBtn.disabled = this.index === 0;
     this.nextBtn.disabled = this.index === this.ids.length - 1;
@@ -298,6 +328,8 @@ class EmailView {
       }
     }
   }
+  
+
 
 
   formatEmailDate(dateString) {
@@ -413,10 +445,15 @@ class EmailView {
       const message   = document.getElementById('responseContent').innerHTML.trim();
 
       try {
+        if ((message || '').length > LIMITS.email_body) {
+          alert(`El cuerpo del correo supera ${LIMITS.email_body} caracteres.`);
+          return;
+        }
+
         const res = await fetchWithAuth('/emails/send', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ emailId, recipient, subject, message })
+          body: JSON.stringify({ email_id: emailId, recipient, subject, message })
         });
         if (!res.ok) {
           const err = await res.json();

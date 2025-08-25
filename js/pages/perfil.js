@@ -1,5 +1,6 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth } from '/js/utils/api.js';
+import { LIMITS } from '/js/config.js?v=1'; 
 
 const PLAN_LABEL = {
   free:      "Plan Free",
@@ -7,6 +8,7 @@ const PLAN_LABEL = {
   advanced:  "Plan Advanced",
   professional: "Plan Professional"
 };
+
 
 /*perfil.js */
 class UserProfile {
@@ -38,11 +40,65 @@ class UserProfile {
         }
 
         this.bindEvents();
+
+        document.addEventListener('input', (e) => {
+            const el = e.target;
+            if (!el || !('value' in el)) return;
+            const max = LIMITS.profile_field;
+            if (typeof el.value === 'string' && el.value.length > max) {
+                el.value = el.value.slice(0, max);
+            }
+        }, { passive: true });
+
+
         this.setupFormValidation();
         this.updateDisplayInfo();
         
         console.log('User Profile initialized');
     }
+    applyMaxLengthConstraints() {
+        const DEFAULT_MAX = LIMITS.profile_field; // 1000
+        // Overrides por id de campo para que el límite sea razonable en UI
+        const OVERRIDES = {
+            storePhone: 32,
+            personalPhone: 32,
+            storeZip: 20,
+            storeUrl: 1000,
+            storeName: 120,
+            storeDescription: 600,
+            storeAddress: 200,
+            storeCity: 120,
+            storeState: 120,
+            firstName: 120,
+            lastName: 120,
+            personalEmail: 320,
+            businessCategoryOther: 120,
+        };
+
+        const selector = 'input[type="text"], input[type="email"], input[type="url"], input[type="tel"], textarea';
+
+        document.querySelectorAll(selector).forEach(el => {
+            const id  = el.id || '';
+            const max = OVERRIDES[id] ?? DEFAULT_MAX;
+
+            // Atributo + propiedad (algunos navegadores respetan más el atributo)
+            el.setAttribute('maxlength', String(max));
+            if ('maxLength' in el) el.maxLength = max;
+
+            // Recorta si ya viene largo (precarga)
+            if (typeof el.value === 'string' && el.value.length > max) {
+            el.value = el.value.slice(0, max);
+            }
+
+            // Hard-trim en tiempo real (tecleo/pegar/drag&drop/IME)
+            el.addEventListener('input', () => {
+            if (typeof el.value === 'string' && el.value.length > max) {
+                el.value = el.value.slice(0, max);
+            }
+            }, { passive: true });
+        });
+    }
+
     
     async loadInitialData() {
         try{
@@ -130,6 +186,7 @@ class UserProfile {
         }
         //this.updateProfileProgress();
         this.toggleLocationFields();
+        this.applyMaxLengthConstraints();
     }
     // Toggle opening hours fields based on checkbox
     toggleHoursFields() {
@@ -471,6 +528,35 @@ class UserProfile {
         
         try {
             const formData = this.collectFormData();
+
+            // ⛔ Límite por campo (mismo mapa que en applyMaxLengthConstraints)
+            const DEFAULT_MAX = LIMITS.profile_field; // 1000
+            const OVERRIDES = {
+                storePhone: 32,
+                personalPhone: 32,
+                storeZip: 20,
+                storeUrl: 2048,
+                storeName: 120,
+                storeDescription: 600,
+                storeAddress: 200,
+                storeCity: 120,
+                storeState: 120,
+                firstName: 120,
+                lastName: 120,
+                personalEmail: 320,
+                businessCategoryOther: 120,
+            };
+
+            for (const [k, v] of Object.entries(formData)) {
+                if (typeof v !== 'string') continue;
+                const max = OVERRIDES[k] ?? DEFAULT_MAX;
+                if (v.length > max) {
+                    this.showMessage(`El campo "${k}" supera ${max} caracteres.`, 'error');
+                    saveBtn.innerHTML = originalText; saveBtn.disabled = false;
+                    return;
+                }
+            }
+
             
             // Simulate API call
             // 2) Llamada al endpoint PUT /stores/me
