@@ -19,7 +19,7 @@
   <p>Entorno <b>pre</b> — uso exclusivo del escaneo.</p>
 
   <div class="box">
-    <input id="email" type="email" placeholder="Email" value="casa-tester@respondize.com" />
+    <input id="email" type="email" placeholder="Email" value="javiasegomez@gmail.com" />
     <input id="password" type="password" placeholder="Password de pruebas" />
     <button id="btn">Iniciar sesión</button>
     <div id="msg"></div>
@@ -31,7 +31,6 @@
     async function login() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
-      const secret = document.getElementById("secret").value.trim();
 
       const res = await fetch(`${API_BASE}/testing/casa-login`, {
         method: "POST",
