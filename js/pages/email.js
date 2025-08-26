@@ -430,7 +430,7 @@ class EmailView {
     async sendReply() {
       const emailId = this.ids[this.index];
       const pageForEmail = Math.floor(this.index / this.emailsPerPage) + 1;
-
+      console.log(`[sendReply] emailId=${emailId} at index=${this.index} (page ${pageForEmail})`);
       // Asegurarnos de que el batch esté cargado
       if (!this.loadedPages.has(pageForEmail)) {
         await this.loadBatch(pageForEmail, { replace: false });
@@ -453,7 +453,7 @@ class EmailView {
         const res = await fetchWithAuth('/emails/send', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ email_id: emailId, recipient, subject, message })
+          body: JSON.stringify({ "emailId": emailId, recipient, subject, message })
         });
         if (!res.ok) {
           const err = await res.json();

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>CASA Testing Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { color-scheme: light dark; }
+    body{font-family:system-ui,Arial;padding:2rem;max-width:420px;margin:auto}
+    h1{margin-bottom:1rem}
+    .box{border:1px solid #ddd;border-radius:8px;padding:1rem}
+    input,button{width:100%;padding:.75rem;margin:.4rem 0}
+    button{background:#20ab7a;color:#fff;border:none;border-radius:6px;cursor:pointer}
+    #msg{min-height:1.2rem;color:#c33}
+  </style>
+</head>
+<body>
+  <h1>Login de pruebas (CASA)</h1>
+  <p>Entorno <b>pre</b> — uso exclusivo del escaneo.</p>
+
+  <div class="box">
+    <input id="email" type="email" placeholder="Email" value="casa-tester@respondize.com" />
+    <input id="password" type="password" placeholder="Password de pruebas" />
+    <button id="btn">Iniciar sesión</button>
+    <div id="msg"></div>
+  </div>
+
+  <script type="module">
+    import { API_BASE, setToken } from "/js/utils/api.js";
+
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const secret = document.getElementById("secret").value.trim();
+
+      const res = await fetch(`${API_BASE}/testing/casa-login`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) {
+        const err = await res.text().catch(()=> "");
+        document.getElementById("msg").textContent = `Login fallido (${res.status}) ${err}`;
+        return;
+      }
+
+      const data = await res.json();
+      setToken(data.access_token);
+      window.location.href = "/secciones/inbox.html";
+    }
+
+    document.getElementById("btn").onclick = login;
+  </script>
+</body>
+</html>
