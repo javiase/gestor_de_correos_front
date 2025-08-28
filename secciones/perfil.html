@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/css/layout.css" />
     <link rel="stylesheet" href="/css/components/sidebar.css" />
     <link rel="stylesheet" href="/css/pages/perfil.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/vendor/fontawesome-6.4.0/css/all.min.css">
 </head>
 <body>
     <div id="sidebarContainer"></div>
@@ -35,7 +35,15 @@
                     <div class="user-info">
                         <h1 class="user-name" id="displayUserName"></h1>
                         <p class="user-email" id="displayUserEmail"></p>
-                        <p  class="user-plan" id="displayUserPlan">—</p>
+                        <div class="plan-row">
+                            <p class="user-plan" id="displayUserPlan">—</p>
+
+                            <!-- Badge de trial -->
+                            <span class="trial-badge hidden" id="trialBadge" title="">
+                                <i class="fas fa-gift"></i>
+                                <span id="trialDays">0</span> días de prueba gratis restantes
+                            </span>
+                        </div>
                         <span class="user-status">Active</span>
                         <button id="logoutBtn" class="logout-btn">Cerrar sesión</button>
                     </div>
@@ -185,7 +193,8 @@
                             
                             <div class="form-group">
                                 <label for="storePhone">Número de Teléfono</label>
-                                <input type="tel" id="storePhone" class="form-input">
+                                <input type="tel" id="storePhone" class="form-input" placeholder="+34 612345678">
+                                <span class="form-hint">+[código país][número]</span>
                             </div>
                         </div>
                     </div>
@@ -212,9 +221,13 @@
                                     <input type="checkbox" class="day-toggle" checked>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <input type="time" class="time-input" value="09:00">
-                                <span class="time-separator">a</span>
-                                <input type="time" class="time-input" value="17:00">
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
                             </div>
                         </div>
                         
@@ -225,9 +238,13 @@
                                     <input type="checkbox" class="day-toggle" checked>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <input type="time" class="time-input" value="09:00">
-                                <span class="time-separator">a</span>
-                                <input type="time" class="time-input" value="17:00">
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
                             </div>
                         </div>
                         
@@ -238,9 +255,13 @@
                                     <input type="checkbox" class="day-toggle" checked>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <input type="time" class="time-input" value="09:00">
-                                <span class="time-separator">a</span>
-                                <input type="time" class="time-input" value="17:00">
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
                             </div>
                         </div>
                         
@@ -251,9 +272,13 @@
                                     <input type="checkbox" class="day-toggle" checked>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <input type="time" class="time-input" value="09:00">
-                                <span class="time-separator">a</span>
-                                <input type="time" class="time-input" value="17:00">
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
                             </div>
                         </div>
                         
@@ -264,9 +289,13 @@
                                     <input type="checkbox" class="day-toggle" checked>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <input type="time" class="time-input" value="09:00">
-                                <span class="time-separator">a</span>
-                                <input type="time" class="time-input" value="17:00">
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
                             </div>
                         </div>
                         
@@ -277,9 +306,13 @@
                                     <input type="checkbox" class="day-toggle" checked>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <input type="time" class="time-input" value="10:00">
-                                <span class="time-separator">a</span>
-                                <input type="time" class="time-input" value="16:00">
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
                             </div>
                         </div>
                         
@@ -287,12 +320,16 @@
                             <div class="day-label">Domingo</div>
                             <div class="day-controls">
                                 <label class="toggle-switch">
-                                    <input type="checkbox" class="day-toggle">
+                                    <input type="checkbox" class="day-toggle" checked>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <input type="time" class="time-input" value="10:00" disabled>
-                                <span class="time-separator">a</span>
-                                <input type="time" class="time-input" value="16:00" disabled>
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -323,18 +360,19 @@
                         
                         <div class="form-group">
                             <label for="personalPhone">Número de Teléfono</label>
-                            <input type="tel" id="personalPhone" class="form-input" >
+                            <input type="tel" id="personalPhone" class="form-input" placeholder="+34 612345678">
+                            <span class="form-hint">+[código país][número]</span>
                         </div>
                         
                         <div class="form-group">
                             <label for="timezone">Zona Horaria</label>
                             <select id="timezone" class="form-select">
-                                <option value="UTC-5" selected>Hora del Este (UTC-5)</option>
-                                <option value="UTC-6">Hora Central (UTC-6)</option>
-                                <option value="UTC-7">Hora de la Montaña (UTC-7)</option>
-                                <option value="UTC-8">Hora del Pacífico (UTC-8)</option>
-                                <option value="UTC+0">Hora de Greenwich (UTC+0)</option>
-                                <option value="UTC+1">Hora Central Europea (UTC+1)</option>
+                                <option value="UTC-8">Los Ángeles (UTC-8)</option>
+                                <option value="UTC-7">Denver (UTC-7)</option>
+                                <option value="UTC-6">Ciudad de México (UTC-6)</option>
+                                <option value="UTC-5">Nueva York (UTC-5)</option>
+                                <option value="UTC+0">Londres (UTC+0)</option>
+                                <option value="UTC+1" selected>Madrid (UTC+1)</option>
                             </select>
                         </div>
                         

@@ -1,0 +1,16 @@
+node_modules
+**/.*          
+.github/**
+*.bak
+*.old
+*.swap
+*~ 
+*.map
+backup*/
+secrets*/
+.env
+.env.*
+firebase.json
+**/node_modules/**
+README.md
+firebase-debug.log
