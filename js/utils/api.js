@@ -5,28 +5,86 @@ export const API_BASE = window.location.hostname.includes("localhost")
   ? "http://localhost:8085/api"
   : "/api";
 
-// 2) Guardar / leer / borrar token
-const TOKEN_KEY = "token";
+// ──────────────────────────────────────────────────────────────
+// 2) Token en MEMORIA + sessionStorage (NO localStorage)
+// ──────────────────────────────────────────────────────────────
+const SS_KEY = "auth_token_v1";
+let memToken = null;
+let refreshPromise = null;
+let isLoggingOut = false;
+
+// Rehidrata desde sessionStorage al cargar el módulo
+try {
+  memToken = sessionStorage.getItem(SS_KEY) || null;
+} catch (_) {
+  memToken = null;
+}
+
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
+  return memToken;
 }
+
 export function setToken(t) {
-  localStorage.setItem(TOKEN_KEY, t);
+  memToken = t || null;
+  try {
+    if (t) sessionStorage.setItem(SS_KEY, t);
+    else sessionStorage.removeItem(SS_KEY);
+  } catch (_) {}
 }
+
 export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
+  memToken = null;
+  try { sessionStorage.removeItem(SS_KEY); } catch (_) {}
 }
 
+// Broadcast logout entre pestañas (por si en el futuro lo necesitas)
+const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("auth") : null;
+if (bc) {
+  bc.onmessage = (ev) => {
+    if (ev?.data === "logout") {
+      clearToken();
+      mostrarModalSesionCaducada();
+    }
+  };
+}
+
+// ──────────────────────────────────────────────────────────────
 // 3) Logout
-export function logout() {
+// ──────────────────────────────────────────────────────────────
+export async function logout(opts = {}) {
+  const {
+    showModal = false,            // ← si true, enseña modal; si false, redirige
+    redirectTo = "/index.html",   // ← destino al salir
+    broadcast = true              // ← avisa a otras pestañas
+  } = opts;
+
+  if (isLoggingOut) return;
+  isLoggingOut = true;
+
+  const tk = getToken();
+  try {
+    if (tk) {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${tk}` }
+      });
+    }
+  } catch (_) {
+    // si falla, cortamos client-side igualmente
+  }
   clearToken();
-  // Si prefieres usar un modal:
-  mostrarModalSesionCaducada();
+  if (bc && broadcast) bc.postMessage("logout");
+  if (showModal) {
+    mostrarModalSesionCaducada();
+  } else {
+    window.location.href = redirectTo;
+  }
+  setTimeout(() => { isLoggingOut = false; }, 3000); // por si no navega
 }
 
-// ─── Helpers de token ───
-
-// Comprueba si el JWT expira en menos de `minutos`
+// ──────────────────────────────────────────────────────────────
+// Helpers de token (renovación y modal)
+// ──────────────────────────────────────────────────────────────
 function tokenExpiraEnMenosDe(minutos = 10) {
   const token = getToken();
   if (!token) return true;
@@ -39,21 +97,23 @@ function tokenExpiraEnMenosDe(minutos = 10) {
   }
 }
 
-// Pide al backend un refresh y guarda el nuevo token
 async function renovarToken() {
-  const oldToken = getToken();
-  if (!oldToken) throw new Error("No hay token para renovar");
-  const res = await fetch(`${API_BASE}/auth/refresh_token`, {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${oldToken}` }
-  });
-  if (!res.ok) throw new Error("No se pudo renovar el token");
-  const { access_token } = await res.json();
-  setToken(access_token);
-  console.log("🔁 Token renovado");
+  if (refreshPromise) return refreshPromise;     // ⟵ evita carreras
+  refreshPromise = (async () => {
+    const oldToken = getToken();
+    if (!oldToken) throw new Error("No hay token para renovar");
+    const res = await fetch(`${API_BASE}/auth/refresh_token`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${oldToken}` }
+    });
+    if (!res.ok) throw new Error("No se pudo renovar el token");
+    const { access_token } = await res.json();
+    setToken(access_token);
+    console.log("🔁 Token renovado");
+  })();
+  try { await refreshPromise; } finally { refreshPromise = null; }
 }
 
-// Muestra un modal bonito cuando la sesión caduque
 function mostrarModalSesionCaducada() {
   const existing = document.getElementById("modal-sesion-caducada");
   if (existing) return existing.style.display = "flex";
@@ -79,35 +139,35 @@ function mostrarModalSesionCaducada() {
   };
 }
 
-// 4) Wrapper para peticiones autenticadas con renovación automática
+// ──────────────────────────────────────────────────────────────
+// 4) fetch con auth + refresh automático
+// ──────────────────────────────────────────────────────────────
 export async function fetchWithAuth(path, opts = {}) {
-  // 1) Si el token expira pronto, renovarlo
   if (tokenExpiraEnMenosDe(10)) {
     try {
       await renovarToken();
     } catch (err) {
-      logout();
+      logout({ showModal: true });
       return Promise.reject(err);
     }
   }
 
-  // 2) Recuperar token (ya renovado si tocaba)
   const token = getToken();
   if (!token) {
     logout();
     return Promise.reject(new Error("No autenticado"));
   }
 
-  // 3) Inyectar cabecera y hacer fetch
   opts.headers = {
     ...(opts.headers || {}),
     "Authorization": `Bearer ${token}`,
+    "Content-Type": opts.body && !("Content-Type" in (opts.headers || {})) ? "application/json" : (opts.headers || {})["Content-Type"]
   };
+
   const res = await fetch(`${API_BASE}${path}`, opts);
 
-  // 4) Si el backend devuelve 401, forzar logout/renewal
   if (res.status === 401) {
-    logout();
+    logout({ showModal: true });
     return Promise.reject(new Error("No autenticado"));
   }
 

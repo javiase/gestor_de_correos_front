@@ -24,17 +24,17 @@ class EmailView {
   constructor() {
     initSidebar('#sidebarContainer');
     this.container = document.getElementById('chatContainer');
-    this.prevBtn   = null;
-    this.nextBtn   = null;
-    this.ids       = JSON.parse(sessionStorage.getItem('inbox_ids') || '[]');
-    this.index     = parseInt(sessionStorage.getItem('inbox_index') || '0', 10);
+    this.prevBtn = null;
+    this.nextBtn = null;
+    this.ids = JSON.parse(sessionStorage.getItem('inbox_ids') || '[]');
+    this.index = parseInt(sessionStorage.getItem('inbox_index') || '0', 10);
     this.page = parseInt(sessionStorage.getItem('inbox_page') || '1', 10);
     this.loadedPages = new Set();
     this.emailsPerPage = 20; // emails por batch
     this.prefetchThreshold = 5;
-    this.pages     = 1;       // total de batches disponibles (se rellena al primer fetch)
-    this.cache     = [];      // aquí replicaremos ids → datos
-    this.sendBtn   = null;
+    this.pages = 1;       // total de batches disponibles (se rellena al primer fetch)
+    this.cache = [];      // aquí replicaremos ids → datos
+    this.sendBtn = null;
     this.deleteBtn = null;
     this.init();
   }
@@ -94,8 +94,8 @@ class EmailView {
     this.deleteBtn = document.getElementById('deleteEmail');
 
     if (!this.prevBtn || !this.nextBtn) {
-        console.error("No encuentro los botones de navegación en el DOM");
-        return;
+      console.error("No encuentro los botones de navegación en el DOM");
+      return;
     }
 
     this.prevBtn.addEventListener('click', () => this.navigate(-1));
@@ -104,7 +104,7 @@ class EmailView {
     // acciones de enviar / borrar
     if (this.sendBtn) this.sendBtn.addEventListener('click', () => this.sendReply());
     if (this.deleteBtn) this.deleteBtn.addEventListener('click', () => this.deleteEmail());
-    }
+  }
 
   async loadBatch(page, { replace = false, prepend = false } = {}) {
     console.log(`[loadBatch] page=${page} replace=${replace} prepend=${prepend}`);
@@ -128,13 +128,13 @@ class EmailView {
 
     if (replace) {
       this.cache = normalized;
-      this.ids   = normalized.map(e => e.id);
+      this.ids = normalized.map(e => e.id);
     } else if (prepend) {
       this.cache = normalized.concat(this.cache);
-      this.ids   = normalized.map(e => e.id).concat(this.ids);
+      this.ids = normalized.map(e => e.id).concat(this.ids);
     } else {
       this.cache = this.cache.concat(normalized);
-      this.ids   = this.ids.concat(normalized.map(e => e.id));
+      this.ids = this.ids.concat(normalized.map(e => e.id));
     }
 
     sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
@@ -150,10 +150,10 @@ class EmailView {
     console.log(`  ↳ index=${this.index}`);
 
     // 2) Calcula posición local y páginas
-    const localPos    = this.index % this.emailsPerPage;
+    const localPos = this.index % this.emailsPerPage;
     const currentPage = Math.floor(this.index / this.emailsPerPage) + 1;
-    const prevPage    = currentPage - 1;
-    const nextPage    = currentPage + 1;
+    const prevPage = currentPage - 1;
+    const nextPage = currentPage + 1;
     console.log(`  ↳ localPos=${localPos}, currentPage=${currentPage}`);
 
     // 3) On‑demand: carga la página actual si no se había cargado
@@ -244,13 +244,11 @@ class EmailView {
         // body del panel
         const ps = document.createElement('div');
         ps.className = 'panel-scroll';
-        ps.innerHTML = `
+        ps.innerHTML = DOMPurify.sanitize(`
           <div class="panel-content">
-            ${msg.message.split('\n')
-              .map(p => `<p>${p}</p>`)
-              .join('')}
+            ${msg.message.split('\n').map(p => `<p>${p}</p>`).join('')}
           </div>
-        `;
+        `);
         panel.appendChild(ps);
 
         // aquí no añadimos footer porque es sólo histórico
@@ -258,36 +256,36 @@ class EmailView {
         hist.appendChild(mc);
       });
       // — Aquí añadimos la nota al final —
-        const note = document.createElement('div');
-        note.className = 'history-note';
-        note.style.textAlign = 'center';
-        note.innerHTML = '<span style="font-size:1.2em;vertical-align:middle;">&#8593;</span> Historial anterior con cliente. <span style="font-size:1.2em;vertical-align:middle;">&#8593;</span>';
-        hist.appendChild(note);
+      const note = document.createElement('div');
+      note.className = 'history-note';
+      note.style.textAlign = 'center';
+      note.innerHTML = '<span style="font-size:1.2em;vertical-align:middle;">&#8593;</span> Historial anterior con cliente. <span style="font-size:1.2em;vertical-align:middle;">&#8593;</span>';
+      hist.appendChild(note);
     }
 
 
 
     // vuelca en los IDs de tu HTML
     document.getElementById('emailFrom').textContent =
-        'De: ' + (email.return_mail.replace(/^<(.+)>$/,'$1') || 'Desconocido');
+      'De: ' + (email.return_mail.replace(/^<(.+)>$/, '$1') || 'Desconocido');
     document.getElementById('emailDate').textContent =
-        this.formatEmailDate(email.date);
+      this.formatEmailDate(email.date);
     document.getElementById('emailSubject').textContent =
-        'Asunto: ' + (email.subject || '(sin asunto)');
+      'Asunto: ' + (email.subject || '(sin asunto)');
 
     // body recibido (preserva saltos de línea)
     const rec = (email.body || '')
-        .split('\n')
-        .map(p => `<p>${p}</p>`)
-        .join('');
-    document.getElementById('receivedContent').innerHTML = rec;
+      .split('\n')
+      .map(p => `<p>${p}</p>`)
+      .join('');
+    document.getElementById('receivedContent').innerHTML = DOMPurify.sanitize(rec);
 
     const respSubj = document.getElementById('responseSubject');
     respSubj.textContent = email.asunto_respuesta;
 
     // respuesta del bot
     document.getElementById('responseContent').innerHTML =
-        (email.texto_combinado || '<p>Sin respuesta</p>')
+      (email.texto_combinado || '<p>Sin respuesta</p>')
         .split('\n')
         .map(p => `<p>${p}</p>`)
         .join('');
@@ -328,202 +326,203 @@ class EmailView {
       }
     }
   }
-  
+
 
 
 
   formatEmailDate(dateString) {
-      const now = new Date();
-      const emailDate = new Date(dateString);
-      if (isNaN(emailDate.getTime())) {
-        return dateString;
-      }
-      const diffMs = now - emailDate;
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      const hh = emailDate.getHours().toString().padStart(2, '0');
-      const mm = emailDate.getMinutes().toString().padStart(2, '0');
-  
-      if (diffDays < 1 && now.getDate() === emailDate.getDate()) {
-        return `${hh}:${mm}`;
-      }
-      const ayer = new Date(now);
-      ayer.setDate(ayer.getDate() - 1);
-      if (ayer.getDate() === emailDate.getDate() &&
-          ayer.getMonth() === emailDate.getMonth() &&
-          ayer.getFullYear() === emailDate.getFullYear()) {
-        return `Ayer, ${hh}:${mm}`;
-      }
-      if (diffDays < 7) {
-        const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-        return `${diasSemana[emailDate.getDay()]}, ${hh}:${mm}`;
-      }
-      const d  = emailDate.getDate().toString().padStart(2, '0');
-      const mo = (emailDate.getMonth() + 1).toString().padStart(2, '0');
-      const y  = emailDate.getFullYear();
-      return `${d}/${mo}/${y}, ${hh}:${mm}`;
+    const now = new Date();
+    const emailDate = new Date(dateString);
+    if (isNaN(emailDate.getTime())) {
+      return dateString;
+    }
+    const diffMs = now - emailDate;
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    const hh = emailDate.getHours().toString().padStart(2, '0');
+    const mm = emailDate.getMinutes().toString().padStart(2, '0');
+
+    if (diffDays < 1 && now.getDate() === emailDate.getDate()) {
+      return `${hh}:${mm}`;
+    }
+    const ayer = new Date(now);
+    ayer.setDate(ayer.getDate() - 1);
+    if (ayer.getDate() === emailDate.getDate() &&
+      ayer.getMonth() === emailDate.getMonth() &&
+      ayer.getFullYear() === emailDate.getFullYear()) {
+      return `Ayer, ${hh}:${mm}`;
+    }
+    if (diffDays < 7) {
+      const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      return `${diasSemana[emailDate.getDay()]}, ${hh}:${mm}`;
+    }
+    const d = emailDate.getDate().toString().padStart(2, '0');
+    const mo = (emailDate.getMonth() + 1).toString().padStart(2, '0');
+    const y = emailDate.getFullYear();
+    return `${d}/${mo}/${y}, ${hh}:${mm}`;
+  }
+
+  async reloadAroundIndex() {
+    console.log(`\n[reload] ▶ Starting reloadAroundIndex (index=${this.index})`);
+
+    // 1) Calcula la página actual en función del this.index
+    this.page = Math.floor(this.index / this.emailsPerPage) + 1;
+    console.log(`[reload] 1) Calculated page=${this.page}`);
+
+    // 2) Reinicia cache y loadedPages
+    this.cache = [];
+    this.loadedPages.clear();
+    console.log(`[reload] 2) Cleared cache & loadedPages`);
+
+    // 3) Carga replace de la página actual
+    console.log(`[reload] 3) loadBatch page=${this.page} replace=true`);
+    await this.loadBatch(this.page, { replace: true });
+    this.loadedPages.add(this.page);
+    console.log(
+      `[reload]    → after loadBatch ids.length=${this.ids.length}, cache.length=${this.cache.length}`
+    );
+
+    // 4) Guarda nuevo inbox_ids y inbox_page
+    sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
+    sessionStorage.setItem('inbox_page', this.page);
+    console.log(
+      `[reload] 4) sessionStorage -> inbox_ids (${this.ids.length} items), inbox_page=${this.page}`
+    );
+
+    // 5) Pre‑fetch de siguiente batch si toca
+    const localPos = this.index % this.emailsPerPage;
+    const nextPage = this.page + 1;
+    console.log(`[reload] 5) localPos=${localPos}, prefetchThreshold=${this.prefetchThreshold}`);
+    if (
+      localPos >= this.emailsPerPage - this.prefetchThreshold &&
+      nextPage <= this.pages
+    ) {
+      console.log(`[reload]    → prefetch nextPage=${nextPage}`);
+      await this.loadBatch(nextPage, { replace: false });
+      this.loadedPages.add(nextPage);
+      console.log(
+        `[reload]    → after prefetch next ids.length=${this.ids.length}, cache.length=${this.cache.length}`
+      );
     }
 
-    async reloadAroundIndex() {
-      console.log(`\n[reload] ▶ Starting reloadAroundIndex (index=${this.index})`);
-
-      // 1) Calcula la página actual en función del this.index
-      this.page = Math.floor(this.index / this.emailsPerPage) + 1;
-      console.log(`[reload] 1) Calculated page=${this.page}`);
-
-      // 2) Reinicia cache y loadedPages
-      this.cache = [];
-      this.loadedPages.clear();
-      console.log(`[reload] 2) Cleared cache & loadedPages`);
-
-      // 3) Carga replace de la página actual
-      console.log(`[reload] 3) loadBatch page=${this.page} replace=true`);
-      await this.loadBatch(this.page, { replace: true });
-      this.loadedPages.add(this.page);
+    // 6) Pre‑fetch de page anterior si toca
+    const prevPage = this.page - 1;
+    if (
+      localPos < this.prefetchThreshold &&
+      prevPage >= 1
+    ) {
+      console.log(`[reload] 6) prefetch prevPage=${prevPage}`);
+      await this.loadBatch(prevPage, { replace: false, prepend: true });
+      this.loadedPages.add(prevPage);
+      this.index += this.emailsPerPage;
       console.log(
-        `[reload]    → after loadBatch ids.length=${this.ids.length}, cache.length=${this.cache.length}`
+        `[reload]    → after prepend prev ids.length=${this.ids.length}, cache.length=${this.cache.length}, index now=${this.index}`
       );
-
-      // 4) Guarda nuevo inbox_ids y inbox_page
-      sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
-      sessionStorage.setItem('inbox_page', this.page);
-      console.log(
-        `[reload] 4) sessionStorage -> inbox_ids (${this.ids.length} items), inbox_page=${this.page}`
-      );
-
-      // 5) Pre‑fetch de siguiente batch si toca
-      const localPos = this.index % this.emailsPerPage;
-      const nextPage = this.page + 1;
-      console.log(`[reload] 5) localPos=${localPos}, prefetchThreshold=${this.prefetchThreshold}`);
-      if (
-        localPos >= this.emailsPerPage - this.prefetchThreshold &&
-        nextPage <= this.pages
-      ) {
-        console.log(`[reload]    → prefetch nextPage=${nextPage}`);
-        await this.loadBatch(nextPage, { replace: false });
-        this.loadedPages.add(nextPage);
-        console.log(
-          `[reload]    → after prefetch next ids.length=${this.ids.length}, cache.length=${this.cache.length}`
-        );
-      }
-
-      // 6) Pre‑fetch de page anterior si toca
-      const prevPage = this.page - 1;
-      if (
-        localPos < this.prefetchThreshold &&
-        prevPage >= 1
-      ) {
-        console.log(`[reload] 6) prefetch prevPage=${prevPage}`);
-        await this.loadBatch(prevPage, { replace: false, prepend: true });
-        this.loadedPages.add(prevPage);
-        this.index += this.emailsPerPage;
-        console.log(
-          `[reload]    → after prepend prev ids.length=${this.ids.length}, cache.length=${this.cache.length}, index now=${this.index}`
-        );
-      }
-
-      console.log(`[reload] ◀ Finished reloadAroundIndex\n`);
-
     }
 
+    console.log(`[reload] ◀ Finished reloadAroundIndex\n`);
+
+  }
 
 
-    async sendReply() {
+
+  async sendReply() {
+    const emailId = this.ids[this.index];
+    const pageForEmail = Math.floor(this.index / this.emailsPerPage) + 1;
+    console.log(`[sendReply] emailId=${emailId} at index=${this.index} (page ${pageForEmail})`);
+    // Asegurarnos de que el batch esté cargado
+    if (!this.loadedPages.has(pageForEmail)) {
+      await this.loadBatch(pageForEmail, { replace: false });
+    }
+
+    const email = this.cache.find(e => e.id === emailId);
+    if (!email) return console.error('Email no encontrado en cache');
+
+    // Extraer datos del DOM
+    const recipient = (email.return_mail || email.sender || '').replace(/^<(.+)>$/, '$1');
+    const subject = document.getElementById('responseSubject').textContent.trim();
+    const message = DOMPurify.sanitize(document.getElementById('responseContent').innerHTML.trim());
+
+
+    try {
+      if ((message || '').length > LIMITS.email_body) {
+        alert(`El cuerpo del correo supera ${LIMITS.email_body} caracteres.`);
+        return;
+      }
+
+      const res = await fetchWithAuth('/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ "emailId": emailId, recipient, subject, message })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        console.error('Error al enviar la respuesta:', res.status, err);
+        return;
+      }
+
+      // 1) Quitarlo igual que delete
+      const removedId = this.ids.splice(this.index, 1)[0];
+      this.cache = this.cache.filter(e => e.id !== removedId);
+
+      // 2) Ajustar índice por si lo eliminas
+      if (this.index >= this.ids.length) {
+        this.index = this.ids.length - 1;
+      }
+
+      // 3) Re-guardar en sessionStorage
+      sessionStorage.setItem('inbox_index', this.index);
+
+      // 4) Recarga toda la caché alrededor de this.index
+      if (this.ids.length > 0) {
+        await this.reloadAroundIndex();
+        this.renderCurrent();
+      } else {
+        window.location.href = '/secciones/inbox.html';
+        return;
+      }
+
+    } catch (e) {
+      console.error('Error al enviar la respuesta:', e);
+    }
+  }
+
+  async deleteEmail() {
+    try {
       const emailId = this.ids[this.index];
-      const pageForEmail = Math.floor(this.index / this.emailsPerPage) + 1;
-      console.log(`[sendReply] emailId=${emailId} at index=${this.index} (page ${pageForEmail})`);
-      // Asegurarnos de que el batch esté cargado
-      if (!this.loadedPages.has(pageForEmail)) {
-        await this.loadBatch(pageForEmail, { replace: false });
+      const res = await fetchWithAuth(`/emails/delete?email_id=${emailId}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        console.error('Error al borrar el email:', res.status, err);
+        return;
       }
 
-      const email = this.cache.find(e => e.id === emailId);
-      if (!email) return console.error('Email no encontrado en cache');
+      // 1) Eliminar de ids y cache
+      const removedId = this.ids.splice(this.index, 1)[0];
+      this.cache = this.cache.filter(e => e.id !== removedId);
 
-      // Extraer datos del DOM
-      const recipient = (email.return_mail || email.sender || '').replace(/^<(.+)>$/, '$1');
-      const subject   = document.getElementById('responseSubject').textContent.trim();
-      const message   = document.getElementById('responseContent').innerHTML.trim();
-
-      try {
-        if ((message || '').length > LIMITS.email_body) {
-          alert(`El cuerpo del correo supera ${LIMITS.email_body} caracteres.`);
-          return;
-        }
-
-        const res = await fetchWithAuth('/emails/send', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ "emailId": emailId, recipient, subject, message })
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          console.error('Error al enviar la respuesta:', res.status, err);
-          return;
-        }
-
-        // 1) Quitarlo igual que delete
-        const removedId = this.ids.splice(this.index, 1)[0];
-        this.cache = this.cache.filter(e => e.id !== removedId);
-
-        // 2) Ajustar índice por si lo eliminas
-        if (this.index >= this.ids.length) {
-          this.index = this.ids.length - 1;
-        }
-
-        // 3) Re-guardar en sessionStorage
-        sessionStorage.setItem('inbox_index', this.index);
-
-        // 4) Recarga toda la caché alrededor de this.index
-        if (this.ids.length > 0) {
-          await this.reloadAroundIndex();
-          this.renderCurrent();
-        } else {
-          window.location.href = '/secciones/inbox.html';
-          return;
-        }
-
-      } catch (e) {
-        console.error('Error al enviar la respuesta:', e);
+      // 2) Ajustar índice si es necesario
+      if (this.index >= this.ids.length) {
+        this.index = this.ids.length - 1;
       }
+
+      // 3) Re-guardar en sessionStorage
+      sessionStorage.setItem('inbox_index', this.index);
+
+      // 3) Si quedan correos, recarga todo alrededor de this.index
+      if (this.ids.length > 0) {
+        await this.reloadAroundIndex();
+        this.renderCurrent();
+      } else {
+        // Si no quedan, vuelve al inbox
+        window.location.href = '/secciones/inbox.html';
+      }
+
+    } catch (e) {
+      console.error('Error al borrar el email:', e);
     }
-
-    async deleteEmail() {
-      try {
-        const emailId = this.ids[this.index];
-        const res = await fetchWithAuth(`/emails/delete?email_id=${emailId}`, {
-          method: 'DELETE'
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          console.error('Error al borrar el email:', res.status, err);
-          return;
-        }
-
-        // 1) Eliminar de ids y cache
-        const removedId = this.ids.splice(this.index, 1)[0];
-        this.cache = this.cache.filter(e => e.id !== removedId);
-
-        // 2) Ajustar índice si es necesario
-        if (this.index >= this.ids.length) {
-          this.index = this.ids.length - 1;
-        }
-
-        // 3) Re-guardar en sessionStorage
-        sessionStorage.setItem('inbox_index', this.index);
-
-        // 3) Si quedan correos, recarga todo alrededor de this.index
-        if (this.ids.length > 0) {
-          await this.reloadAroundIndex();
-          this.renderCurrent();
-        } else {
-          // Si no quedan, vuelve al inbox
-          window.location.href = '/secciones/inbox.html';
-        }
-
-      } catch (e) {
-        console.error('Error al borrar el email:', e);
-      }
-    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => new EmailView());

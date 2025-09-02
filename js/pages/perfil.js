@@ -1,5 +1,5 @@
 import { initSidebar } from '/js/components/sidebar.js';
-import { fetchWithAuth } from '/js/utils/api.js';
+import { fetchWithAuth, logout } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js?v=1'; 
 
 const PLAN_LABEL = {
@@ -338,13 +338,9 @@ class UserProfile {
         // Logout
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             const ok = await this.confirmModal('¿Quieres cerrar la sesión?', {
-            okText:'Sí, salir', okClass:'btn btn-danger'
+                okText:'Sí, salir', okClass:'btn btn-danger'
             });
-            if (ok){
-            localStorage.removeItem('token');
-            localStorage.removeItem('store');
-            window.location.href = '/index.html';
-            }
+            if (ok) await logout({ showModal: false, redirectTo: "/index.html" });
         });
 
         // Mostrar/ocultar bloque de horarios
@@ -1120,9 +1116,8 @@ class UserProfile {
             try {
                 const res = await fetchWithAuth('/stores/eliminar_tienda', { method: 'DELETE' });
                 if (!res.ok) throw new Error('Error eliminando');
-                // limpieza y logout
-                localStorage.clear();
-                window.location.href = '/index.html';
+                // 🔐 cierra sesión SIN modal y avisa a otras pestañas
+                await logout({ showModal: false, redirectTo: '/index.html', broadcast: true });
             } catch (err) {
                 overlay.remove();
                 this.showMessage('No pude eliminar tu cuenta', 'error');
