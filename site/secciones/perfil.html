@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Settings</title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/layout.css" />
+    <link rel="stylesheet" href="/css/components/sidebar.css" />
+    <link rel="stylesheet" href="/css/pages/perfil.css">
+    <link rel="stylesheet" href="/vendor/fontawesome-6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="sidebarContainer"></div>
+    <div id="messageContainer" style="
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 1000;
+  "></div>
+    <div class="main-content" id="mainContent">
+        <div class="profile-container">
+            <!-- Header -->
+            <div class="profile-header">
+                <div class="header-content">
+                    <div class="user-avatar">
+                        <img alt="User Avatar" id="userAvatar">
+                        <button class="avatar-edit-btn" id="avatarEditBtn">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    <div class="user-info">
+                        <h1 class="user-name" id="displayUserName"></h1>
+                        <p class="user-email" id="displayUserEmail"></p>
+                        <div class="plan-row">
+                            <p class="user-plan" id="displayUserPlan">—</p>
+
+                            <!-- Badge de trial -->
+                            <span class="trial-badge hidden" id="trialBadge" title="">
+                                <i class="fas fa-gift"></i>
+                                <span id="trialDays">0</span> días de prueba gratis restantes
+                            </span>
+                        </div>
+                        <span class="user-status">Active</span>
+                        <button id="logoutBtn" class="logout-btn">Cerrar sesión</button>
+                    </div>
+                </div>
+                <div class="header-actions-left">
+                    <div class="stats-container">
+                        <div class="stat-card stat-used">
+                            <div class="stat-icon"><i class="fas fa-envelope-open-text"></i></div>
+                            <div class="stat-info">
+                            <div class="stat-value" id="usedEmails">0</div>
+                            <div class="stat-label">Usados</div>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-extra">
+                            <div class="stat-icon"><i class="fas fa-bolt"></i></div>
+                            <div class="stat-info">
+                            <div class="stat-value" id="extraCredits">0</div>
+                            <div class="stat-label">Extra</div>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-total">
+                            <div class="stat-icon"><i class="fas fa-infinity"></i></div>
+                            <div class="stat-info">
+                            <div class="stat-value" id="totalLimit">0</div>
+                            <div class="stat-label">Límite</div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="plans.html" class="btn-manage-plan">
+                        <i class="fas fa-cogs"></i> Gestionar plan
+                    </a>
+                </div>
+                <div class="header-actions-right">
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+                        <button class="btn btn-primary" id="saveBtn">Guardar Cambios</button>
+                    </div>
+                    <!-- <div class="profile-progress" id="profileProgress">
+                        <div class="profile-progress-bar" id="profileProgressBar" style="width:0%"></div>
+                    </div> -->
+                </div>
+                
+            </div>
+
+            <!-- Profile Content -->
+            <div class="profile-content">
+                <!-- Store Information Section -->
+                <div class="profile-section">
+                    <div class="section-header-profile">
+                        <h2>Información de la Tienda</h2>
+                        <p>Gestiona los detalles y configuraciones de tu tienda</p>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="storeName">Nombre de la Tienda *</label>
+                            <input type="text" id="storeName" class="form-input" required>
+                            <span class="form-hint">Así es como aparecerá tu tienda para los clientes</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeUrl">URL de la Tienda</label>
+                            <div class="input-group">
+                                <span class="input-prefix">https://</span>
+                                <input type="text" id="storeUrl" class="form-input" placeholder="mystore.com">
+                            </div>
+                            <span class="form-hint">URL del sitio web de tu tienda</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeDescription">Descripción de la Tienda</label>
+                            <textarea id="storeDescription" class="form-textarea" rows="3" placeholder="Cuéntale a los clientes sobre tu tienda..."></textarea>
+                            <span class="form-hint">Descripción breve de tu tienda (opcional)</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="businessCategory">Categoría del Negocio</label>
+                            <select id="businessCategory" class="form-select">
+                                <option value="" disabled selected>Selecciona una categoría</option>
+                                <option value="fashion">Moda</option>
+                                <option value="electronics">Electrónica</option>
+                                <option value="books">Libros</option>
+                                <option value="home">Hogar</option>
+                                <option value="other">Otro</option>
+                            </select>
+                            <span class="form-hint">¿En qué sector opera tu tienda?</span>
+                        </div>
+                        <div class="form-group hidden" id="businessCategoryOtherContainer">
+                            <label for="businessCategoryOther">Otra categoría</label>
+                            <input type="text" id="businessCategoryOther" class="form-input" placeholder="Escribe tu categoría">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Physical Location Section -->
+                <div class="profile-section">
+                    <div class="section-header-profile">
+                        <h2>Ubicación Física</h2>
+                        <p>Configura la presencia física de tu tienda</p>
+                    </div>
+                    
+                    <div class="location-toggle">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="hasPhysicalLocation" checked>
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">Mi tienda tiene una ubicación física</span>
+                        </label>
+                    </div>
+                    
+                    <div class="location-fields" id="locationFields">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="storeAddress">Dirección *</label>
+                                <input type="text" id="storeAddress" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storeCity">Ciudad *</label>
+                                <input type="text" id="storeCity" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storeState">Provincia *</label>
+                                <input type="text" id="storeState" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storeZip">Código Postal</label>
+                                <input type="text" id="storeZip" class="form-input" >
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storeCountry">País *</label>
+                                <select id="storeCountry" class="form-select" required>
+                                    <option value="US" selected>Estados Unidos</option>
+                                    <option value="CA">Canadá</option>
+                                    <option value="UK">Reino Unido</option>
+                                    <option value="DE">Alemania</option>
+                                    <option value="FR">Francia</option>
+                                    <option value="ES">España</option>
+                                    <option value="IT">Italia</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="JP">Japón</option>
+                                    <option value="OTHER">Otro</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storePhone">Número de Teléfono</label>
+                                <input type="tel" id="storePhone" class="form-input" placeholder="+34 612345678">
+                                <span class="form-hint">+[código país][número]</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Store Hours Section -->
+                <div class="profile-section">
+                    <div class="section-header-profile">
+                        <h2>Horario de Apertura</h2>
+                        <p>Establece el horario de funcionamiento de tu tienda</p>
+                    </div>
+                    <div class="location-toggle">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="hasOpeningHours" checked>
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">Tengo horario de apertura</span>
+                    </label>
+                    </div>
+                    <div class="hours-container" id="openingHoursFields">
+                        <div class="hours-day" data-day="monday">
+                            <div class="day-label">Lunes</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="tuesday">
+                            <div class="day-label">Martes</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="wednesday">
+                            <div class="day-label">Miércoles</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="thursday">
+                            <div class="day-label">Jueves</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="friday">
+                            <div class="day-label">Viernes</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="saturday">
+                            <div class="day-label">Sábado</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="hours-day" data-day="sunday">
+                            <div class="day-label">Domingo</div>
+                            <div class="day-controls">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="day-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+
+                                <!-- Contenedor de tramos (se rellena por JS) -->
+                                <div class="slots" data-day-slots></div>
+
+                                <button type="button" class="btn add-slot" data-action="add-slot">
+                                    <i class="fas fa-plus"></i> Añadir tramo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="profile-section">
+                    <div class="section-header-profile">
+                        <h2>Información Personal</h2>
+                        <p>Los detalles de su cuenta personal</p>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="firstName">Nombre *</label>
+                            <input type="text" id="firstName" class="form-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lastName">Apellido *</label>
+                            <input type="text" id="lastName" class="form-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="personalEmail">Correo Electrónico *</label>
+                            <input type="email" id="personalEmail" class="form-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="personalPhone">Número de Teléfono</label>
+                            <input type="tel" id="personalPhone" class="form-input" placeholder="+34 612345678">
+                            <span class="form-hint">+[código país][número]</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="timezone">Zona Horaria</label>
+                            <select id="timezone" class="form-select">
+                                <option value="UTC-8">Los Ángeles (UTC-8)</option>
+                                <option value="UTC-7">Denver (UTC-7)</option>
+                                <option value="UTC-6">Ciudad de México (UTC-6)</option>
+                                <option value="UTC-5">Nueva York (UTC-5)</option>
+                                <option value="UTC+0">Londres (UTC+0)</option>
+                                <option value="UTC+1" selected>Madrid (UTC+1)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="language">Idioma Preferido</label>
+                            <select id="language" class="form-select">
+                                <option value="en" selected>English</option>
+                                <option value="es">Español</option>
+                                <option value="fr">Français</option>
+                                <option value="de">Deutsch</option>
+                                <option value="it">Italiano</option>
+                                <option value="pt">Português</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Preferences -->
+                <div class="profile-section hidden" id="notificationSelection">
+                    <div class="section-header-profile">
+                        <h2>Preferencias de Notificación</h2>
+                        <p>Elige cómo quieres recibir actualizaciones</p>
+                    </div>
+                    
+                    <div class="notification-options">
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Notificaciones por Correo Electrónico</h4>
+                                <p>Recibe actualizaciones sobre pedidos, promociones y actividad de la cuenta</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="emailNotifications" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Notificaciones por SMS</h4>
+                                <p>Recibe mensajes de texto para actualizaciones urgentes y estado de pedidos</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="smsNotifications">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <h4>Comunicaciones de Marketing</h4>
+                                <p>Recibe ofertas promocionales y actualizaciones de marketing</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="marketingNotifications" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-footer">
+                    <button id="deleteAccountBtn" class="btn btn-danger">Eliminar cuenta</button>
+                </div>
+            </div>
+            
+
+            <!-- Success/Error Messages -->
+            <div class="message-container" id="messageContainer"></div>
+        </div>
+    </div>
+    
+
+    <!-- Hidden file input for avatar upload -->
+    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+    <script type="module" src="/js/config.js"></script>
+    <script type="module" src="/js/components/sidebar.js"></script>
+    <script type="module" src="/js/pages/perfil.js"></script>
+</body>
+</html>

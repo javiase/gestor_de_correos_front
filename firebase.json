@@ -2,7 +2,7 @@
   "hosting": [
     {
       "target": "prod",
-      "public": ".",
+      "public": "site",
       "headers": [
         {
           "source": "**",
@@ -27,7 +27,7 @@
     },
     {
       "target": "pre",
-      "public": ".",
+      "public": "site",
       "headers": [
         {
           "source": "**",
