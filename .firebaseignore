@@ -1,6 +1,8 @@
-node_modules
 **/.*          
-.github/**
+**/node_modules/**
+**/.git/**
+**/.github/**
+**/.gitignore
 *.bak
 *.old
 *.swap
