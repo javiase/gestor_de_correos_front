@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const to      = document.getElementById('toInput').value.trim();
     const subject = document.getElementById('subjectInput').value.trim();
-    const message = editor.innerHTML.trim();
+    const message = DOMPurify.sanitize(editor.innerHTML.trim());
 
     // Validación
     if (!to) {

@@ -63,13 +63,7 @@
       ],
       "redirects": [],
       "rewrites": [
-        {
-          "source": "/api/**",
-          "run": {
-            "serviceId": "api-backend",
-            "region": "europe-west1"
-          }
-        }
+        { "source": "/api/**", "run": { "serviceId": "api-backend", "region": "europe-west1" } }
       ]
     },
     {

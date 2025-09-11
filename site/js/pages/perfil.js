@@ -1,5 +1,5 @@
 import { initSidebar } from '/js/components/sidebar.js';
-import { fetchWithAuth } from '/js/utils/api.js';
+import { fetchWithAuth, logout } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js?v=1'; 
 
 const PLAN_LABEL = {
@@ -8,6 +8,37 @@ const PLAN_LABEL = {
   advanced:  "Plan Advanced",
   professional: "Plan Professional"
 };
+// Reglas por prefijo (longitudes de número nacional válidas)
+const PHONE_RULES = {
+  '1':  { name: 'NANP (US/CA)', nsn: [10] },            // US, CA
+  '34': { name: 'España',        nsn: [9]  },
+  '44': { name: 'Reino Unido',   nsn: [10] },
+  '49': { name: 'Alemania',      nsn: [10,11] },
+  '33': { name: 'Francia',       nsn: [9]  },
+  '39': { name: 'Italia',        nsn: [9,10,11] },
+  '61': { name: 'Australia',     nsn: [9]  },
+  '81': { name: 'Japón',         nsn: [9,10] }
+};
+const DEFAULT_NSN_MIN = 8, DEFAULT_NSN_MAX = 15;
+
+function findPhoneRuleByE164(e164) {
+  const digits = e164.replace(/^\+/, '');
+  const codes = Object.keys(PHONE_RULES).sort((a,b) => b.length - a.length); // longest match
+  for (const cc of codes) {
+    if (digits.startsWith(cc)) {
+      return { cc, ...PHONE_RULES[cc], rest: digits.slice(cc.length) };
+    }
+  }
+  return { cc: null, name: 'Desconocido', rest: digits, nsn: null };
+}
+
+function normalizeE164(input) {
+  // Deja un único + al inicio y solo dígitos después
+  input = input.trim();
+  const hasPlus = input.startsWith('+');
+  const digits  = input.replace(/[^\d]/g, '');
+  return (hasPlus ? '+' : '+') + digits; // forzamos siempre +
+}
 
 
 /*perfil.js */
@@ -145,20 +176,27 @@ class UserProfile {
         document.getElementById('smsNotifications').checked = this.currentData.smsNotifications;
         document.getElementById('marketingNotifications').checked = this.currentData.marketingNotifications;
         
-        const hasOpeningHours = this.currentData.storeHours || {};
-        // Store Hours
-        Object.entries(hasOpeningHours).forEach(([day, hours]) => {
-            const dayElement = document.querySelector(`[data-day="${day}"]`);
-            if (!dayElement) return; // si no existe el día, salta
+        const storeHours = this.currentData.storeHours || {};
+        document.querySelectorAll('.hours-day').forEach(dayElement => {
+            const day = dayElement.dataset.day;
+            const hours = storeHours[day] || null;
             const toggle = dayElement.querySelector('.day-toggle');
-            const timeInputs = dayElement.querySelectorAll('.time-input');
-            
-            toggle.checked = hours.open;
-            timeInputs[0].value = hours.start;
-            timeInputs[1].value = hours.end;
-            timeInputs[0].disabled = !hours.open;
-            timeInputs[1].disabled = !hours.open;
+            const isOpen = hours ? !!hours.open : false;
+            toggle.checked = isOpen;
+
+            // Normaliza a array de tramos
+            const slots = Array.isArray(hours?.slots)
+                ? hours.slots
+                : (hours && hours.start && hours.end) ? [{ start: hours.start, end: hours.end }] : [];
+
+            this.renderDaySlots(day, isOpen ? slots : []);
+            // Habilita/inhabilita inputs y botón añadir
+            dayElement.querySelectorAll('input[type="time"], button[data-action="add-slot"]').forEach(el => {
+                el.disabled = !isOpen;
+            });
+            dayElement.classList.toggle('day-closed', !isOpen);
         });
+
         const avatar = document.getElementById('userAvatar');
         if (this.currentData.picture_url) {
             avatar.src = this.currentData.picture_url;
@@ -210,7 +248,6 @@ class UserProfile {
         document.getElementById('avatarEditBtn').addEventListener('click', () => {
             document.getElementById('avatarInput').click();
         });
-        
         document.getElementById('avatarInput').addEventListener('change', (e) => {
             this.handleAvatarUpload(e);
         });
@@ -219,18 +256,70 @@ class UserProfile {
         document.getElementById('hasPhysicalLocation').addEventListener('change', () => {
             this.toggleLocationFields();
             this.markAsChanged();
-            //this.updateProfileProgress();
         });
-        
-        // Store hours toggles
-        document.querySelectorAll('.day-toggle').forEach(toggle => {
-            toggle.addEventListener('change', (e) => {
+
+        // Delegación horarios (con guard por si no existe el nodo)
+        const hoursRoot = document.getElementById('openingHoursFields');
+        if (hoursRoot) {
+            // Toggle día abierto/cerrado
+            hoursRoot.addEventListener('change', (e) => {
+            if (e.target.matches('.day-toggle')) {
                 this.handleDayToggle(e);
                 this.markAsChanged();
-                //this.updateProfileProgress();
+            }
+            });
+
+            // Añadir / quitar tramos
+            hoursRoot.addEventListener('click', (e) => {
+            const addBtn = e.target.closest('[data-action="add-slot"]');
+            const rmBtn  = e.target.closest('[data-action="remove-slot"]');
+
+            if (addBtn) {
+                const dayEl = addBtn.closest('.hours-day');
+                this.addSlot(dayEl.dataset.day);
+                this.markAsChanged();
+            }
+
+            if (rmBtn) {
+                const slotEl = rmBtn.closest('[data-slot-index]');
+                const dayEl  = rmBtn.closest('.hours-day');
+                const idx    = parseInt(slotEl.dataset.slotIndex, 10);
+                this.removeSlot(dayEl.dataset.day, idx);
+                this.markAsChanged();
+            }
+            });
+        }
+
+        // NEW — Validación en vivo de teléfonos (tienda y personal)
+        ['storePhone', 'personalPhone'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            // Solo permitir + al inicio y dígitos/espacios después (en input)
+            el.addEventListener('input', () => {
+            const cleaned = el.value.replace(/(?!^\+)[^\d\s]/g, ''); // deja + solo al inicio
+            if (cleaned !== el.value) el.value = cleaned;
+            this.clearFieldError(el);
+            }, { passive: true });
+
+            // Validación E.164 al perder foco
+            el.addEventListener('blur', () => {
+            if (!el.value.trim()) return; // si no es obligatorio y está vacío, omite
+            this._validatePhoneField(el);
             });
         });
-        
+
+        // NEW — Cambiar placeholder según país de tienda
+        const storeCountryEl = document.getElementById('storeCountry');
+        if (storeCountryEl) {
+            storeCountryEl.addEventListener('change', () => {
+            const ccMap = { US:'1', CA:'1', UK:'44', DE:'49', FR:'33', ES:'34', IT:'39', AU:'61', JP:'81' };
+            const cc = ccMap[ storeCountryEl.value ] || '';
+            const ph = document.getElementById('storePhone');
+            if (ph) ph.placeholder = cc ? `+${cc} …` : '+…';
+            });
+        }
+
         // Form inputs change detection
         const formInputs = document.querySelectorAll('.form-input, .form-textarea, .form-select, input[type="checkbox"], input[type="time"]');
         formInputs.forEach(input => {
@@ -241,29 +330,26 @@ class UserProfile {
         // Prevent accidental navigation
         window.addEventListener('beforeunload', (e) => {
             if (this.hasUnsavedChanges) {
-                e.preventDefault();
-                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
             }
         });
-        
 
-        document.getElementById('logoutBtn')
-        .addEventListener('click', async () => {
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
             const ok = await this.confirmModal('¿Quieres cerrar la sesión?', {
-                        okText:'Sí, salir', okClass:'btn btn-danger'
-                        });
-            if (ok){
-                localStorage.removeItem('token');
-                localStorage.removeItem('store');
-                window.location.href = '/index.html';
-            }
+                okText:'Sí, salir', okClass:'btn btn-danger'
+            });
+            if (ok) await logout({ showModal: false, redirectTo: "/index.html" });
         });
 
+        // Mostrar/ocultar bloque de horarios
         document.getElementById('hasOpeningHours').addEventListener('change', () => {
             this.toggleHoursFields();
             this.markAsChanged();
         });
 
+        // Other category
         document.getElementById('businessCategory').addEventListener('change', () => {
             const isOther = document.getElementById('businessCategory').value === 'other';
             document.getElementById('businessCategoryOtherContainer')
@@ -271,6 +357,7 @@ class UserProfile {
             this.markAsChanged();
         });
 
+        // Delete account
         document.getElementById('deleteAccountBtn').addEventListener('click', () => {
             this.showDeleteModal();
         });
@@ -278,17 +365,18 @@ class UserProfile {
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
-                if (e.key === 's') {
-                    e.preventDefault();
-                    this.saveChanges();
-                }
-                if (e.key === 'z' && !e.shiftKey) {
-                    e.preventDefault();
-                    this.cancelChanges();
-                }
+            if (e.key === 's') {
+                e.preventDefault();
+                this.saveChanges();
+            }
+            if (e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                this.cancelChanges();
+            }
             }
         });
     }
+
     
     setupFormValidation() {
         const requiredFields = document.querySelectorAll('[required]');
@@ -381,17 +469,17 @@ class UserProfile {
     
     handleDayToggle(event) {
         const dayElement = event.target.closest('.hours-day');
-        const timeInputs = dayElement.querySelectorAll('.time-input');
         const isOpen = event.target.checked;
-        
-        timeInputs.forEach(input => {
-            input.disabled = !isOpen;
-            if (!isOpen) {
-                input.style.opacity = '0.5';
-            } else {
-                input.style.opacity = '1';
-            }
+
+        dayElement.querySelectorAll('input[type="time"]').forEach(inp => {
+            inp.disabled = !isOpen;
+            inp.style.opacity = isOpen ? '1' : '0.5';
         });
+
+        const addBtn = dayElement.querySelector('[data-action="add-slot"]');
+        if (addBtn) addBtn.disabled = !isOpen;
+
+        dayElement.classList.toggle('day-closed', !isOpen);
     }
     
     markAsChanged() {
@@ -425,7 +513,278 @@ class UserProfile {
         extraEl.textContent = extra;
         totalEl.textContent = limit;
 
+        // — Badge de días de prueba —
+        const badgeEl  = document.getElementById('trialBadge');
+        const daysEl   = document.getElementById('trialDays');
+
+        const daysLeft = this.getTrialDaysLeft(this.currentData);
+        if (daysLeft > 0) {
+        daysEl.textContent = String(daysLeft);
+        badgeEl.classList.remove('hidden');
+
+        const trialEnd = this.getTrialEndDate(this.currentData);
+        if (trialEnd) {
+            // Tooltip: cuándo termina exactamente (hora local)
+            badgeEl.title = `Termina el ${trialEnd.toLocaleString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'Europe/Madrid'
+            })}`;
+        } else {
+            badgeEl.title = '';
+        }
+        } else {
+            badgeEl.classList.add('hidden');
+            badgeEl.title = '';
+        }
+
     }
+
+    getTrialDaysLeft(data) {
+        // Solo calculamos a partir de trial_end (si no existe, no hay trial)
+        const end = this.getTrialEndDate(data);
+        if (!end) return 0;
+
+        const diffMs = end.getTime() - Date.now();
+        if (diffMs <= 0) return 0;
+
+        // UX: cuenta cualquier fracción como 1 día restante
+        return Math.max(0, Math.ceil(diffMs / 86400000));
+    }
+
+    getTrialEndDate(data) {
+        // Tu backend solo envía trial_end si está en trial
+        return this._parseDate(data?.trial_end || null);
+    }
+
+    _parseDate(value) {
+        if (!value) return null;
+        // Soporta ISO string o epoch (ms / s)
+        if (typeof value === 'number') {
+            // Stripe suele dar segundos
+            const ms = value < 1e12 ? value * 1000 : value;
+            const d = new Date(ms);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        if (typeof value === 'string') {
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        return null;
+    }
+
+    _validatePhoneField(inputEl) {
+        const raw = inputEl.value.trim();
+        const e164 = normalizeE164(raw);
+
+        if (!/^\+\d{8,16}$/.test(e164)) {
+            this.showFieldError(inputEl, 'Usa formato internacional: +código y solo dígitos (8–16 en total).');
+            return false;
+        }
+
+        const { cc, nsn, rest } = findPhoneRuleByE164(e164);
+        if (nsn && !nsn.includes(rest.length)) {
+            this.showFieldError(inputEl, `Longitud inválida para +${cc}. Debe tener ${nsn.join(' o ')} dígitos tras el prefijo.`);
+            return false;
+        }
+
+        if (!nsn) {
+            // País no mapeado: valida rango genérico 8–15 para el número nacional
+            if (rest.length < DEFAULT_NSN_MIN || rest.length > DEFAULT_NSN_MAX) {
+            this.showFieldError(inputEl, `Número muy corto/largo. Usa entre ${DEFAULT_NSN_MIN} y ${DEFAULT_NSN_MAX} dígitos tras el prefijo.`);
+            return false;
+            }
+        }
+
+        // Normaliza visualmente a E.164 compacto (sin espacios)
+        inputEl.value = `+${cc ? cc : ''}${rest}`;
+        this.clearFieldError(inputEl);
+        return true;
+    }
+
+    _validatePhones() {
+        const fields = [
+            { id: 'storePhone',    label: 'Número de Teléfono (tienda)'   },
+            { id: 'personalPhone', label: 'Número de Teléfono (personal)' }
+        ];
+        let ok = true;
+        for (const f of fields) {
+            const el = document.getElementById(f.id);
+            if (!el) continue;
+            const val = el.value.trim();
+            if (!val) continue; // si no es obligatorio, saltamos
+            if (!this._validatePhoneField(el)) ok = false;
+        }
+        return ok;
+    }
+
+
+    // Configurable: número máximo de tramos por día
+    MAX_SLOTS_PER_DAY = 3;
+
+    renderDaySlots(day, slots = []) {
+        const dayElement = document.querySelector(`.hours-day[data-day="${day}"]`);
+        if (!dayElement) return;
+        const container = dayElement.querySelector('[data-day-slots]');
+        if (!container) return;
+
+        container.innerHTML = '';
+        // Si no hay tramos pero el día está abierto, sugiere uno
+        if (slots.length === 0 && dayElement.querySelector('.day-toggle').checked) {
+            slots = this._suggestDefaultSlots(day);
+        }
+
+        slots.forEach((slot, idx) => {
+            container.appendChild(this._createSlotEl(day, slot, idx));
+        });
+
+        // Deshabilita añadir si se alcanzó el máximo
+        const addBtn = dayElement.querySelector('[data-action="add-slot"]');
+        if (addBtn) addBtn.disabled = (slots.length >= this.MAX_SLOTS_PER_DAY) || !dayElement.querySelector('.day-toggle').checked;
+    }
+
+    _createSlotEl(day, slot, idx) {
+        const el = document.createElement('div');
+        el.className = 'slot';
+        el.dataset.slotIndex = String(idx);
+        el.setAttribute('data-slot-index', String(idx)); // para query robusta
+
+        el.innerHTML = `
+            <input type="time" class="time-input" data-role="start" value="${slot.start || '09:00'}">
+            <span class="time-separator">a</span>
+            <input type="time" class="time-input" data-role="end"   value="${slot.end   || '17:00'}">
+            <button type="button" class="remove-slot" data-action="remove-slot" title="Eliminar tramo">
+            <i class="fas fa-times"></i>
+            </button>
+        `;
+        return el;
+    }
+
+    addSlot(day) {
+        const dayElement = document.querySelector(`.hours-day[data-day="${day}"]`);
+        if (!dayElement) return;
+        const container = dayElement.querySelector('[data-day-slots]');
+        const curr = Array.from(container.querySelectorAll('.slot')).length;
+        if (curr >= this.MAX_SLOTS_PER_DAY) return;
+
+        // Sugerir siguiente tramo por defecto
+        const suggestion = this._nextSlotSuggestion(day, container);
+        container.appendChild(this._createSlotEl(day, suggestion, curr));
+
+        // Re-evaluar botón añadir
+        const addBtn = dayElement.querySelector('[data-action="add-slot"]');
+        if (addBtn) addBtn.disabled = (curr + 1 >= this.MAX_SLOTS_PER_DAY);
+    }
+
+    removeSlot(day, idx) {
+        const dayElement = document.querySelector(`.hours-day[data-day="${day}"]`);
+        if (!dayElement) return;
+        const container = dayElement.querySelector('[data-day-slots]');
+        const slotEl = container.querySelector(`[data-slot-index="${idx}"]`);
+        if (!slotEl) return;
+        slotEl.remove();
+
+        // Reindexar
+        container.querySelectorAll('.slot').forEach((s, i) => {
+            s.dataset.slotIndex = String(i);
+        });
+
+        const addBtn = dayElement.querySelector('[data-action="add-slot"]');
+        if (addBtn) addBtn.disabled = false;
+    }
+
+    // Sugerencias: primer día partido típico ES
+    _suggestDefaultSlots(day) {
+        // Puedes personalizar por día si quieres
+        return [
+            { start: '09:00', end: '13:30' },
+            { start: '16:00', end: '19:00' },
+        ];
+    }
+
+    _nextSlotSuggestion(day, container) {
+        const slots = Array.from(container.querySelectorAll('.slot')).map(s => ({
+            start: s.querySelector('[data-role="start"]').value,
+            end:   s.querySelector('[data-role="end"]').value,
+        }));
+        if (slots.length === 0) return { start: '09:00', end: '13:30' };
+        if (slots.length === 1) {
+            // Sugerir tarde si solo hay mañana
+            return { start: '16:00', end: '19:00' };
+        }
+        // A partir de ahí, sugiere a continuación de la última
+        const last = slots[slots.length - 1];
+        const start = last.end;
+        const end   = this._addMinutes(start, 120); // tramo de 2h por defecto
+        return { start, end };
+    }
+
+    _addMinutes(hhmm, minutes) {
+        const [h, m] = hhmm.split(':').map(Number);
+        const base = new Date(0,0,1,h,m,0);
+        const d2 = new Date(base.getTime() + minutes*60000);
+        const pad = v => String(v).padStart(2,'0');
+        return `${pad(d2.getHours())}:${pad(d2.getMinutes())}`;
+    }
+
+    _validateOpeningHours() {
+        let ok = true;
+        const errors = [];
+
+        document.querySelectorAll('.hours-day').forEach(dayElement => {
+            const day    = dayElement.dataset.day;
+            const open   = dayElement.querySelector('.day-toggle')?.checked;
+            if (!open) return;
+
+            // Lee tramos
+            const slots = Array.from(dayElement.querySelectorAll('.slot')).map(slotEl => {
+                const s = slotEl.querySelector('[data-role="start"]').value;
+                const e = slotEl.querySelector('[data-role="end"]').value;
+                return { start: s, end: e };
+            });
+
+            // Formato y orden
+            const toMin = (hhmm) => {
+                const [h,m] = hhmm.split(':').map(Number);
+                if (Number.isNaN(h) || Number.isNaN(m)) return NaN;
+                    return h*60 + m;
+            };
+
+            // Validación básica: start < end
+            for (const {start, end} of slots) {
+                const s = toMin(start), e = toMin(end);
+                if (!(s < e)) {
+                    ok = false;
+                    errors.push(`"${day}": un tramo tiene inicio >= fin (${start} - ${end}).`);
+                    break;
+                }
+            }
+            if (!ok) return;
+
+            // Sin solapes
+            const sorted = slots
+            .map(x => ({...x, s: toMin(x.start), e: toMin(x.end)}))
+            .sort((a,b) => a.s - b.s);
+
+            for (let i=1; i<sorted.length; i++) {
+                if (sorted[i].s < sorted[i-1].e) {
+                    ok = false;
+                    errors.push(`"${day}": tramos solapados (${sorted[i-1].start}-${sorted[i-1].end} y ${sorted[i].start}-${sorted[i].end}).`);
+                    break;
+                }
+            }
+        });
+
+        if (!ok) {
+            this.showMessage(`Revisa horarios: ${errors.join(' ')}`, 'error');
+        }
+        return ok;
+        }
+
     
     collectFormData() {
         const formData = {
@@ -460,18 +819,24 @@ class UserProfile {
             storeHours: {}
         };
         
-        // Collect store hours
-        if ( document.getElementById('hasOpeningHours').checked ) {
+        // Collect store hours (múltiples tramos)
+        if (document.getElementById('hasOpeningHours').checked) {
             formData.storeHours = {};
             document.querySelectorAll('.hours-day').forEach(dayElement => {
-            const day        = dayElement.dataset.day;
-            const toggle     = dayElement.querySelector('.day-toggle');
-            const timeInputs = dayElement.querySelectorAll('.time-input');
-            formData.storeHours[day] = {
-                open:  toggle.checked,
-                start: timeInputs[0].value,
-                end:   timeInputs[1].value
-            };
+                const day    = dayElement.dataset.day;
+                const toggle = dayElement.querySelector('.day-toggle');
+
+                const slots = [];
+                dayElement.querySelectorAll('.slot').forEach(slotEl => {
+                const start = slotEl.querySelector('input[data-role="start"]').value;
+                const end   = slotEl.querySelector('input[data-role="end"]').value;
+                if (start && end) slots.push({ start, end });
+                });
+
+                formData.storeHours[day] = {
+                open: toggle.checked,
+                slots: toggle.checked ? slots : []
+                };
             });
         } else {
             formData.storeHours = {};
@@ -518,6 +883,19 @@ class UserProfile {
             this.showMessage('Please fix the errors before saving', 'error');
             return;
         }
+        // Validación de teléfonos antes de activar loading
+        if (!this._validatePhones()) {
+            this.showMessage('Revisa los números de teléfono en formato internacional.', 'error');
+            return;
+        }
+
+        // Validación de horarios antes de guardar
+        if (!this._validateOpeningHours()) {
+            saveBtn.innerHTML = originalText; 
+            saveBtn.disabled = false;
+            return;
+        }
+
         
         const saveBtn = document.getElementById('saveBtn');
         const originalText = saveBtn.innerHTML;
@@ -738,9 +1116,8 @@ class UserProfile {
             try {
                 const res = await fetchWithAuth('/stores/eliminar_tienda', { method: 'DELETE' });
                 if (!res.ok) throw new Error('Error eliminando');
-                // limpieza y logout
-                localStorage.clear();
-                window.location.href = '/index.html';
+                // 🔐 cierra sesión SIN modal y avisa a otras pestañas
+                await logout({ showModal: false, redirectTo: '/index.html', broadcast: true });
             } catch (err) {
                 overlay.remove();
                 this.showMessage('No pude eliminar tu cuenta', 'error');

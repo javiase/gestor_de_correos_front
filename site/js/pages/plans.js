@@ -89,7 +89,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
   
-    const token = localStorage.getItem("token");
     const loadingEl = document.getElementById("plans-loading");
     const gridEl    = document.getElementById("pricing-grid");
     const pricingEl = document.getElementById('pricing');

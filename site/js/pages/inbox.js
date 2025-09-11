@@ -1,6 +1,6 @@
 // js/pages/inbox.js
 import { initSidebar } from '/js/components/sidebar.js';
-import { fetchWithAuth } from '/js/utils/api.js';
+import { fetchWithAuth, getToken } from '/js/utils/api.js';
 
 class EmailInbox {
   constructor() {
@@ -290,6 +290,35 @@ class EmailInbox {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// inbox.js
+document.addEventListener('DOMContentLoaded', async () => {
+  // Espera a que config haya terminado su setup
+  if (window.configReady) {
+    try { await window.configReady; } catch(_) {}
+  }
+
+  // Si no hay token, escucha un pelín por si acaba de llegar
+  let tk = getToken();
+  if (!tk) {
+    await new Promise(resolve => {
+      const to = setTimeout(resolve, 3000); // hasta 3s
+      const onReady = () => { clearTimeout(to); resolve(); };
+      window.addEventListener("auth-token-ready", onReady, { once: true });
+    });
+    tk = getToken();
+  }
+
+  if (!tk) {
+    // sigue sin token → al login
+    window.location.replace("/index.html");
+    return;
+  }
+
+  // Ya tenemos token y (en breve) appUserPromise
+  if (window.appUserPromise) {
+    try { await window.appUserPromise; } catch(_) {}
+  }
+
   new EmailInbox();
 });
+

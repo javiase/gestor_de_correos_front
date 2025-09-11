@@ -99,6 +99,39 @@ body {
   margin-top:0.8vh;
   margin-bottom: 0.8vh;
 }
+
+/* Fila de plan + badge de trial */
+.plan-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8vh;
+  flex-wrap: wrap;
+}
+
+/* Badge verde “días de prueba” */
+.trial-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6vh;
+  background: #10b981; /* mismo verde de success */
+  color: #0b1b13;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 1.35vh;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid rgba(0,0,0,.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+
+.trial-badge i {
+  font-size: 1.4vh;
+}
+
+.trial-badge.hidden {
+  display: none !important;
+}
+
 .user-status {
     background: #10b981;
     color: white;
@@ -412,6 +445,17 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex: 1 1 auto;      /* ocupa el resto del ancho disponible */
+    flex-wrap: wrap;      /* permite saltar de línea si no cabe */
+}
+
+.day-controls .slots {
+    flex: 1 1 32vh;     /* crece y puede bajar a segunda línea */
+    min-width: 22vh;    /* evita que todo aplaste al toggle */
+}
+.day-controls .add-slot {
+    flex: 0 0 auto;      /* no intentes ocupar más ni encogerte raro */
+    white-space: nowrap; /* que no se parta el texto del botón */
 }
 
 .time-input {
@@ -434,12 +478,54 @@ body {
     font-size: 14px;
 }
 
+/* Tramos de horario partido */
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slot .time-input {
+  width: 120px; /* un poco más ancho para comodidad */
+}
+
+.slot .remove-slot {
+  background: transparent;
+  border: 1px solid #444;
+  color: #ccc;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.slot .remove-slot:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  border-color: #666;
+}
+
+.hours-day.day-closed .slots,
+.hours-day.day-closed .add-slot {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 /* Toggle Switch */
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 48px;
-    height: 24px;
+    width: 4.8vh;
+    height: 2.4vh;
+    flex: 0 0 4.8vh;
+    min-width: 4.8vh;
 }
 
 .toggle-switch input {
