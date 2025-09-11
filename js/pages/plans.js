@@ -1,5 +1,5 @@
 // plans.js
-import { fetchWithAuth, logout, API_BASE } from '/js/utils/api.js';
+import { fetchWithAuth, logout, API_BASE, getToken} from '/js/utils/api.js';
 
 // justo después de imports, antes de DOMContentLoaded:
 let notification;
@@ -26,15 +26,35 @@ function showNotification(msg, type = 'success', duration = 2000) {
 
 initNotification();
 document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        await window.appUserPromise;
-    } catch (err) {
-        // si falla (token inválido, expirado, etc) forzamos logout 
-        return logout();
+    // Espera a que config acabe su setup
+    if (window.configReady) {
+        try { await window.configReady; } catch(_) {}
     }
+
+    // Si no hay token, espera breve al evento del login
+    let tk = getToken();
+    if (!tk) {
+        await new Promise(resolve => {
+            const to = setTimeout(resolve, 3000); // hasta 3s
+            const onReady = () => { clearTimeout(to); resolve(); };
+            window.addEventListener("auth-token-ready", onReady, { once: true });
+        });
+        tk = getToken();
+    }
+    if (!tk) { window.location.replace("/index.html"); return; }
+
+    // Ya con token, espera a appUser
+    if (window.appUserPromise) {
+        try { await window.appUserPromise; } catch(_) {}
+    }
+
+    // Coge datos del usuario (del store cacheado o de window.appUser)
     const store = localStorage.getItem("store");
-    const data = store ? JSON.parse(store) : null;
-    if (!data) return;
+    const data  = store ? JSON.parse(store) : (window.appUser || null);
+    if (!data) { 
+    showNotification("No pudimos cargar tus planes", "error", 4000); 
+    return; 
+    }
 
     const isActive  = data.active;   // true / false
     const currentPlan = data.plan; // null, "free", "starter", "advanced", "professional"
@@ -45,34 +65,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // ➊ — Ajustar botón de la derecha (“Cerrar sesión” → “Volver al perfil” o ocultar)
     const logoutLink = document.getElementById('logoutBtn');
+    if (logoutLink) {
+    logoutLink.removeAttribute('onclick');
     if (isActive) {
         logoutLink.textContent = 'Volver al perfil';
-        logoutLink.removeAttribute('onclick');
-        logoutLink.addEventListener('click', () => {
-            window.location.href = '/secciones/perfil.html';
-        });
+        logoutLink.addEventListener('click', () => { window.location.href = '/secciones/perfil.html'; });
     } else {
         logoutLink.textContent = 'Volver al inicio';
-        logoutLink.removeAttribute('onclick');
-        logoutLink.addEventListener('click', () => {
-            window.location.href = '/index.html';
-        });
+        logoutLink.addEventListener('click', () => { window.location.href = '/index.html'; });
+    }
     }
     
     // ➋ — Hacer clic en el logo (“Respondize”) condicional
     const logo = document.querySelector('.logo-text');
-    logo.style.cursor = 'pointer';
-    logo.addEventListener('click', () => {
-        if (isActive && currentPlan !== 'free') {
+    if (logo) {
+        logo.style.cursor = 'pointer';
+        logo.addEventListener('click', () => {
+            if (isActive) {
             window.location.href = '/secciones/inbox.html';
-        } else {
+            } else {
             window.location.href = '/index.html';
-        }
-    });
+            }
+        });
+    }
   
     const token = localStorage.getItem("token");
     const loadingEl = document.getElementById("plans-loading");
     const gridEl    = document.getElementById("pricing-grid");
+    const pricingEl = document.getElementById('pricing');
 
     const pendingPlan             = data.pendingPlan;            // puede ser undefined o "free"/"starter"/"advanced", "professional"
     const pendingPlanEffective    = data.pendingPlanEffective || data.period_end;
@@ -82,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         notice.className = 'plan-notice';
         notice.textContent = `⚠️ Los cambios de plan se harán efectivos al final del ciclo de facturación, el ${new Date(pendingPlanEffective).toLocaleDateString()} ⚠️`;
         // Inserta antes del grid
-        document.getElementById('pricing').prepend(notice);
+        if (pricingEl) pricingEl.prepend(notice);
     }
     if (isActive) {
         const cardToHide = document.querySelector(`.pricing-card.${currentPlan}`);
