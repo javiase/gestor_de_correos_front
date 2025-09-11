@@ -248,6 +248,12 @@ body {
   background-color: #555;
 }
 
+.faq-block.editing .faq-question-text { 
+  background-color: #3a3a3a;
+  padding: 0.3em 0.5em; border-radius: 
+  4px; cursor: text;
+}
+
 /* Ocultar elemento */
 .hidden {
   display: none !important;
