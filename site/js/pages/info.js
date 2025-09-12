@@ -176,7 +176,7 @@ import { LIMITS } from '/js/config.js?v=1';
                     newBlock.innerHTML = `
                       <div>
                         <p class="faq-question-text" contenteditable="true" style="width: fit-content;">Nueva pregunta</p>
-                        <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Guardar</button>
+                        <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
                         <button class="delete-faq-btn edit-title-btn" style="position:absolute; top:0; right:0; background-color:#b93030;">Eliminar</button>
                       </div>
                       <textarea class="faq-answer" placeholder="Escribe tu respuesta aquí..." style="margin-top: 2vh; min-height: 1vh; resize: none; overflow-y: hidden; line-height: 1; font-size: 1.5vh;"></textarea>
@@ -307,7 +307,7 @@ import { LIMITS } from '/js/config.js?v=1';
                             <div class="faq-block" style="position: relative; margin-bottom: 3vh; padding-left: 1vh;">
                               <div>
                                 <p class="faq-question-text" style="width: fit-content;" contentEditable="true">Escribe aqui el texto</p>
-                                <button class="edit-faq-btn edit-title-btn" style="position: absolute; top: 0; right: 10vh;">Guardar</button>
+                                <button class="edit-faq-btn edit-title-btn" style="position: absolute; top: 0; right: 10vh;">Editar</button>
                                 <button class="delete-faq-btn edit-title-btn" style="position: absolute; top: 0; right: 0; background-color: #b93030;">Eliminar</button>
                               </div>
                               <textarea class="faq-answer"
@@ -340,7 +340,7 @@ import { LIMITS } from '/js/config.js?v=1';
                         newBlock.innerHTML = `
                           <div>
                             <p class="faq-question-text" contenteditable="true" style="width: fit-content;">Nueva pregunta</p>
-                            <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Guardar</button>
+                            <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
                             <button class="delete-faq-btn edit-title-btn" style="position:absolute; top:0; right:0; background-color:#b93030;">Eliminar</button>
                           </div>
                           <textarea class="faq-answer" placeholder="Escribe tu respuesta aquí..." style="margin-top: 2vh; min-height: 1vh; resize: none; overflow-y: hidden; line-height: 1; font-size: 1.5vh;"></textarea>
@@ -411,14 +411,9 @@ import { LIMITS } from '/js/config.js?v=1';
     if (btn.matches('.edit-faq-btn')) {
       const faqBlock = btn.closest('.faq-block');
       const questionP = faqBlock.querySelector('.faq-question-text');
-
-      if (questionP.isContentEditable) {
-        questionP.contentEditable = "false";
-        btn.textContent = "Editar";
-      } else {
-        questionP.contentEditable = "true";
-        btn.textContent = "Guardar";
-      }
+      const editing = questionP.isContentEditable;
+      questionP.contentEditable = editing ? "false" : "true";
+      faqBlock.classList.toggle('editing', !editing);
     }
 
     // ELIMINAR FAQ
@@ -457,7 +452,7 @@ import { LIMITS } from '/js/config.js?v=1';
     newBlock.innerHTML = `
       <div>
         <p class="faq-question-text" contenteditable="true" style="width: fit-content;">Nueva pregunta</p>
-        <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Guardar</button>
+        <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
         <button class="delete-faq-btn edit-title-btn" style="position:absolute; top:0; right:0; background-color:#b93030;">Eliminar</button>
       </div>
       <textarea class="faq-answer" placeholder="Escribe tu respuesta aquí..." style="margin-top: 2vh; min-height: 1vh; resize: none; overflow-y: hidden; line-height: 1; font-size: 1.5vh;"></textarea>
@@ -633,7 +628,7 @@ import { LIMITS } from '/js/config.js?v=1';
     resultContainer.classList.add('result-container');
     // Insertar el resultContainer debajo del título
     const cardTitle = card.querySelector('h2');
-    cardTitle.insertAdjacentElement('afterend', resultContainer);
+    (card.querySelector('.expand-content') || card).appendChild(resultContainer);
 
     sendBtn.addEventListener('click', async () => {
       console.log("Procesando FAQ");
@@ -669,7 +664,6 @@ import { LIMITS } from '/js/config.js?v=1';
       try {
         // Ocultar los elementos que el usuario no debe modificar durante el envío
         const expandContent = card.querySelector('.expand-content');
-        if (expandContent) expandContent.classList.add('hidden');
         if (arrow) arrow.classList.add('hidden');
         sendBtn.classList.add('hidden');
 
@@ -698,12 +692,23 @@ import { LIMITS } from '/js/config.js?v=1';
         const data = await response.json();
 
         if (data.status === "complete") {
+          const exp = card.querySelector('.expand-content');
+          if (exp) {
+            [...exp.children].forEach(ch => {
+              if (!ch.classList.contains('result-container')) ch.style.display = 'none';
+            });
+          }
+
+          // Pinta el mensaje de éxito
+          resultContainer.innerHTML = "";
           const successMsg = document.createElement('p');
           successMsg.textContent = "¡Felicidades, ya se ha guardado tu informacion! 🎉";
           successMsg.style.textAlign = 'center';
           successMsg.style.fontWeight = 'bold';
           successMsg.style.fontSize = '2em';
           resultContainer.appendChild(successMsg);
+
+          // Muestra la flecha para poder cerrar
           if (arrow) arrow.classList.remove('hidden');
         } else {
           alert("Error al guardar: " + (data.error || "Respuesta inesperada"));
@@ -711,12 +716,9 @@ import { LIMITS } from '/js/config.js?v=1';
       } catch (error) {
         console.error(error);
         alert("Ocurrió un error al enviar la política: " + error.message);
-        expandContent.classList.remove('hidden');
+        
         sendBtn.classList.remove('hidden');
         if (arrow) arrow.classList.remove('hidden');
-      } finally {
-        // 4) Ocultar el spinner pase lo que pase
-        spinner.classList.add('hidden');
       }
     });
   }

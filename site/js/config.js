@@ -80,7 +80,12 @@ window.configReady = (async function initConfig() {
       window.appUser = data;
       localStorage.setItem("store", JSON.stringify(data));
       return data;
-    })().catch(err => {
+    })()
+    .then((data) => {
+      try { window.dispatchEvent(new CustomEvent("app-user-ready", { detail: data })); } catch(_) {}
+      return data;
+    })
+    .catch(err => {
       console.error("❌ fallo en stores/me:", err);
       logout();
     });

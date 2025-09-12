@@ -206,6 +206,7 @@ body {
 
 .card.expanded .expand-content {
   display: block;
+  padding-top: 2vh;
   width: 100%;
 }
 
@@ -266,7 +267,7 @@ body {
   padding: 1rem 2rem;
   border-radius: 1.25rem;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   flex-direction: column;
   margin-top: 5vh;
 }
