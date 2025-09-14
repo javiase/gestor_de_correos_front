@@ -183,7 +183,6 @@ enforceProfileGate();
                       <div>
                         <p class="faq-question-text" contenteditable="true" style="width: fit-content;">Nueva pregunta</p>
                         <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
-                        <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
                         <button class="delete-faq-btn edit-title-btn" style="position:absolute; top:0; right:0; background-color:#b93030;">Eliminar</button>
                       </div>
                       <textarea class="faq-answer" placeholder="Escribe tu respuesta aquí..." style="margin-top: 2vh; min-height: 1vh; resize: none; overflow-y: hidden; line-height: 1; font-size: 1.5vh;"></textarea>
@@ -315,7 +314,6 @@ enforceProfileGate();
                               <div>
                                 <p class="faq-question-text" style="width: fit-content;" contentEditable="true">Escribe aqui el texto</p>
                                 <button class="edit-faq-btn edit-title-btn" style="position: absolute; top: 0; right: 10vh;">Editar</button>
-                                <button class="edit-faq-btn edit-title-btn" style="position: absolute; top: 0; right: 10vh;">Editar</button>
                                 <button class="delete-faq-btn edit-title-btn" style="position: absolute; top: 0; right: 0; background-color: #b93030;">Eliminar</button>
                               </div>
                               <textarea class="faq-answer"
@@ -348,7 +346,6 @@ enforceProfileGate();
                         newBlock.innerHTML = `
                           <div>
                             <p class="faq-question-text" contenteditable="true" style="width: fit-content;">Nueva pregunta</p>
-                            <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
                             <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
                             <button class="delete-faq-btn edit-title-btn" style="position:absolute; top:0; right:0; background-color:#b93030;">Eliminar</button>
                           </div>
@@ -423,9 +420,6 @@ enforceProfileGate();
       const editing = questionP.isContentEditable;
       questionP.contentEditable = editing ? "false" : "true";
       faqBlock.classList.toggle('editing', !editing);
-      const editing = questionP.isContentEditable;
-      questionP.contentEditable = editing ? "false" : "true";
-      faqBlock.classList.toggle('editing', !editing);
     }
 
     // ELIMINAR FAQ
@@ -463,7 +457,6 @@ enforceProfileGate();
     newBlock.innerHTML = `
       <div>
         <p class="faq-question-text" contenteditable="true" style="width: fit-content;">Nueva pregunta</p>
-        <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
         <button class="edit-faq-btn edit-title-btn" style="position:absolute; top:0; right:10vh;">Editar</button>
         <button class="delete-faq-btn edit-title-btn" style="position:absolute; top:0; right:0; background-color:#b93030;">Eliminar</button>
       </div>
@@ -641,7 +634,6 @@ enforceProfileGate();
     // Insertar el resultContainer debajo del título
     const cardTitle = card.querySelector('h2');
     (card.querySelector('.expand-content') || card).appendChild(resultContainer);
-    (card.querySelector('.expand-content') || card).appendChild(resultContainer);
 
     sendBtn.addEventListener('click', async () => {
       console.log("Procesando FAQ");
@@ -744,23 +736,12 @@ enforceProfileGate();
 
           // Pinta el mensaje de éxito
           resultContainer.innerHTML = "";
-          const exp = card.querySelector('.expand-content');
-          if (exp) {
-            [...exp.children].forEach(ch => {
-              if (!ch.classList.contains('result-container')) ch.style.display = 'none';
-            });
-          }
-
-          // Pinta el mensaje de éxito
-          resultContainer.innerHTML = "";
           const successMsg = document.createElement('p');
           successMsg.textContent = "¡Felicidades, ya se ha guardado tu informacion! 🎉";
           successMsg.style.textAlign = 'center';
           successMsg.style.fontWeight = 'bold';
           successMsg.style.fontSize = '2em';
           resultContainer.appendChild(successMsg);
-
-          // Muestra la flecha para poder cerrar
 
           // Muestra la flecha para poder cerrar
           if (arrow) arrow.classList.remove('hidden');
