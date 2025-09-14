@@ -64,6 +64,79 @@
     max-width: 100vh;
 }
 
+.gmail-frame { border-radius: 10px; background: transparent; }
+
+/* añade a tu CSS */
+.attachments {
+  margin-top: 1.2vh;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8vh;
+}
+.attachment-chip{
+  display:inline-flex; align-items:center; gap:0.6vh;
+  padding:0.6vh 1vh; border-radius:1.2vh;
+  text-decoration:none; color:inherit; background:rgba(255,255,255,.06);
+  max-width:16vh; /* limita el ancho */
+  font: inherit;   /* hereda tipografía del panel */
+}
+.attachment-chip:hover{ opacity:.9 }
+
+.attachment-chip .att-icon{
+  width:5vh; height:5vh; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
+}
+.attachment-chip .att-icon img{
+  width:100%; height:100%; object-fit:contain;
+  image-rendering:-webkit-optimize-contrast; /* nítido en PNG */
+}
+.attachment-chip .att-name{
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+/* Grid contenedor de adjuntos */
+.attachments-grid{
+  display:flex; flex-wrap:wrap; gap:0.8vh; margin-top:1vh;
+}
+
+/* Tarjeta */
+.att-card{
+  width:9.6vh; height:9.6vh;
+  padding:1vh;
+  border-radius:1.2vh;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-decoration:none;
+  color:inherit;
+  box-shadow:0 1px 2px rgba(0,0,0,.12);
+  background:rgba(0,0,0,.04);
+  transition:.15s transform ease, .15s box-shadow ease;
+}
+.att-card:hover{ transform:translateY(-.1vh); box-shadow:0 .2vh .6vh rgba(0,0,0,.18); }
+
+@media (prefers-color-scheme:dark){
+  .att-card{ background:rgba(255,255,255,.06); }
+}
+
+/* Icono + nombre */
+.att-icon svg{ width:3.6vh; height:3.6vh; display:block; }
+.att-name{
+  margin-top:0.8vh; font-size:1.2vh; text-align:center;
+  width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* Colores por tipo (currentColor) */
+.att-card.kind-pdf   { color:#d93025; }
+.att-card.kind-doc   { color:#1a73e8; }
+.att-card.kind-xls   { color:#0b8043; }
+.att-card.kind-ppt   { color:#e37400; }
+.att-card.kind-img   { color:#f29900; }
+.att-card.kind-zip   { color:#5f6368; }
+.att-card.kind-audio { color:#a142f4; }
+.att-card.kind-video { color:#34a853; }
+.att-card.kind-txt   { color:#5f6368; }
+
+
+.attachment-chip:hover { background: rgba(255,255,255,.06); }
+
 .mail-container.bot{
     display: flex;
     flex-direction: column;

@@ -1,6 +1,12 @@
 // js/pages/redactar.js
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth } from '/js/utils/api.js';
+import { enforceProfileGate } from '/js/utils/profile-gate.js';
+import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { notify } from '/js/utils/notify.js';
+
+enforceSessionGate();
+enforceProfileGate();
 
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar('#sidebarContainer');
@@ -8,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const form       = document.getElementById('composeForm');
   const editor     = document.getElementById('messageInput');
   const toolbarBtns= document.querySelectorAll('.toolbar [data-cmd]');
-  const notification = initNotification();
 
   // Función para aplicar formato al texto seleccionado
   function applyFormat(cmd, value) {
@@ -61,11 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return n;
   }
-  function showNotification(msg, duration = 2000) {
-    notification.textContent = msg;
-    notification.style.display = 'block';
-    setTimeout(() => notification.style.display = 'none', duration);
-  }
 
   // Botones de la toolbar
   toolbarBtns.forEach(btn => {
@@ -86,10 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Validación
     if (!to) {
-      return showNotification('El destinatario es obligatorio');
+      return notify.error('El destinatario es obligatorio');
     }
     if (!message) {
-      return showNotification('El cuerpo del mensaje no puede estar vacío');
+      return notify.error('El cuerpo del mensaje no puede estar vacío');
     }
 
     try {
@@ -101,16 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (!res.ok) {
         console.error('422 Validation error:', data);
-        return showNotification(
-          data.detail || data.message || 'Error al enviar el correo ❌'
-        );
+        return notify.error('Error al enviar el correo ❌');
       }
-      showNotification('Correo enviado con éxito ✅');
+      notify.success('Correo enviado con éxito ✅');
       form.reset();
       editor.innerHTML = '';
     } catch (err) {
       console.error('Error inesperado en envío:', err);
-      showNotification('Error al enviar el correo ❌');
+      notify.error('Error al enviar el correo ❌');
     }
   });
 });

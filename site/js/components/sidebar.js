@@ -1,4 +1,6 @@
 
+import { isProfileComplete, getStoreCached } from '/js/utils/profile-gate.js';
+
 // Módulo sidebar.js
 export function initSidebar(containerSelector) {
   const container = document.querySelector(containerSelector);
@@ -30,7 +32,47 @@ class EmailSidebar {
     this.userProfile = document.getElementById("userProfile");
     this.loadUserProfile();
     this.bind();
+    this.setupProfileLock();
   }
+
+  async setupProfileLock() {
+    const store = await getStoreCached();
+    this.profileComplete = isProfileComplete(store);
+    this.updateDisabledMenu();
+    // Si Perfil se guarda y queda completo, lo re-habilitamos
+    window.addEventListener('profile-complete-changed', (e) => {
+      this.profileComplete = !!e.detail?.complete;
+      this.updateDisabledMenu();
+    });
+  }
+
+  updateDisabledMenu() {
+    const lock = !this.profileComplete;
+    this.items.forEach(item => {
+      const sec = item.dataset.section;
+      const a = item.querySelector('a');
+      const lockThis = lock && sec !== 'perfil';
+      item.classList.toggle('is-disabled', lockThis);
+      a.setAttribute('aria-disabled', lockThis ? 'true' : 'false');
+      if (lockThis) {
+        a.addEventListener('click', this.blockClick, { passive: false });
+      } else {
+        a.removeEventListener('click', this.blockClick, { passive: false });
+      }
+    });
+    // Botón "Redactar"
+    if (this.createBtn) {
+      this.createBtn.classList.toggle('is-disabled', lock);
+      if (lock) this.createBtn.addEventListener('click', this.blockClick, { passive:false });
+      else this.createBtn.removeEventListener('click', this.blockClick, { passive:false });
+    }
+  }
+
+  blockClick = (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    window.location.href = '/secciones/perfil.html?msg=Completa%20tu%20perfil%20para%20continuar.';
+  };
 
   async loadUserProfile() {
     try {
@@ -47,7 +89,7 @@ class EmailSidebar {
       const emailEl = this.userProfile.querySelector(".profile-email");
       const avatar  = this.userProfile.querySelector(".profile-avatar img");
       avatar.onload = () => avatar.classList.add("loaded");
-      avatar.onerror = () => avatar.src = "/image.png";
+      avatar.onerror = () => avatar.src = "/assets/icons/image.png";
       const firstName = data.firstName?.split(" ")[0] || "Sin nombre";
       nameEl.textContent  = firstName;
       emailEl.textContent = data.storeEmail;
@@ -93,6 +135,10 @@ class EmailSidebar {
   }
 
   navigate(section) {
+    if (!this.profileComplete && section !== 'perfil') {
+      this.blockClick(new Event('click'));
+      return;
+    }
     // mapear a rutas
     const map = {
       inbox: "/secciones/inbox.html",
