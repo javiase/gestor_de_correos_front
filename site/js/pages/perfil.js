@@ -1,7 +1,11 @@
 import { initSidebar } from '/js/components/sidebar.js';
-import { fetchWithAuth, logout } from '/js/utils/api.js';
+import { fetchWithAuth, logout, getToken } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js?v=1'; 
+import { isProfileComplete } from '/js/utils/profile-gate.js';
+import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { notify } from '/js/utils/notify.js';
 
+enforceSessionGate();
 const PLAN_LABEL = {
   free:      "Plan Free",
   starter:   "Plan Starter",
@@ -56,7 +60,7 @@ class UserProfile {
         const img = document.getElementById('userAvatar');
         img.src = cached.picture_url;
         img.onload  = () => img.classList.add('loaded');
-        img.onerror = () => (img.src = '/image.png');
+        img.onerror = () => (img.src = '/assets/icons/image.png');
         }
     }
     async init() {
@@ -65,7 +69,7 @@ class UserProfile {
         const params = new URLSearchParams(window.location.search);
         const msg    = params.get('msg');
         if (msg) {
-            this.showMessage(decodeURIComponent(msg), 'success');
+            notify.success(decodeURIComponent(msg));
             // limpiamos la URL para que al recargar no vuelva a mostrarlo
             window.history.replaceState({}, '', window.location.pathname);
         }
@@ -203,13 +207,13 @@ class UserProfile {
         }
         avatar.onerror = () => {
             // si falla la carga, pon una imagen genérica
-            avatar.src = '/image.png';
+            avatar.src = '/assets/icons/image.png';
             };
             if (this.currentData.picture_url) {
                 avatar.src = this.currentData.picture_url;
             } else {
                 // si no viene picture_url, también pon el placeholder
-                avatar.src = '/image.png';
+                avatar.src = '/assets/icons/image.png';
         }
         // Si el backend trae businessCategory
         if (this.currentData.businessCategory) {
@@ -434,12 +438,12 @@ class UserProfile {
         const file = event.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                this.showMessage('File size must be less than 5MB', 'error');
+                notify.error('File size must be less than 5MB');
                 return;
             }
             
             if (!file.type.startsWith('image/')) {
-                this.showMessage('Please select a valid image file', 'error');
+                notify.error('Please select a valid image file');
                 return;
             }
             
@@ -447,7 +451,7 @@ class UserProfile {
             reader.onload = (e) => {
                 document.getElementById('userAvatar').src = e.target.result;
                 this.markAsChanged();
-                this.showMessage('Avatar actualizado', 'success');
+                notify.success('Avatar actualizado');
             };
             reader.readAsDataURL(file);
         }
@@ -780,7 +784,7 @@ class UserProfile {
         });
 
         if (!ok) {
-            this.showMessage(`Revisa horarios: ${errors.join(' ')}`, 'error');
+            notify.error(`Revisa horarios: ${errors.join(' ')}`);
         }
         return ok;
         }
@@ -880,12 +884,12 @@ class UserProfile {
     
     async saveChanges() {
         if (!this.validateForm()) {
-            this.showMessage('Please fix the errors before saving', 'error');
+            notify.error('Please fix the errors before saving');
             return;
         }
         // Validación de teléfonos antes de activar loading
         if (!this._validatePhones()) {
-            this.showMessage('Revisa los números de teléfono en formato internacional.', 'error');
+            notify.error('Revisa los números de teléfono en formato internacional.');
             return;
         }
 
@@ -929,7 +933,7 @@ class UserProfile {
                 if (typeof v !== 'string') continue;
                 const max = OVERRIDES[k] ?? DEFAULT_MAX;
                 if (v.length > max) {
-                    this.showMessage(`El campo "${k}" supera ${max} caracteres.`, 'error');
+                    notify.error(`El campo "${k}" supera ${max} caracteres.`);
                     saveBtn.innerHTML = originalText; saveBtn.disabled = false;
                     return;
                 }
@@ -960,11 +964,17 @@ class UserProfile {
             // Reset button states
             saveBtn.style.background = '#8b5cf6';
             document.getElementById('cancelBtn').style.display = 'none';
-            this.showMessage('Perfil actualizado!', 'success');
+            notify.success('Perfil actualizado!');
+            // Si ya está completo, avisa al resto (sidebar)
+            if (isProfileComplete(updated)) {
+                window.dispatchEvent(new CustomEvent('profile-complete-changed', {
+                    detail: { complete: true }
+                }));
+            }
             
         } catch (error) {
             console.error('Save error:', error);
-            this.showMessage('Error al guardar los cambios. Por favor, inténtalo de nuevo.', 'error');
+            notify.error('Error al guardar los cambios. Por favor, inténtalo de nuevo.');
         } finally {
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
@@ -986,7 +996,7 @@ class UserProfile {
 
         document.getElementById('saveBtn').style.background = '#8b5cf6';
         document.getElementById('cancelBtn').style.display  = 'none';
-        this.showMessage('Cambios descartados', 'warning');
+        notify.warning('Cambios descartados');
     }
     
     simulateApiCall(data) {
@@ -1002,35 +1012,6 @@ class UserProfile {
         });
     }
     
-    showMessage(text, type = 'success') {
-        const messageContainer = document.getElementById('messageContainer');
-        const message = document.createElement('div');
-        message.className = `message ${type}`;
-        
-        const icon = type === 'success' ? 'fa-check-circle' : 
-                    type === 'error' ? 'fa-exclamation-circle' : 
-                    'fa-exclamation-triangle';
-        
-        message.innerHTML = `
-            <i class="fas ${icon}"></i>
-            <span>${text}</span>
-            <button class="message-close">&times;</button>
-        `;
-        
-        messageContainer.appendChild(message);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (message.parentNode) {
-                message.remove();
-            }
-        }, 5000);
-        
-        // Manual close
-        message.querySelector('.message-close').addEventListener('click', () => {
-            message.remove();
-        });
-    }
     confirmModal(
         text             = '¿Estás seguro?',
         {
@@ -1120,7 +1101,7 @@ class UserProfile {
                 await logout({ showModal: false, redirectTo: '/index.html', broadcast: true });
             } catch (err) {
                 overlay.remove();
-                this.showMessage('No pude eliminar tu cuenta', 'error');
+                notify.error('Error eliminando la cuenta. Inténtalo de nuevo.');
             }
         });
     }
@@ -1128,6 +1109,24 @@ class UserProfile {
 
 // Initialize the profile when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
+    // espera a config
+    if (window.configReady) { try { await window.configReady; } catch(_) {} }
+
+    // espera a que exista el token (o redirige)
+    let tk = getToken();
+    if (!tk) {
+        await new Promise(resolve => {
+        const to = setTimeout(resolve, 3000);
+        const onReady = () => { clearTimeout(to); resolve(); };
+        window.addEventListener('auth-token-ready', onReady, { once: true });
+        });
+        tk = getToken();
+    }
+    if (!tk) { window.location.replace('/index.html'); return; }
+
+    // espera a appUser si existe
+    if (window.appUserPromise) { try { await window.appUserPromise; } catch(_) {} }
+
     try{
         await initSidebar('#sidebarContainer');
         const userProfile = new UserProfile();

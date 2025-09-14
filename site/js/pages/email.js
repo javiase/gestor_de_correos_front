@@ -2,6 +2,151 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js?v=1';
+import { enforceProfileGate } from '/js/utils/profile-gate.js';
+import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { notify } from '/js/utils/notify.js';
+
+enforceSessionGate();
+enforceProfileGate();
+
+// === ICONOS SVG PARA ADJUNTOS (inline, super ligeros) ===
+const ATT_SVGS = {
+  img: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#0097a7"/>
+  <circle cx="150" cy="58" r="16" fill="white"/>
+  <path d="M28 160 L88 88 Q94 80 102 92 L120 118 Q128 130 142 122 L172 160 Z" fill="white"/>
+</svg>
+  `,
+  csv: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#388e3c"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="80" font-weight="bold" fill="white" font-family="Arial, sans-serif">CSV</text>
+</svg>
+  `,
+  pdf: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#d32f2f"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="80" font-weight="bold" fill="white" font-family="Arial, sans-serif">PDF</text>
+</svg>
+  `,
+  doc: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#1976d2"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="80" font-weight="bold" fill="white" font-family="Arial, sans-serif">DOC</text>
+</svg>
+  `,
+  txt: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#616161"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="80" font-weight="bold" fill="white" font-family="Arial, sans-serif">TXT</text>
+</svg>
+  `,
+  other: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#455A64"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="64" font-weight="bold" fill="white" font-family="Arial, sans-serif">FILE</text>
+</svg>
+  `
+};
+
+function isViewableInBrowser(a){
+  const mime = (a.mimeType || '').toLowerCase();
+  const name = (a.filename || '').toLowerCase();
+  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name)) return true;
+  if (mime === 'application/pdf' || /\.pdf$/.test(name)) return true;
+  return false;
+}
+
+async function openAttachmentAuth(a, emailId){
+  const baseUrl =
+    a.url ||
+    `/emails/attachment?email_id=${encodeURIComponent(emailId)}&att_id=${encodeURIComponent(a.attachmentId)}`;
+
+  const preOpen = isViewableInBrowser(a) ? window.open('', '_blank', 'noopener') : null;
+
+  try {
+    const res = await fetchWithAuth(baseUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const ctHeader = (res.headers.get('Content-Type') || '').toLowerCase();
+    let blob = await res.blob();
+
+    // Si el tipo viene vacío/genérico, corrígelo con el Content-Type o con el mime conocido
+    const fallbackType = ctHeader || (a.mimeType || '');
+    if (!blob.type || blob.type === '' || blob.type === 'application/octet-stream') {
+      const ab = await blob.arrayBuffer();
+      blob = new Blob([ab], { type: fallbackType || 'application/octet-stream' });
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+    const viewable = /^image\//.test(blob.type) || blob.type === 'application/pdf' || isViewableInBrowser(a);
+
+    if (viewable) {
+      if (preOpen) preOpen.location.href = blobUrl;
+      else window.open(blobUrl, '_blank', 'noopener');
+    } else {
+      const tmp = document.createElement('a');
+      tmp.href = blobUrl;
+      tmp.download = a.filename || 'archivo';
+      document.body.appendChild(tmp);
+      tmp.click();
+      tmp.remove();
+    }
+
+    // Limpieza
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+  } catch (err) {
+    if (preOpen && !preOpen.closed) preOpen.close();
+    console.error('Adjunto no accesible:', err);
+    notify?.error?.('No se pudo abrir/descargar el archivo.');
+  }
+}
+
+
+function svgForKind(kind){ return ATT_SVGS[kind] || ATT_SVGS.other; }
+
+function escRe(s) { return (s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function stripInlineImages(html = '', attachments = []) {
+  let out = html || '';
+  // Quita <img> que apunten a cid:, a tu endpoint /emails/attachment?att_id=…,
+  // o que contengan el filename del adjunto inline.
+  attachments.forEach(a => {
+    if (!a || a.inline !== true) return;
+
+    if (a.contentId) {
+      const reCid = new RegExp(
+        `<img\\b[^>]*\\bsrc\\s*=\\s*["']\\s*cid:\\s*<?${escRe(a.contentId)}>?["'][^>]*>`,
+        'gi'
+      );
+      out = out.replace(reCid, '');
+    }
+    if (a.attachmentId) {
+      const reAtt = new RegExp(
+        `<img\\b[^>]*\\bsrc\\s*=\\s*["'][^"']*?/emails/attachment[^"']*?att_id=${escRe(a.attachmentId)}[^"']*?["'][^>]*>`,
+        'gi'
+      );
+      out = out.replace(reAtt, '');
+    }
+    if (a.filename) {
+      const reFile = new RegExp(
+        `<img\\b[^>]*\\bsrc\\s*=\\s*["'][^"']*?${escRe(a.filename)}[^"']*?["'][^>]*>`,
+        'gi'
+      );
+      out = out.replace(reFile, '');
+    }
+  });
+
+  // Además, como red de seguridad: elimina cualquier <img src="cid:...">
+  out = out.replace(/<img\b[^>]*\bsrc\s*=\s*["']\s*cid:[^"']+["'][^>]*>/gi, '');
+  return out;
+}
 
 
 function enforceContentEditableMax(el, max) {
@@ -19,6 +164,184 @@ function enforceContentEditableMax(el, max) {
     }
   });
 }
+
+
+function getAttachmentKind(a){
+  const mime = (a.mimeType || '').toLowerCase();
+  const name = (a.filename || '').toLowerCase();
+  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name)) return 'img';
+  if (mime === 'application/pdf' || /\.pdf$/.test(name)) return 'pdf';
+  if (mime.includes('msword') || mime.includes('officedocument.word') || /\.(docx?|rtf)$/.test(name)) return 'doc';
+  if (mime.includes('excel') || mime.includes('spreadsheet') || /\.(xlsx?)$/.test(name)) return 'csv'; // sin icono xls → usa csv
+  if (/\.csv$/.test(name)) return 'csv';
+  if (/\.txt$/.test(name)) return 'txt';
+  return 'other';
+}
+
+function analyzeEmailHtml(rawHtml = "") {
+  const h = (rawHtml || "").toLowerCase();
+  if (!h.trim()) return { isStructured:false, preferWhite:false };
+
+  let score = 0;
+
+  // 1) Maquetación clásica de newsletters
+  const tableCount = (h.match(/<table\b/gi) || []).length;
+  if (tableCount >= 2) score += 2;           // varias tablas
+  if (h.includes('<!--[if mso]')) score += 2; // hacks de Outlook
+  if (/\bwidth\s*=\s*["']?5\d{2,3}["']?/.test(h) || /width\s*:\s*5\d{2,3}px/.test(h)) score += 1; // 500-799px
+  if (/margin\s*:\s*0\s*auto/.test(h)) score += 1; // centrado típico
+
+  // 2) Complejidad visual
+  const styleCount = (h.match(/style=/gi) || []).length;
+  if (styleCount >= 12) score += 1;
+  if (styleCount >= 25) score += 1;
+
+  // 3) Botones y badges
+  if (/<a[^>]+(background|border-radius|display:\s*inline-block|padding:\s*[^;]{2,})/i.test(h)) score += 1;
+
+  // 4) Imágenes grandes de cabecera / logos anchos
+  if (/<img[^>]+(width=["']?[34-7]\d{2}["']?|style=["'][^"']*width:\s*[34-7]\d{2}px)/i.test(h)) score += 1;
+
+  // 5) Atributos “email HTML antiguo”
+  if (/\balign=["']?center|valign=["']?top|bgcolor=|cellpadding=|cellspacing=/i.test(h)) score += 1;
+
+  // 6) Señales claras de wrapper claro
+  const hasWhiteBg =
+    /\bbgcolor=['"]?#?fff/i.test(h) ||
+    /background(-color)?:\s*#?fff/i.test(h) ||
+    /rgb\(\s*255\s*,\s*255\s*,\s*255\s*\)/.test(h);
+
+  // 7) ¿Parece casi texto plano?
+  const tagNames = (h.match(/<([a-z0-9-]+)/gi) || []).map(m => m.replace('<',''));
+  const nonTrivial = tagNames.filter(t => !['p','br','a','span','strong','em','b','i'].includes(t));
+  const looksPlain = tableCount === 0 && nonTrivial.length <= 2 && styleCount < 6;
+
+  const isStructured = !looksPlain && (score >= 3);
+  const preferWhite  = hasWhiteBg; // si declara blancos, mejor blanco
+
+  return { isStructured, preferWhite };
+}
+
+
+// Detecta plantilla clara y decide estilos del iframe según el tema del usuario
+function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []) {
+  // ——— 1) Tema del usuario ———
+  // usa data-theme="light|dark|auto" si lo tenéis; si no, cae a prefers-color-scheme
+  const appThemeAttr =
+    document.documentElement.getAttribute('data-theme') || 'dark';
+  const systemDark =
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const appTheme = appThemeAttr === 'auto'
+    ? (systemDark ? 'dark' : 'light')
+    : appThemeAttr; // 'light' | 'dark'
+
+  const { isStructured, preferWhite } = analyzeEmailHtml(rawHtml || '');
+  // Regla:
+  //  - si hay estructura → SIEMPRE blanco (como Gmail)
+  //  - si no hay estructura → usa el tema del usuario, salvo que el HTML pida explícitamente blanco
+  const useWhite = isStructured || preferWhite || appTheme === 'light';
+  const bg = useWhite ? '#ffffff' : '#2a2a2a';
+  const fg = useWhite ? '#111111' : '#e6e6e6';
+
+  // ——— 3) Sanitiza el HTML del email ———
+  const raw = (rawHtml && rawHtml.trim())
+    ? stripInlineImages(rawHtml, attachments)
+    : (fallbackText || '').replace(/\n/g, '<br>');
+  const safeHtml = DOMPurify.sanitize(raw, {
+    ALLOW_UNKNOWN_PROTOCOLS: true,
+    ADD_TAGS: ['style','svg','path'],
+    ADD_ATTR: ['style','target','align','border','cellpadding','cellspacing','background'],
+    FORBID_TAGS: ['script','iframe','object','embed','form'],
+  });
+
+  // ——— 4) Crea iframe aislado ———
+  const iframe = document.createElement('iframe');
+  iframe.className = 'gmail-frame';
+  // allow-same-origin necesario para poder ajustar altura/leer document,
+  // pero sin allow-scripts mantenemos seguridad
+  iframe.setAttribute(
+    'sandbox',
+    'allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation'
+  );
+  iframe.style.width = '100%';
+  iframe.style.border = '0';
+
+  // CSS base + overrides de tema
+  const baseCSS = `
+    :root { color-scheme: ${useWhite ? 'light' : 'dark'}; }
+    html,body {
+      margin:0 !important; padding:0 !important;
+      background:${bg} !important; color:${fg} !important;
+      font:14px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+    a:not([class*="btn"]):not([class*="button"]):not([role="button"])
+      :not([style*="background"]):not([style*="padding"]):not([style*="border-radius"]) {
+      color: inherit !important;
+      text-decoration: underline;
+    }
+
+    /* Estado visitado/activo igual */
+    a:visited, a:active {
+      color: inherit !important;
+    }
+
+    /* Hover suave */
+    a:hover { opacity: .85; text-decoration: underline; }
+    img { max-width:100% !important; height:auto !important; border:0; outline:0; }
+    img[src^="cid:"] { display:none !important; }
+    img[src*="/emails/attachment"] { display:none !important; }
+    table { border-collapse:collapse !important; max-width:100%; }
+    blockquote { margin:.5em 0 .5em 1em; padding-left:.8em; border-left:3px solid rgba(0,0,0,.2); }
+    hr { border:0; border-top:1px solid rgba(0,0,0,.15); }
+    /* En oscuro y email NO claro: evitar texto negro sobre fondo oscuro */
+    ${!useWhite ? `
+      body, p, div, span, td, li, a, h1, h2, h3, h4, h5, h6 { color:${fg} !important; }
+      /* Algunas plantillas fijan bg blancos en celdas: neutralízalos en oscuro */
+      table[bgcolor], td[bgcolor],
+      div[style*="background"], td[style*="background"],
+      table[style*="background-color:#fff"], td[style*="background-color:#fff"],
+      table[style*="background-color: #fff"], td[style*="background-color: #fff"] {
+        background-color:${bg} !important;
+      }
+    ` : ``}
+  `;
+
+  const srcdoc = `
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <base target="_blank">
+        <style>${baseCSS}</style>
+      </head>
+      <body>${safeHtml}</body>
+    </html>
+  `;
+  iframe.srcdoc = srcdoc;
+
+  // Inserta y ajusta altura
+  container.innerHTML = '';
+  container.appendChild(iframe);
+
+  const onReady = () => {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    const resize = () => { iframe.style.height = (doc.body.scrollHeight + 16) + 'px'; };
+    // primera medida
+    resize();
+    // al cargar imágenes
+    Array.from(doc.images || []).forEach(img => img.addEventListener('load', resize));
+    // si hay cambios de layout
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(resize).observe(doc.body);
+    } else {
+      setTimeout(resize, 300);
+    }
+  };
+  iframe.addEventListener('load', onReady, { once: true });
+}
+
+
 
 class EmailView {
   constructor() {
@@ -262,6 +585,8 @@ class EmailView {
       note.innerHTML = '<span style="font-size:1.2em;vertical-align:middle;">&#8593;</span> Historial anterior con cliente. <span style="font-size:1.2em;vertical-align:middle;">&#8593;</span>';
       hist.appendChild(note);
     }
+    console.log('attachments:', email.attachments);
+
 
 
 
@@ -273,12 +598,59 @@ class EmailView {
     document.getElementById('emailSubject').textContent =
       'Asunto: ' + (email.subject || '(sin asunto)');
 
-    // body recibido (preserva saltos de línea)
-    const rec = (email.body || '')
-      .split('\n')
-      .map(p => `<p>${p}</p>`)
-      .join('');
-    document.getElementById('receivedContent').innerHTML = DOMPurify.sanitize(rec);
+    // Si tenemos HTML real, lo renderizamos en un iframe aislado (como Gmail)
+    const rc = document.getElementById('receivedContent');
+    rc.innerHTML = ''; // limpio contenedor
+    if (email.body_html && email.body_html.trim()) {
+      renderHtmlEmail(rc, email.body_html, '', email.attachments || []);
+    } else {
+      // Fallback a texto plano
+      const rec = (email.body || '')
+        .split('\n').map(p => `<p>${p}</p>`).join('');
+      rc.innerHTML = DOMPurify.sanitize(rec);
+    }
+
+    // Adjuntos visibles (no inline)
+    let attWrap = document.getElementById('attachmentsContainer');
+    if (!attWrap) {
+      attWrap = document.createElement('div');
+      attWrap.id = 'attachmentsContainer';
+      attWrap.className = 'attachments-grid';
+      // debajo del cuerpo recibido
+      rc.parentNode.insertBefore(attWrap, rc.nextSibling);
+    }
+    attWrap.innerHTML = '';
+
+    const visibleAttachments = (email.attachments || []);
+
+    visibleAttachments.forEach(a => {
+      const aEl = document.createElement('a');
+
+      // NO ponemos href real para que no intente ir sin auth
+      aEl.href = '#';
+      aEl.title = a.filename || 'archivo';
+      aEl.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        openAttachmentAuth(a, email.id);
+      });
+
+      const kind = getAttachmentKind(a);
+      const svg  = svgForKind(kind);
+
+      aEl.innerHTML = `
+        <span class="att-icon" aria-hidden="true">${svg}</span>
+        <span class="att-name">${a.filename || 'archivo'}</span>
+      `;
+      aEl.className = 'attachment-chip';
+      attWrap.appendChild(aEl);
+    });
+
+    // si no queda nada que mostrar, elimina el contenedor
+    if (visibleAttachments.length === 0) {
+      attWrap.remove();
+    }
+
+
 
     const respSubj = document.getElementById('responseSubject');
     respSubj.textContent = email.asunto_respuesta;
@@ -445,7 +817,7 @@ class EmailView {
 
     try {
       if ((message || '').length > LIMITS.email_body) {
-        alert(`El cuerpo del correo supera ${LIMITS.email_body} caracteres.`);
+        notify.error(`El cuerpo del correo supera ${LIMITS.email_body} caracteres.`);
         return;
       }
 
@@ -457,6 +829,7 @@ class EmailView {
       if (!res.ok) {
         const err = await res.json();
         console.error('Error al enviar la respuesta:', res.status, err);
+        notify.error('Error al enviar el correo ❌');
         return;
       }
 
@@ -523,6 +896,7 @@ class EmailView {
       console.error('Error al borrar el email:', e);
     }
   }
+  
 }
 
 document.addEventListener('DOMContentLoaded', () => new EmailView());

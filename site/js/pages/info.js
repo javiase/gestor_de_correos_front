@@ -2,6 +2,12 @@
 import { fetchWithAuth } from '/js/utils/api.js';
 import { initSidebar } from '/js/components/sidebar.js';
 import { LIMITS } from '/js/config.js?v=1';
+import { enforceProfileGate } from '/js/utils/profile-gate.js';
+import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { notify } from '/js/utils/notify.js';
+
+enforceSessionGate();
+enforceProfileGate();
 
   /****************************************
    * 4) Expansión / Contracción de tarjetas
@@ -404,7 +410,7 @@ import { LIMITS } from '/js/config.js?v=1';
    * 6) FAQS (preguntas frecuentes)
   ****************************************/
   // 1) EDITAR y ELIMINAR (delegación de eventos)
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', async (e) => {
     const btn = e.target;
 
     // EDITAR FAQ
@@ -419,9 +425,8 @@ import { LIMITS } from '/js/config.js?v=1';
     // ELIMINAR FAQ
     if (btn.classList.contains('delete-faq-btn')) {
       const faqBlock = btn.closest('.faq-block');
-      if (confirm('¿Seguro que deseas eliminar esta pregunta?')) {
-        faqBlock.remove();
-      }
+      const ok = await notify.confirm('¿Seguro que deseas eliminar esta pregunta?', { okText:'Eliminar', cancelText:'Cancelar' });
+      if (ok) faqBlock.remove();
     }
   });
 
@@ -513,11 +518,11 @@ import { LIMITS } from '/js/config.js?v=1';
     sendBtn.addEventListener('click', async () => {
       const content = textarea.value.trim();
       if (!content) {
-        alert("No has escrito nada");
+        notify.error('El contenido no puede estar vacío.');
         return;
       }
       if (content.length > LIMITS.policies) {
-        alert(`Has superado el máximo de ${LIMITS.policies} caracteres para esta política.`);
+        notify.error(`Has superado el máximo de ${LIMITS.policies} caracteres para esta política.`);
         return;
       }
 
@@ -600,14 +605,14 @@ import { LIMITS } from '/js/config.js?v=1';
           if (arrow) arrow.classList.remove('hidden');
         }else {
           // Respuesta inesperada
-          alert("Respuesta inesperada del servidor: " + JSON.stringify(data));
+          notify.error("Respuesta inesperada del servidor:");
           textarea.classList.remove('hidden');
           sendBtn.classList.remove('hidden');
           if (arrow) arrow.classList.remove('hidden');
         }
       } catch (error) {
         console.error(error);
-        alert("Ocurrió un error al enviar la política: " + error.message);
+        notify.error("Ocurrió un error al enviar la política");
         textarea.classList.remove('hidden');
         sendBtn.classList.remove('hidden');
         if (arrow) arrow.classList.remove('hidden');
@@ -636,6 +641,9 @@ import { LIMITS } from '/js/config.js?v=1';
       const faqBlocks = card.querySelectorAll('.faq-block');
       let faqList = [];
 
+      let emptyPairs = 0;
+      let firstEmptyBlock = null;
+
       for (const [idx, block] of Array.from(faqBlocks).entries()) {
         const questionEl = block.querySelector('.faq-question-text');
         const answerEl   = block.querySelector('.faq-answer');
@@ -644,20 +652,47 @@ import { LIMITS } from '/js/config.js?v=1';
         const question = (questionEl.textContent || '').trim();
         const answer   = (answerEl.value || '').trim();
 
+        // 1) Ambos vacíos → ignorar bloque silenciosamente
+        if (!question && !answer) {
+          emptyPairs++;
+          if (!firstEmptyBlock) firstEmptyBlock = { questionEl, answerEl, idx: idx + 1 };
+          continue;
+        }
+
+        // 2) Uno vacío → notificar y abortar envío
+        if (!question && answer) {
+          notify.warning(`Falta la pregunta en el bloque #${idx+1}.`);
+          questionEl.focus();
+          return;
+        }
+        if (question && !answer) {
+          notify.warning(`Falta la respuesta en el bloque #${idx+1}.`);
+          answerEl.focus();
+          return;
+        }
+
+        // 3) Límites de longitud
         if (question.length > LIMITS.faq_q) {
-          alert(`La pregunta #${idx+1} supera ${LIMITS.faq_q} caracteres.`);
+          notify.error(`La pregunta #${idx+1} supera ${LIMITS.faq_q} caracteres.`);
           return;
         }
         if (answer.length > LIMITS.faq_a) {
-          alert(`La respuesta #${idx+1} supera ${LIMITS.faq_a} caracteres.`);
+          notify.error(`La respuesta #${idx+1} supera ${LIMITS.faq_a} caracteres.`);
           return;
         }
+
+        // 4) Añadir par válido
         faqList.push({ [question]: answer });
       }
 
-      // Validación: asegurarse de que se haya ingresado al menos un par pregunta-respuesta
+      // Validación: al menos 1 par no vacío
       if (faqList.length === 0) {
-        alert("No has ingresado ninguna pregunta-respuesta.");
+        if (emptyPairs > 0) {
+          notify.warning('Añade al menos una pregunta y una respuesta.');
+          if (firstEmptyBlock?.questionEl) firstEmptyBlock.questionEl.focus();
+        } else {
+          notify.error('No has ingresado ninguna pregunta-respuesta.');
+        }
         return;
       }
       const expandContent = card.querySelector('.expand-content');
@@ -711,11 +746,11 @@ import { LIMITS } from '/js/config.js?v=1';
           // Muestra la flecha para poder cerrar
           if (arrow) arrow.classList.remove('hidden');
         } else {
-          alert("Error al guardar: " + (data.error || "Respuesta inesperada"));
+          notify.error("Error al guardar: Respuesta inesperada");
         }
       } catch (error) {
         console.error(error);
-        alert("Ocurrió un error al enviar la política: " + error.message);
+        notify.error("Ocurrió un error al enviar la política: ");
         
         sendBtn.classList.remove('hidden');
         if (arrow) arrow.classList.remove('hidden');

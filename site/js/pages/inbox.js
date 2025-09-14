@@ -1,6 +1,93 @@
 // js/pages/inbox.js
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, getToken } from '/js/utils/api.js';
+import { enforceProfileGate } from '/js/utils/profile-gate.js';
+import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { notify } from '/js/utils/notify.js';
+
+enforceSessionGate();
+enforceProfileGate();
+
+// === Mismos SVGs que en email.js ===
+const ATT_SVGS = {
+  img: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#0097a7"/>
+  <circle cx="150" cy="58" r="16" fill="white"/>
+  <path d="M28 160 L88 88 Q94 80 102 92 L120 118 Q128 130 142 122 L172 160 Z" fill="white"/>
+</svg>
+  `,
+  csv: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#388e3c"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="80" font-weight="bold" fill="white" font-family="Arial, sans-serif">CSV</text>
+</svg>
+  `,
+  pdf: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#d32f2f"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="80" font-weight="bold" fill="white" font-family="Arial, sans-serif">PDF</text>
+</svg>
+  `,
+  doc: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#1976d2"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="80" font-weight="bold" fill="white" font-family="Arial, sans-serif">DOC</text>
+</svg>
+  `,
+  txt: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#616161"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="80" font-weight="bold" fill="white" font-family="Arial, sans-serif">TXT</text>
+</svg>
+  `,
+  other: `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="200" height="200" rx="30" fill="#455A64"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-size="64" font-weight="bold" fill="white" font-family="Arial, sans-serif">FILE</text>
+</svg>
+  `
+};
+
+function svgForKind(kind){ return ATT_SVGS[kind] || ATT_SVGS.other; }
+
+// Solo documentos (excluye imágenes)
+function getDocKind(a){
+  const mime = (a.mimeType || '').toLowerCase();
+  const name = (a.filename || '').toLowerCase();
+  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name)) return 'img';
+  if (mime === 'application/pdf' || /\.pdf$/.test(name)) return 'pdf';
+  if (mime.includes('msword') || mime.includes('officedocument.word') || /\.(docx?|rtf)$/.test(name)) return 'doc';
+  if (mime.includes('excel') || mime.includes('spreadsheet') || /\.(xlsx?)$/.test(name)) return 'csv';
+  if (/\.csv$/.test(name)) return 'csv';
+  if (/\.txt$/.test(name)) return 'txt';
+  return 'other';
+}
+
+function escapeAttr(s=''){ return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Tira de iconos (solo docs) para el inbox
+function renderDocIconsStrip(email){
+  const atts = email.attachments || email.attachments_meta || [];
+  if (!Array.isArray(atts) || atts.length === 0) return '';
+  const items = [];
+  for (const a of atts) {
+    const kind = getDocKind(a);
+    if (!kind) continue;
+    items.push(
+      `<span class="inbox-att-ico" title="${escapeAttr(a.filename || '')}" aria-label="${escapeAttr(a.filename || '')}">
+        ${svgForKind(kind)}
+      </span>`
+    );
+  }
+  if (items.length === 0) return '';
+  return `<div class="inbox-att-strip">${items.join('')}</div>`;
+}
 
 class EmailInbox {
   constructor() {
@@ -107,6 +194,7 @@ class EmailInbox {
       this.allLoaded      = false; 
     } catch (err) {
       console.error('Error cargando correos:', err);
+      notify.error('Error cargando correos. Inténtalo de nuevo más tarde.');
       // opcionalmente mostrar un mensaje de error al usuario
     }finally{
       this.hideSpinner();
@@ -218,7 +306,8 @@ class EmailInbox {
             : email.subject
         }
       </div>
-        <div class="email-preview">${((email.body || "").split(/\s+/).slice(0,15).join(" ") + "...") }</div>
+      <div class="email-preview">${((email.body || "").split(/\s+/).slice(0,15).join(" ") + "...") }</div>
+      ${renderDocIconsStrip(email)}
       </div>
       <div class="email-meta">
         ${email.hasAttachment ? '<i class="fas fa-paperclip"></i>' : ''}

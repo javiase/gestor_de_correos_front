@@ -1,30 +1,116 @@
 // plans.js
 import { fetchWithAuth, logout, API_BASE, getToken} from '/js/utils/api.js';
+import { enforceProfileGate } from '/js/utils/profile-gate.js';
+import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { notify } from '/js/utils/notify.js';
 
-// justo después de imports, antes de DOMContentLoaded:
-let notification;
-function initNotification() {
-    notification = document.getElementById('notification') || document.createElement('div');
-    notification.id = 'notification';
-    Object.assign(notification.style, {
-        position: 'fixed', bottom: '20px', right: '20px',
-        background: '#333', color: '#fff',
-        padding: '10px 20px', borderRadius: '5px',
-        display: 'none', zIndex: '1000'
-    });
-    document.body.appendChild(notification);
+enforceSessionGate();
+enforceProfileGate();
+
+async function fetchStoreFresh() {
+  try {
+    const res = await fetchWithAuth('/stores/me');
+    if (!res.ok) throw new Error('status ' + res.status);
+    const fresh = await res.json();
+    localStorage.setItem('store', JSON.stringify(fresh));
+    window.appUser = fresh;
+    return fresh;
+  } catch (e) {
+    console.warn('No se pudo refrescar la tienda:', e);
+    return null;
+  }
 }
-function showNotification(msg, type = 'success', duration = 2000) {
-    if (!notification) initNotification();
-    notification.textContent = msg;
-    notification.style.background = type === 'error' ? '#b91c1c' : '#333';
-    notification.style.display = 'block';
-    setTimeout(() => notification.style.display = 'none', duration);
+
+function disableAnchorAsButton(el) {
+  // aria + UX
+  el.setAttribute('aria-disabled', 'true');
+  el.setAttribute('tabindex', '-1');
+  // sin interacción
+  el.style.pointerEvents = 'none';
+  el.removeAttribute('href');
+  el.classList.add('is-disabled');
 }
 
+function setScheduledLabel(el, effectiveDate) {
+  el.textContent = 'Cambio programado';
+  const sub = document.createElement('div');
+  sub.className = 'cta-subtext';
+  sub.textContent = formatBillingDate(effectiveDate); // (07-jul-2025)
+  el.appendChild(sub);
+}
 
+function toDate(dateLike){
+  if (!dateLike) return null;
+  if (typeof dateLike === 'number') {
+    const ms = dateLike < 1e12 ? dateLike * 1000 : dateLike; // epoch s/ms
+    const d = new Date(ms);
+    return isNaN(d) ? null : d;
+  }
+  const d = new Date(dateLike);
+  return isNaN(d) ? null : d;
+}
 
-initNotification();
+function formatBillingDate(dateLike) {
+  const d = new Date(dateLike);
+  if (isNaN(d)) return '';
+  const DD = String(d.getDate()).padStart(2, '0');
+  const MMM = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()];
+  const YYYY = d.getFullYear();
+  return `(${DD}-${MMM}-${YYYY})`;
+}
+
+// Pone la fecha en todos los nodos con [data-billing-date]
+function updatePopoverBillingDate(dateLike) {
+  const els = document.querySelectorAll('[data-billing-date]');
+  if (!els.length) return;
+  const txt = formatBillingDate(dateLike);
+  els.forEach(el => el.textContent = txt);
+}
+
+function initPlanHelpPopover() {
+  const btn   = document.getElementById('planHelpBtn');
+  const pop   = document.getElementById('planHelpPopover');
+
+  if (!btn || !pop) return;
+
+  // Accesibilidad básica
+  btn.setAttribute('aria-controls', 'planHelpPopover');
+  btn.setAttribute('aria-haspopup', 'dialog');
+  btn.setAttribute('aria-expanded', 'false');
+  pop.hidden = true;
+
+  const open = () => {
+    pop.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    // foco al primer elemento interactivo si existe
+    (pop.querySelector('[data-autofocus]') || pop).focus?.();
+  };
+
+  const closePop = () => {
+    pop.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+  };
+
+  // Toggle por click en el botón
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    pop.hidden ? open() : closePop();
+  });
+
+  // Cierre por click fuera
+  document.addEventListener('click', (e) => {
+    if (pop.hidden) return;
+    const clickInside = pop.contains(e.target) || btn.contains(e.target);
+    if (!clickInside) closePop();
+  });
+
+  // Cierre con ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePop();
+  });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     // Espera a que config acabe su setup
     if (window.configReady) {
@@ -49,14 +135,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Coge datos del usuario (del store cacheado o de window.appUser)
-    const store = localStorage.getItem("store");
-    const data  = store ? JSON.parse(store) : (window.appUser || null);
+    let cached = localStorage.getItem("store");
+    let data   = cached ? JSON.parse(cached) : (window.appUser || null);
+
+    // Si no hay nada en caché, intentamos traerlo del backend
+    if (!data) {
+        const fetched = await fetchStoreFresh();
+        if (fetched) data = fetched;
+    }
     if (!data) { 
-    showNotification("No pudimos cargar tus planes", "error", 4000); 
-    return; 
+        notify.error("No pudimos cargar tus planes");
+        return; 
+    }
+    const isActive  = data.active;   // true / false
+
+    // 🔄 Si la tienda está activa, refrescamos SIEMPRE al entrar en planes
+    if (isActive) {
+        const fresh = await fetchStoreFresh();
+        if (fresh) data = fresh; // si falla el fetch, seguimos con cacheado
     }
 
-    const isActive  = data.active;   // true / false
     const currentPlan = data.plan; // null, "free", "starter", "advanced", "professional"
 
     const usedFreeStarter     = data.used_free_trial_starter;
@@ -82,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         logo.style.cursor = 'pointer';
         logo.addEventListener('click', () => {
             if (isActive) {
-            window.location.href = '/secciones/inbox.html';
+            window.location.href = '/secciones/perfil.html';
             } else {
             window.location.href = '/index.html';
             }
@@ -95,15 +193,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const pendingPlan             = data.pendingPlan;            // puede ser undefined o "free"/"starter"/"advanced", "professional"
     const pendingPlanEffective    = data.pendingPlanEffective || data.period_end;
-    console.log("acive:", isActive)
-    if (isActive && currentPlan !== 'free') {
-        const notice = document.createElement('div');
-        notice.className = 'plan-notice';
-        notice.textContent = `⚠️ Los cambios de plan se harán efectivos al final del ciclo de facturación, el ${new Date(pendingPlanEffective).toLocaleDateString()} ⚠️`;
-        // Inserta antes del grid
-        if (pricingEl) pricingEl.prepend(notice);
-    }
+    const helpWrap = document.querySelector('.plan-change-help');
+
+
     if (isActive) {
+        updatePopoverBillingDate(pendingPlanEffective);
         const cardToHide = document.querySelector(`.pricing-card.${currentPlan}`);
         if (cardToHide) cardToHide.classList.add('hidden');
     }
@@ -111,10 +205,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     // ocultamos todas las cards y el grid hasta decidir
     loadingEl.classList.remove("hidden");
-    
+    const freeBlockUntil = data.free_block_until;     // puede ser "", ISO o epoch
+    const freeBlockDate  = toDate(freeBlockUntil);
+    const freeBlocked    = !!freeBlockDate && freeBlockDate.getTime() > Date.now();
+
+    // Si está bloqueado, ocultamos la card del plan Free
+    if (freeBlocked) {
+        const freeCard = document.querySelector('.pricing-card.free');
+        if (freeCard) freeCard.classList.add('hidden');
+    }
     // 5) Configurar botones
     const planButtons = {
-        freeBtn:    "free",
+        ...(freeBlocked ? {} : { freeBtn: "free" }),
         starterBtn: "starter",
         advancedBtn:"advanced",
         professionalBtn: "professional",
@@ -128,9 +230,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 btn.disabled    = true;
                 btn.textContent = "Plan actual";
             } else if (pendingPlan === planKey) {
-                btn.disabled    = true;
-                const date = new Date(pendingPlanEffective);
-                btn.textContent = `Cambio programado`;
+                btn.disabled = true; // inofensivo en <a>, pero mantenemos por consistencia
+                setScheduledLabel(btn, pendingPlanEffective);
+                disableAnchorAsButton(btn);
 
                 const cancelBtn = document.createElement('button');
                 cancelBtn.textContent = 'Cancelar cambio';
@@ -149,7 +251,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     window.location.href = `/secciones/perfil.html?msg=${text}`;
 
                     } catch {
-                    showNotification('No se pudo cancelar el cambio', 'error');
+                    notify.error('No se pudo cancelar el cambio');
                     cancelBtn.disabled = false;
                     }
                 });
@@ -182,37 +284,51 @@ document.addEventListener("DOMContentLoaded", async () => {
             btn.textContent = label;
             btn.disabled = false;
         }
-        btn.addEventListener("click", async () => {
-            btn.disabled    = true;
-            btn.textContent = "Procesando...";
-            
-            try {
-                let res, data;
+        const isScheduled = isActive && pendingPlan === planKey;
+        if (!isScheduled) {
+            btn.addEventListener("click", async () => {
+                btn.disabled    = true;
+                btn.textContent = "Procesando...";
+                
+                try {
+                    let res, data;
 
-                // 1) Usuario nuevo (isActive == null)
-                if (!isActive) {
-                    if (planKey === "free") {
-                        try{
-                            const res =await fetchWithAuth("/billing/select-free-plan", { method: "POST" });
-                            if (res.ok) {                       // ✅ Free plan creado
-                                window.location.href = "/secciones/inbox.html";
+                    // 1) Usuario nuevo (isActive == null)
+                    if (!isActive) {
+                        if (planKey === "free") {
+                            try{
+                                const res =await fetchWithAuth("/billing/select-free-plan", { method: "POST" });
+                                if (res.ok) {                       // ✅ Free plan creado
+                                    window.location.href = "/secciones/perfil.html";
+                                    return;
+                                }
+                        
+                                if (res.status === 403) {           // ⛔ Ya tenía un ciclo Free activo
+                                    const msg = encodeURIComponent("Ya disfrutaste de un periodo free este mes.");
+                                    window.location.href = `/index.html?msg=${msg}`;
+                                    return;
+                                }
+                            } catch (error) {
+                                console.error(error);
+                                notify.error("Error al seleccionar el plan gratuito");
+                                btn.disabled    = false;
+                                btn.textContent = "Comienza Gratis!";
                                 return;
                             }
-                    
-                            if (res.status === 403) {           // ⛔ Ya tenía un ciclo Free activo
-                                const msg = encodeURIComponent("Ya disfrutaste de un periodo free este mes.");
-                                window.location.href = `/index.html?msg=${msg}`;
-                                return;
-                            }
-                        } catch (error) {
-                            console.error(error);
-                            showNotification("Error al seleccionar el plan gratuito", "error");
-                            btn.disabled    = false;
-                            btn.textContent = "Comienza Gratis!";
+                        } else {
+                            // Checkout inmediato para plan de pago
+                            res = await fetchWithAuth("/billing/create-checkout-session", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ plan: planKey })
+                            });
+                            data = await res.json();
+                            window.location.href = data.url;
                             return;
                         }
-                    } else {
-                        // Checkout inmediato para plan de pago
+                    }
+                    // 2) Upgrade de Free -> Paid (inmediato)
+                    if (currentPlan === "free" && planKey !== "free") {
                         res = await fetchWithAuth("/billing/create-checkout-session", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
@@ -222,54 +338,45 @@ document.addEventListener("DOMContentLoaded", async () => {
                         window.location.href = data.url;
                         return;
                     }
-                }
-                // 2) Upgrade de Free -> Paid (inmediato)
-                if (currentPlan === "free" && planKey !== "free") {
-                    res = await fetchWithAuth("/billing/create-checkout-session", {
+                    // 3) De Paid -> Paid o Paid -> Free (programado al fin de ciclo)
+                    res = await fetchWithAuth("/billing/change-plan", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ plan: planKey })
                     });
                     data = await res.json();
+                    
+                    // Si el backend devuelve una URL, es un UPGRADE (toca pasar por Stripe Checkout)
+                    if (data.url) {
                     window.location.href = data.url;
                     return;
-                }
-                // 3) De Paid -> Paid o Paid -> Free (programado al fin de ciclo)
-                res = await fetchWithAuth("/billing/change-plan", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ plan: planKey })
-                });
-                data = await res.json();
-                
-                // Si el backend devuelve una URL, es un UPGRADE (toca pasar por Stripe Checkout)
-                if (data.url) {
-                window.location.href = data.url;
-                return;
-                }
+                    }
 
-                const info = encodeURIComponent(`Cambio al plan ${planKey} programado con éxito`);
-                window.location.href = `/secciones/perfil.html?msg=${info}`;
+                    const info = encodeURIComponent(`Cambio al plan ${planKey} programado con éxito`);
+                    window.location.href = `/secciones/perfil.html?msg=${info}`;
 
 
-            } catch (error) {
-                console.error(error);
-                const info = encodeURIComponent(`❌ Error al cambiar el plan`);
-                window.location.href = `/secciones/perfil.html?msg=${info}`;
-                btn.disabled    = false;
-                // Restauramos el texto original tras el fallo
-                if (!isActive) {
-                    btn.textContent = planKey === "free"
-                        ? "Comienza Gratis!"
-                        : "Empieza tu prueba gratuita";
-                } else {
-                    btn.textContent = "Cambiar a este plan";
+                } catch (error) {
+                    console.error(error);
+                    const info = encodeURIComponent(`❌ Error al cambiar el plan`);
+                    window.location.href = `/secciones/perfil.html?msg=${info}`;
+                    btn.disabled    = false;
+                    // Restauramos el texto original tras el fallo
+                    if (!isActive) {
+                        btn.textContent = planKey === "free"
+                            ? "Comienza Gratis!"
+                            : "Empieza tu prueba gratuita";
+                    } else {
+                        btn.textContent = "Cambiar a este plan";
+                    }
                 }
-            }
-        });
+            });
+        }
     });
     // 6) Pack extra (solo si ya tiene plan distinto de free)
-    if (isActive && currentPlan !== "free") {
+    const trialEndDate = toDate(data.trial_end);
+    const inTrial = !!trialEndDate && trialEndDate.getTime() > Date.now();
+    if (isActive && currentPlan !== "free" && !inTrial) {
         const packCard   = document.getElementById("packCard");
         const buyPackBtn = document.getElementById("buyPackBtn");
         packCard.classList.remove("hidden");
@@ -291,9 +398,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 buyPackBtn.textContent = "Comprar pack";
             }
         });
+    } else {
+        // En trial o no cumple condiciones → ocultar por completo
+        const packCard = document.getElementById("packCard");
+        if (packCard) packCard.classList.add("hidden");
     }
+    initPlanHelpPopover();
     // 7) Mostrar grid y ocultar spinner
     loadingEl.classList.add("hidden");
     gridEl.classList.remove("hidden");
+    if (helpWrap) helpWrap.classList.toggle('hidden', !isActive);
 });
 

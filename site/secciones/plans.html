@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Respondize – Elige tu plan</title>
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="preload" href="./fonts/inter/Inter-Variable.ttf" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="./css/fonts.css">
+  <link rel="preload" href="/fonts/inter/Inter-Variable.ttf" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/fonts.css">
   <link rel="stylesheet" href="/vendor/fontawesome-6.4.0/css/all.min.css">
 </head>
 <body>
@@ -28,6 +28,22 @@
   <main style="padding-top: 8rem;">
     <section id="pricing" class="pricing-section">
       <h2>Elige tu plan</h2>
+      <div class="plan-change-help hidden">
+        <button id="planHelpBtn" class="info-chip" type="button" aria-haspopup="dialog" aria-expanded="false">
+          <i class="fa fa-info-circle" aria-hidden="true"></i>
+          Cómo funcionan los cambios de plan
+        </button>
+
+        <div id="planHelpPopover" class="plan-popover" role="dialog" aria-modal="false" aria-labelledby="planHelpTitle" hidden>
+          <h4 id="planHelpTitle">Cambios de plan: resumen</h4>
+          <ul>
+            <li><strong>Correos extra</strong> se mantienen en cualquier cambio <em>entre planes de pago</em>. Si pasas a <strong>Free</strong>, los extra se <strong>eliminan</strong>.</li>
+            <li><strong>Subir de plan</strong>: efecto <strong>inmediato</strong>.</li>
+            <li><strong>Bajar de plan</strong>: el cambio se aplica <strong>al final del ciclo</strong> <span data-billing-date></span>. Verás el plan programado y podrás <strong>cancelarlo</strong> en cualquier momento.</li>
+            <li>Cuando el cambio se haga efectivo, los <strong>correos no usados</strong> del ciclo actual se <strong>sumarán</strong> a tus <strong>extra</strong>.</li>
+          </ul>
+        </div>
+      </div>
       <div id="plans-loading">Cargando planes…</div>
 
       <div id="pricing-grid" class="pricing-grid hidden">
