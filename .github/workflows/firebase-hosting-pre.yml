@@ -11,6 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Set asset version
+        run: echo "ASSET_VERSION=${GITHUB_SHA::7}-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Inject asset version into HTML
+        run: |
+          find site -name "*.html" -print0 | xargs -0 sed -i "s/%ASSET_VERSION%/${ASSET_VERSION}/g"
+
       - name: Deploy to PRE
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
