@@ -56,7 +56,6 @@ const ATT_SVGS = {
 
 function svgForKind(kind){ return ATT_SVGS[kind] || ATT_SVGS.other; }
 
-// Solo documentos (excluye imágenes)
 function getDocKind(a){
   const mime = (a.mimeType || '').toLowerCase();
   const name = (a.filename || '').toLowerCase();
@@ -71,21 +70,35 @@ function getDocKind(a){
 
 function escapeAttr(s=''){ return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// Tira de iconos (solo docs) para el inbox
+function truncateMiddle(str = '', max = 22) {
+  if (str.length <= max) return str;
+  const keep = Math.max(4, Math.floor((max - 3) / 2));
+  return str.slice(0, keep) + '…' + str.slice(-keep);
+}
+
 function renderDocIconsStrip(email){
   const atts = email.attachments || email.attachments_meta || [];
   if (!Array.isArray(atts) || atts.length === 0) return '';
+
+  const MAX_SHOW = 3; // muestra hasta 3 y luego un "+n"
   const items = [];
-  for (const a of atts) {
+  for (let i = 0; i < Math.min(atts.length, MAX_SHOW); i++) {
+    const a = atts[i];
     const kind = getDocKind(a);
-    if (!kind) continue;
-    items.push(
-      `<span class="inbox-att-ico" title="${escapeAttr(a.filename || '')}" aria-label="${escapeAttr(a.filename || '')}">
-        ${svgForKind(kind)}
-      </span>`
-    );
+    const svg  = svgForKind(kind);
+    const name = a?.filename || 'archivo';
+
+    items.push(`
+      <span class="inbox-att-chip" title="${escapeAttr(name)}" aria-label="${escapeAttr(name)}">
+        <span class="inbox-att-ico">${svg}</span>
+        <span class="inbox-att-name">${escapeAttr(truncateMiddle(name, 28))}</span>
+      </span>
+    `);
   }
-  if (items.length === 0) return '';
+  const extra = atts.length - MAX_SHOW;
+  if (extra > 0) {
+    items.push(`<span class="inbox-att-more">+${extra}</span>`);
+  }
   return `<div class="inbox-att-strip">${items.join('')}</div>`;
 }
 

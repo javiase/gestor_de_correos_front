@@ -1,28 +1,50 @@
-/* File: css/layout.css */
-/* 2. Layout global: sidebar + main-content flex en todo el body */
-body {
+/* DESPUÉS: layout con grid universal controlado por body.has-sidebar */
+
+/* Medidas del sidebar (ajusta a tu diseño) */
+:root{
+  --sb-expanded: 28vh;
+  --sb-collapsed: 9vh; /* si prefieres 7.2vh, cámbialo aquí */
+}
+
+/* El body solo usa grid cuando hay sidebar en la página */
+body.has-sidebar{
+  display: grid;
+  grid-template-columns: var(--sb-expanded) 1fr;
+  min-height: 100dvh;
+  transition: grid-template-columns .25s ease;
+  overflow: hidden; /* mantener scroll dentro del main */
+}
+
+/* Estado colapsado (lo marcamos desde sidebar.toggle()) */
+body.has-sidebar.sidebar-collapsed{
+  grid-template-columns: var(--sb-collapsed) 1fr;
+}
+
+/* El contenedor del sidebar ocupa su columna del grid */
+#sidebarContainer{
+  width: 100%;
+  min-height: 100dvh;
+}
+
+/* El contenido principal rellena y se contrae (clave: min-width:0) */
+.main-content{
+  min-width: 0;
   display: flex;
-  flex-direction: row;
-  overflow: hidden;
-}
-
-#sidebarContainer {
-  flex: 0 0 auto; /* ancho fijo del sidebar */
-}
-
-.main-content {
-  flex: 1 1 auto;       /* ocupa resto de espacio */
-  display: flex;        /* para centrar internamente */
-  flex-direction: column; /* apila de arriba abajo */
-  justify-content: flex-start; /* arranca en la parte superior */
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
   overflow-y: auto;
   background: var(--color-bg);
-  margin-left: 28vh;
-  transition: margin-left 0.3s ease; /* suaviza el cambio de margen */
+  margin-left: 0;                  /* ❌ fuera el hack de margen */
+  transition: none;                /* ya animamos el grid del body */
 }
 
-/* cuando collapsas, sidebarContainer recibe .collapsed: */
-#sidebarContainer.collapsed + .main-content {
-  margin-left: 9vh;            /* ancho de sidebar colapsada */
+/* Móvil: el grid no aporta; el sidebar se gestiona como off-canvas */
+@media (max-width: 768px){
+  body.has-sidebar{
+    display: block;
+  }
+  #sidebarContainer{
+    min-height: auto;
+  }
 }

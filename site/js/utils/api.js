@@ -158,13 +158,17 @@ export async function fetchWithAuth(path, opts = {}) {
     return Promise.reject(new Error("No autenticado"));
   }
 
-  opts.headers = {
-    ...(opts.headers || {}),
-    "Authorization": `Bearer ${token}`,
-    "Content-Type": opts.body && !("Content-Type" in (opts.headers || {})) ? "application/json" : (opts.headers || {})["Content-Type"]
-  };
+  const headers = new Headers(opts.headers || {});
+  headers.set("Authorization", `Bearer ${token}`);
 
-  const res = await fetch(`${API_BASE}${path}`, opts);
+  // ⚠️ Solo poner Content-Type si el body NO es FormData
+  if (opts.body && !(opts.body instanceof FormData)) {
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
 
   if (res.status === 401) {
     logout({ showModal: true });

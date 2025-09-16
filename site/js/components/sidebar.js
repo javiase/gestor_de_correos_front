@@ -12,6 +12,8 @@ export function initSidebar(containerSelector) {
     })
     .then((html) => {
       container.innerHTML = html;
+      // 👇 Señal universal: esta página tiene sidebar
+      document.body.classList.add('has-sidebar');
       initEmailSidebar();
     })
     .catch(console.error);
@@ -160,10 +162,18 @@ class EmailSidebar {
     } else {
       this.isCollapsed = !this.isCollapsed;
       this.sidebar.classList.toggle("collapsed", this.isCollapsed);
-      // además colapsamos el contenedor para que el main-content se desplace
-      document
-        .getElementById('sidebarContainer')
-        .classList.toggle('collapsed', this.isCollapsed);
+
+      // Aún tocamos el contenedor actual por compatibilidad
+      const sc = document.getElementById('sidebarContainer');
+      if (sc) sc.classList.toggle('collapsed', this.isCollapsed);
+
+      // 👉 Señal global para TODAS las páginas
+      document.body.classList.toggle('sidebar-collapsed', this.isCollapsed);
+      window.dispatchEvent(new CustomEvent('sidebar:state', {
+        detail: { collapsed: this.isCollapsed }
+      }));
+
+      this.updateToggleLabel?.();
     }
   }
 

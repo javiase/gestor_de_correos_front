@@ -146,10 +146,69 @@ async function iniciarOAuth() {
     alert("No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.");
   }
 }
-document.querySelectorAll(".auth-google").forEach(el => {
-  el.addEventListener('click', (e) => {
+// Solo el botón de navbar con id="loginBtn" va directo
+const loginBtnEl = document.querySelector("#loginBtn");
+if (loginBtnEl) {
+  loginBtnEl.addEventListener('click', (e) => {
     e.preventDefault();
     iniciarOAuth();
   });
+}
+
+// ——— 1) Scroll arriba al pulsar cualquier "Respondize" ———
+document.querySelectorAll('.logo-text').forEach(el => {
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 });
 
+// ——— 2) Modal de introducción previo al login ———
+const introModal = document.getElementById('introModal');
+const introContinueBtn = document.getElementById('introContinue');
+
+function openIntroModal() {
+  if (!introModal) return;
+  introModal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  // foco al modal para accesibilidad
+  const dialog = introModal.querySelector('.modal-dialog');
+  if (dialog) dialog.focus();
+}
+
+function closeIntroModal() {
+  if (!introModal) return;
+  introModal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+}
+
+// Abrir modal desde todos los botones marcados como trigger-intro
+document.querySelectorAll('.trigger-intro').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    openIntroModal();
+  });
+});
+
+// Continuar => cerrar modal y lanzar OAuth
+if (introContinueBtn) {
+  introContinueBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeIntroModal();
+    iniciarOAuth();
+  });
+}
+
+// Cerrar con backdrop o con la X
+if (introModal) {
+  introModal.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-backdrop') || e.target.classList.contains('modal-close')) {
+      closeIntroModal();
+    }
+  });
+}
+
+// Cerrar con Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeIntroModal();
+});

@@ -13,7 +13,7 @@
   <header class="navbar">
     <div class="navbar-content">
       <div class="navbar-left">
-        <span class="logo-text">Respondize</span>
+        <a href="#" class="logo-text" aria-label="Ir arriba">Respondize</a>
       </div>
       <nav class="navbar-center">
         <a href="#features">Características</a>
@@ -23,7 +23,7 @@
       </nav>
       <div class="navbar-right">
         <a href="#" id="loginBtn" class="login-btn auth-google">Iniciar sesión</a>
-        <a href="#" id="joinBtn" class="cta-btn auth-google">Únete gratis</a>
+        <a href="#" id="joinBtn" class="cta-btn trigger-intro">Únete gratis</a>
         <a href="/secciones/testing-login.html" id="loginCasa" class="login-btn" style="margin-left:12px;">Login CASA (pre)</a>
       </div>
       <button class="mobile-menu-btn">
@@ -35,12 +35,13 @@
   </header>
 
   <main>
+    <!-- HERO -->
     <section class="hero">
       <div class="hero-content">
-        <h1>Atención al cliente e-commerce sin fricciones</h1>
-        <p class="hero-subtitle">Reduce un 60% el tiempo de respuesta y crece sin contratar más personal</p>
+        <h1>Atención al cliente e-commerce rápida y humana</h1>
+        <p class="hero-subtitle">Reduce hasta un 60% el tiempo de respuesta y dedica más tiempo a lo que importa</p>
         <div class="hero-cta">
-          <a href="#start" class="cta-btn big">Únete gratis</a>
+          <a href="#" class="cta-btn big trigger-intro">Únete gratis</a>
           <a href="#demo" class="secondary-btn">Ver demo <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="social-proof">
@@ -51,146 +52,262 @@
           </div>
         </div>
       </div>
-    
+
       <div class="hero-image">
-        <!-- Aquí reemplazamos la imagen con el placeholder del vídeo -->
         <div class="video-placeholder hero-video">
           <span>Vídeo Demo próximamente</span>
         </div>
       </div>
     </section>
 
-    <section id="features" class="features-section">
-      <h2>Beneficios destacados</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-clock"></i>
-          </div>
-          <h3>Ahorro de tiempo</h3>
-          <p>Automatiza respuestas en segundos, liberando a tu equipo para tareas más importantes.</p>
+    <!-- TRUST BADGES (CASA + GDPR) -->
+    <section class="trust-badges" aria-label="Sellos de confianza">
+      <div class="trust-headline">
+        <h2 class="trust-title">Seguridad y privacidad primero</h2>
+        <p class="trust-subtitle">
+          Cumplimos con el Reglamento General de Protección de Datos (GDPR) y contamos con la verificación de seguridad de Google 
+          <strong>(CASA Tier 2)</strong>, requerida para apps con acceso a datos restringidos.
+        </p>
+      </div>
+
+      <div class="trust-inner">
+        <div class="trust-item" title="Verificación de seguridad de Google para apps con acceso a datos restringidos">
+          <img src="/assets/badges/casa_tier_2.png" alt="CASA Tier 2 de Google (verificación de seguridad)" loading="lazy">
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-chart-line"></i>
-          </div>
-          <h3>Escala sin contratar</h3>
-          <p>Maneja más consultas sin aumentar tu equipo de soporte.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-robot"></i>
-          </div>
-          <h3>Respuestas 24/7</h3>
-          <p>Ofrece soporte instantáneo a tus clientes en cualquier momento.</p>
+        <div class="trust-item" title="Compromiso con el Reglamento General de Protección de Datos (GDPR) de la UE">
+          <img src="/assets/badges/gdpr.png" alt="Cumplimos GDPR" loading="lazy">
         </div>
       </div>
     </section>
 
+    <!-- BENEFICIOS -->
+    <section id="features" class="features-section">
+      <h2>Beneficios destacados</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+          <h3>Respuestas en minutos</h3>
+          <p>Atiende 24/7 con borradores listos para enviar y menos esperas para tus clientes.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-handshake"></i></div>
+          <h3>Control humano</h3>
+          <p>La IA redacta; tú apruebas y mantienes el tono de marca en cada respuesta.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
+          <h3>Escala sin gastos mayores</h3>
+          <p>Más volumen con el mismo equipo.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+          <h3>Métricas accionables</h3>
+          <p>Tiempos, resolución y motivos top para priorizar mejoras y reducir tickets.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+          <h3>Privacidad y cumplimiento</h3>
+          <p>OAuth de Google, GDPR y verificación de seguridad (CASA Tier 2). Sin entrenar modelos globales.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-store"></i></div>
+          <h3>Listo para e-commerce</h3>
+          <p>Conecta tu tienda (según plan) para responder con datos de pedido cuando haga falta.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CÓMO FUNCIONA -->
     <section id="how-it-works" class="how-it-works">
       <h2>Cómo funciona</h2>
       <div class="steps-container">
         <div class="step">
           <div class="step-number">1</div>
-          <h3>Entrena con tu política</h3>
-          <p>Sube tus FAQs y políticas de devolución</p>
+          <h3>Conecta y configura</h3>
+          <p>Autoriza con Google y sube tus políticas y FAQs. Sin código y en minutos.</p>
         </div>
         <div class="step">
           <div class="step-number">2</div>
-          <h3>Borrador automático</h3>
-          <p>La IA genera respuestas basadas en tu información</p>
+          <h3>La IA redacta por ti</h3>
+          <p>Clasifica el correo y propone un borrador on-brand.</p>
         </div>
         <div class="step">
           <div class="step-number">3</div>
-          <h3>Validación y envío</h3>
-          <p>Revisa y envía con un solo clic</p>
+          <h3>Apruebas y envías</h3>
+          <p>Revisa, ajusta si quieres y envía en un clic.</p>
         </div>
       </div>
     </section>
 
+    <!-- PLANES (sin cambios profundos aún; los afinamos después) -->
     <section id="pricing" class="pricing-section">
       <h2>Planes adaptados a tu negocio</h2>
-      <div class="pricing-grid">
+
+      <div id="pricing-grid" class="pricing-grid">
         <!-- Free Plan -->
         <div class="pricing-card free">
           <div class="pricing-header">
-            <h3>Free</h3>
+            <h3>Free Plan</h3>
             <span class="price">0 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 30 correos/mes</li>
-            <li><i class="fas fa-check"></i> Personalizar respuestas con info de tu tienda</li>
+            <li><i class="fas fa-check"></i> Hasta 30 correos/mes</li>
+            <li><i class="fas fa-check"></i> 1 buzón disponible</li>
+            <li><i class="fas fa-check"></i> Respuestas alineadas con las políticas y FAQs de tu negocio</li>
           </ul>
-          <a href="#start" class="cta-btn">Empezar gratis</a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn trigger-intro" id="freeBtn">¡Empieza Gratis!</a>
+          </div>
         </div>
 
         <!-- Starter Plan -->
-        <div class="pricing-card starter">
+        <div class="pricing-card starter" style="border: 3px solid var(--primary);">
           <div class="popular-badge">Más popular</div>
           <div class="pricing-header">
-            <h3>Starter</h3>
+            <h3>Starter Plan</h3>
             <span class="price">79,99 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 300 correos/mes</li>
-            <li><i class="fas fa-check"></i> Todo lo de Free</li>
-            <li><i class="fas fa-check"></i> Métricas limitadas</li>
+            <li><i class="fas fa-check"></i> Hasta 300 correos/mes</li>
+            <li><i class="fas fa-check"></i> 1 buzón disponible</li>
+            <li><i class="fas fa-check"></i> Respuestas alineadas con las políticas y FAQs de tu negocio</li>
+
+            <!-- Línea divisoria -->
+            <li class="feature-divider" style="margin: 1.5rem 0;"></li>
+
+            <li class="feature-soon">
+              <i class="fa-regular fa-clock" style="color: #fbbf24;"></i> Integracion con Shopify
+              <span class="feature-badge">Pronto</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Métricas básicas
+              <span class="feature-badge" >Planeado</span>
+            </li>
           </ul>
-          <a href="#start" class="cta-btn" id="starterBtn">Elegir Starter</a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn trigger-intro" id="starterBtn">Seleccionar Starter</a>
+          </div>
         </div>
 
         <!-- Advanced Plan -->
         <div class="pricing-card advanced">
           <div class="pricing-header">
-            <h3>Advanced</h3>
+            <h3>Advanced Plan</h3>
             <span class="price">159,99 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 600 correos/mes</li>
-            <li><i class="fas fa-check"></i> Todo lo de Starter</li>
-            <li><i class="fas fa-check"></i> Acceso total a métricas</li>
-            <li><i class="fas fa-check"></i> Conectar tienda con Shopify</li>
-            <li><i class="fas fa-check"></i> Hasta 2 reglas personalizadas para el bot</li>
-            <li><i class="fas fa-check"></i> Hasta 2 buzones personalizados</li>
-            <li><i class="fas fa-check"></i> Instagram Business</li>
+            <li><i class="fas fa-check"></i> Hasta 600 correos/mes</li>
+            <li><i class="fas fa-check"></i> 1 buzón disponible</li>
+            <li><i class="fas fa-check"></i> Respuestas alineadas con las políticas y FAQs de tu negocio</li>
+
+            <!-- Línea divisoria -->
+            <li class="feature-divider" style="margin: 1.5rem 0;"></li>
+
+            <li class="feature-soon">
+              <i class="fa-regular fa-clock" style="color: #fbbf24;"></i> Integracion con Shopify
+              <span class="feature-badge">Pronto</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Acceso total a métricas y panel de estadísticas
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Hasta 2 reglas para personalizar el bot
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Hasta 2 buzones configurables
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Chatbot personalizado para consultas de métricas
+              <span class="feature-badge" >Planeado</span>
+            </li>
           </ul>
-          <a href="#start" class="cta-btn" id="advancedBtn">Elegir Advanced</a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn trigger-intro" id="advancedBtn">Seleccionar Advanced</a>
+          </div>
         </div>
 
         <!-- Professional Plan -->
         <div class="pricing-card professional">
           <div class="pricing-header">
-            <h3>Professional</h3>
+            <h3>Professional Plan</h3>
             <span class="price">319,99 €<span class="period">/mes</span></span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 1 200 correos/mes</li>
-            <li><i class="fas fa-check"></i> Todo lo de Advanced</li>
-            <li><i class="fas fa-check"></i> Creación de clases propias para clasificación de correos</li>
-            <li><i class="fas fa-check"></i> Hasta 6 reglas personalizadas para el bot</li>
-            <li><i class="fas fa-check"></i> Hasta 5 buzones personalizados</li>
-            <li><i class="fas fa-check"></i> Bot para consultas personalizadas a tu base de datos de métricas</li>
-            <li><i class="fas fa-check"></i> WhatsApp Business</li>
+            <li><i class="fas fa-check"></i> Hasta 1.200 correos/mes</li>
+            <li><i class="fas fa-check"></i> 1 buzón disponible</li>
+            <li><i class="fas fa-check"></i> Respuestas alineadas con las políticas y FAQs de tu negocio</li>
+
+             <!-- Línea divisoria -->
+            <li class="feature-divider" style="margin: 1.5rem 0;"></li>
+
+            <li class="feature-soon">
+              <i class="fa-regular fa-clock" style="color: #fbbf24;"></i> Integracion con Shopify
+              <span class="feature-badge">Pronto</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Acceso total a métricas y panel de estadísticas
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Chatbot personalizado para consultas de métricas
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Hasta 6 reglas para personalizar el bot
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Hasta 4 buzones configurables
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Creación de tus propias clases para clasificación
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Instagram Business
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> WhatsApp Business
+              <span class="feature-badge" >Planeado</span>
+            </li>
+            <li class="feature-planned">
+              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Creación de tus propias clases para clasificación
+              <span class="feature-badge" >Planeado</span>
+            </li>
           </ul>
-          <a href="#start" class="cta-btn" id="professionalBtn">Elegir Professional</a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn trigger-intro" id="professionalBtn">Seleccionar Professional</a>
+          </div>
         </div>
 
         <!-- Custom Plan -->
         <div class="pricing-card custom">
           <div class="pricing-header">
-            <h3>Custom</h3>
+            <h3>Custom Plan</h3>
             <span class="price">Personalizado</span>
           </div>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> Todo lo de Professional</li>
-            <li><i class="fas fa-check"></i> Funcionalidades a medida</li>
-            <li><i class="fas fa-check"></i> Soporte y SLA premium</li>
+            <li><i class="fas fa-check"></i> Incluye todas las funciones del plan Professional</li>
+            <li><i class="fas fa-check"></i> Soporte y ajustes a medida</li>
+            <li><i class="fas fa-check"></i> Integraciones y desarrollo a medida</li>
           </ul>
-          <a href="#contact" class="cta-btn">Contáctanos</a>
+          <div class="buttons-container">
+            <a href="#" class="cta-btn">Contacta con nosotros</a>
+          </div>
         </div>
       </div>
+      <p class="plan-notice" style="max-width:1100px;margin:3rem auto 0;">
+        * Las funciones marcadas como <strong>"Pronto"</strong> están en desarrollo y se desplegarán gradualmente. Y las funciones marcadas como <strong>"Planeado"</strong> están en nuestra hoja de ruta para los próximos meses.
+      </p>
     </section>
 
+
+    <!-- FAQ -->
     <section id="faq" class="faq-section">
       <h2>Preguntas frecuentes</h2>
       <div class="faq-grid">
@@ -200,37 +317,78 @@
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Sí, utilizamos encriptación de extremo a extremo y cumplimos con GDPR y otras regulaciones de privacidad.</p>
+            <p>Usamos OAuth de Google y cifrado en tránsito y en reposo. Nuestra base de datos está cifrada, lo que protege tus datos frente a accesos no autorizados. Cumplimos GDPR y aplicamos prácticas evaluadas en la verificación de seguridad de Google (CASA Tier 2). No utilizamos tus datos para entrenar modelos globales.</p>
           </div>
         </div>
+
         <div class="faq-item">
           <button class="faq-question">
-            ¿Cómo funciona la suscripción?
+            ¿Tengo control humano?
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Puedes cambiar o cancelar tu plan en cualquier momento. El cobro es mensual y puedes actualizar tu plan según tus necesidades.</p>
-            <br>
-            <p>El cambio de plan gratis a uno de pago se realiza de manera inmediata, pero cualquier otro cambio se aplicará al siguiente ciclo de facturación.</p>
+            <p>Sí. La IA propone borradores y tú siempre decides antes de enviar.</p>
           </div>
         </div>
+
         <div class="faq-item">
           <button class="faq-question">
-            ¿Puedo cancelar en cualquier momento?
+            ¿Cómo se cuentan los correos?
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Sí, puedes cancelar tu suscripción y no se te realizará ningún cargo en el siguiente ciclo de facturación.</p>
+            <p>Por borradores/respuestas generadas y enviadas desde la app. Puedes ampliar con packs cuando superes tu límite.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Qué integraciones incluye?
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="faq-answer">
+            <p>Gmail por defecto; en planes avanzados (próximamente), Shopify e Instagram/WhatsApp Business.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Cómo funcionan los cambios de plan?
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="faq-answer">
+            <p>De Free a pago es inmediato. El resto de cambios aplican en el siguiente ciclo de facturación.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Puedo cancelar?
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="faq-answer">
+            <p>Sí, cuando quieras; ten en cuenta que, tras 2 meses de inactividad, eliminaremos todos tus datos para cumplir con la normativa europea de protección de datos.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Se tarda mucho en configurar la app a mi medida?
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="faq-answer">
+            <p>No. En pocos minutos la tendrás funcionando y adaptada a tus políticas.</p>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- CTA FINAL -->
     <section class="cta-section" id="start">
       <div class="cta-content">
-        <h2>¿Listo para revolucionar tu atención al cliente?</h2>
-        <p>Únete a cientos de tiendas que ya confían en Respondize</p>
-        <a href="#" class="cta-btn big auth-google">Únete gratis</a>
+        <h2>Gana tiempo para lo que de verdad importa</h2>
+        <p>Deja el trabajo repetitivo en nuestras manos y dedica tu día a clientes, producto y crecimiento.</p>
+        <a href="#" class="cta-btn big trigger-intro">Empieza gratis</a>
       </div>
     </section>
   </main>
@@ -238,7 +396,7 @@
   <footer>
     <div class="footer-content">
       <div class="footer-brand">
-        <span class="logo-text">Respondize</span>
+        <a href="#" class="logo-text" aria-label="Ir arriba">Respondize</a>
         <p>Transformando la atención al cliente con IA</p>
       </div>
       <div class="footer-links">
@@ -267,7 +425,7 @@
       <p>
         Respondize procesa tus correos en tiempo real para generar respuestas personalizadas  
         y <strong>no utiliza tus datos para entrenar modelos de IA globales</strong>.  
-        Consulta nuestra <a href="/secciones/politica_privacidad.html#uso‑ia‑limited‑use">
+        Consulta nuestra <a href="/secciones/politica_privacidad.html#uso-ia-limited-use">
           Política de Privacidad
         </a> para más detalles.
       </p>
@@ -277,6 +435,55 @@
     </div>
   </footer>
 
+  <!-- Modal de introducción -->
+  <div id="introModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="true"></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="introTitle" aria-describedby="introDesc" tabindex="-1">
+      <button class="modal-close" aria-label="Cerrar">&times;</button>
+
+      <!-- Texto introductorio -->
+      <h2 id="introTitle" class="modal-title">Antes de empezar: tendrás que autorizar a Respondize en Google</h2>
+      <p id="introDesc" class="modal-desc">
+        En el siguiente paso se puede ver la pantalla de Google para conceder permisos de forma segura.
+        Es necesario para conectar tu cuenta y que Respondize funcione al 100%.
+      </p>
+
+      <!-- Imagen explicativa -->
+      <img
+        src="assets/icons/intro_español_index.png"
+        alt="Pantalla de permisos de Google y explicación de por qué los solicitamos"
+        class="modal-image"
+        loading="lazy"
+      />
+
+      <!-- Leyenda corta bajo la imagen -->
+      <p class="modal-caption">
+        En la imagen puedes ver <strong>por qué</strong> solicitamos cada permiso.
+      </p>
+
+      <a href="#" id="introContinue" class="cta-btn" style="margin-top: 16px;">Continuar</a>
+    </div>
+  </div>
+
+
+  <!-- Script principal -->
   <script type="module" src="/js/script.js"></script>
+
+  <!-- FAQ Schema (SEO) -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"FAQPage",
+    "mainEntity":[
+      {"@type":"Question","name":"¿Es mi información segura?","acceptedAnswer":{"@type":"Answer","text":"Usamos OAuth de Google y cifrado en tránsito y en reposo. Nuestra base de datos está cifrada, lo que protege tus datos frente a accesos no autorizados. Cumplimos GDPR y aplicamos prácticas evaluadas en la verificación de seguridad de Google (CASA Tier 2). No utilizamos tus datos para entrenar modelos globales."}},
+      {"@type":"Question","name":"¿Tengo control humano?","acceptedAnswer":{"@type":"Answer","text":"Sí. La IA propone borradores y tú siempre decides antes de enviar."}},
+      {"@type":"Question","name":"¿Cómo se cuentan los correos?","acceptedAnswer":{"@type":"Answer","text":"Por borradores/respuestas generadas y enviadas desde la app. Puedes ampliar con packs cuando superes tu límite."}},
+      {"@type":"Question","name":"¿Qué integraciones incluye?","acceptedAnswer":{"@type":"Answer","text":"Gmail por defecto; en planes avanzados (próximamente), Shopify e Instagram/WhatsApp Business."}},
+      {"@type":"Question","name":"¿Cómo funcionan los cambios de plan?","acceptedAnswer":{"@type":"Answer","text":"De Free a pago es inmediato. El resto de cambios aplican en el siguiente ciclo de facturación."}},
+      {"@type":"Question","name":"¿Puedo cancelar?","acceptedAnswer":{"@type":"Answer","text":"Sí, cuando quieras; ten en cuenta que, tras 2 meses de inactividad, eliminaremos todos tus datos para cumplir con la normativa europea de protección de datos."}},
+      {"@type":"Question","name":"¿Se tarda mucho en configurar la app a mi medida?","acceptedAnswer":{"@type":"Answer","text":"No. En pocos minutos la tendrás funcionando y adaptada a tus políticas."}}
+    ]
+  }
+  </script>
 </body>
-</html> 
+</html>

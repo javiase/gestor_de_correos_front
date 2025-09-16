@@ -61,20 +61,36 @@
                                     data-placeholder="Escribe tu respuesta…"
                                 ></div>
                             </div>
+                            <div id="replyFilesPreview" class="attachments-grid"></div>
                             <div class="panel-footer">
-                                <!-- Acciones -->
-                                <button id = "sendReply" class="send-button">Enviar</button>
-                                <button id = "deleteEmail" class="trash-button" aria-label="Borrar">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6" stroke="currentColor"></polyline>
-                                    <path d="M19 6l-1.35 14.11A2 2 0 0 1 15.66 22H8.34
-                                            A2 2 0 0 1 6.35 20.11L5 6" stroke="currentColor"></path>
-                                    <path d="M14 10v6" stroke="currentColor"></path>
-                                    <path d="M10 10v6" stroke="currentColor"></path>
-                                    <line x1="9" y1="6" x2="9" y2="4" stroke="currentColor"></line>
-                                    <line x1="15" y1="6" x2="15" y2="4" stroke="currentColor"></line>
+                                <div class="left-actions">
+                                    <button id="sendReply" class="send-button">Enviar</button>
+                                </div>
+
+                                <div class="right-actions">
+                                    <button id="attachBtn" class="icon-button attach-button" type="button" aria-label="Adjuntar">
+                                    <!-- icono paperclip -->
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.2a2 2 0 0 1-2.83-2.83l8.5-8.5"/>
                                     </svg>
-                                </button>
+                                    </button>
+
+                                    <button id="deleteEmail" class="icon-button trash-button" aria-label="Borrar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6l-1.35 14.11A2 2 0 0 1 15.66 22H8.34A2 2 0 0 1 6.35 20.11L5 6"></path>
+                                        <path d="M14 10v6"></path>
+                                        <path d="M10 10v6"></path>
+                                        <line x1="9" y1="6" x2="9" y2="4"></line>
+                                        <line x1="15" y1="6" x2="15" y2="4"></line>
+                                    </svg>
+                                    </button>
+                                </div>
+                                </div>
+
+                                <input id="replyFilesInput" type="file" multiple hidden />
                             </div>
                         </div>
                     </div>

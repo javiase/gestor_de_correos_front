@@ -9,6 +9,17 @@ import { notify } from '/js/utils/notify.js';
 enforceSessionGate();
 enforceProfileGate();
 
+// Límites prudentes (≈25MB Gmail, dejamos margen por base64)
+const GMAIL_MAX_TOTAL_BYTES = 24 * 1024 * 1024; // ~24 MiB total
+const GMAIL_MAX_PER_FILE    = 24 * 1024 * 1024; // ~24 MiB por archivo
+
+function formatBytes(n){
+  if (!n && n !== 0) return '';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024*1024) return `${(n/1024).toFixed(1)} KB`;
+  return `${(n/1024/1024).toFixed(1)} MB`;
+}
+
 // === ICONOS SVG PARA ADJUNTOS (inline, super ligeros) ===
 const ATT_SVGS = {
   img: `
@@ -149,6 +160,7 @@ function stripInlineImages(html = '', attachments = []) {
 }
 
 
+
 function enforceContentEditableMax(el, max) {
   el.addEventListener('input', () => {
     const plain = (el.textContent || '');
@@ -244,10 +256,24 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
   const fg = useWhite ? '#111111' : '#e6e6e6';
 
   // ——— 3) Sanitiza el HTML del email ———
-  const raw = (rawHtml && rawHtml.trim())
-    ? stripInlineImages(rawHtml, attachments)
-    : (fallbackText || '').replace(/\n/g, '<br>');
-  const safeHtml = DOMPurify.sanitize(raw, {
+  let innerHtml;
+  if (rawHtml && rawHtml.trim()) {
+    const stripped = stripInlineImages(rawHtml, attachments);
+    // Si NO está estructurado, lo envolvemos en el wrapper para que herede estilos del bot
+    innerHtml = isStructured
+      ? stripped
+      : `<div class="panel-content">${stripped}</div>`;
+  } else {
+    // Texto plano → conviértelo en <p> y envuélvelo
+    const paragraphs = (fallbackText || '')
+      .split('\n')
+      .map(p => `<p>${p}</p>`)
+      .join('');
+    innerHtml = `<div class="panel-content" id="receivedContent">${paragraphs}</div>`;
+  }
+
+
+  const safeHtml = DOMPurify.sanitize(innerHtml, {
     ALLOW_UNKNOWN_PROTOCOLS: true,
     ADD_TAGS: ['style','svg','path'],
     ADD_ATTR: ['style','target','align','border','cellpadding','cellspacing','background'],
@@ -293,6 +319,20 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
     table { border-collapse:collapse !important; max-width:100%; }
     blockquote { margin:.5em 0 .5em 1em; padding-left:.8em; border-left:3px solid rgba(0,0,0,.2); }
     hr { border:0; border-top:1px solid rgba(0,0,0,.15); }
+    .panel-content {
+      /* iguala la “sensación” del bot sin usar vh */
+      font-size: 1.2rem;       /* ~15px */
+      line-height: 1.45;        /* cómodo para lectura */
+      color: inherit;           /* usa fg calculado arriba */
+    }
+    .panel-content p,
+    .panel-content div,
+    .panel-content span,
+    .panel-content li {
+      font: inherit;
+      color: inherit;
+    }
+    .panel-content p { margin: .45em 0; }
     /* En oscuro y email NO claro: evitar texto negro sobre fondo oscuro */
     ${!useWhite ? `
       body, p, div, span, td, li, a, h1, h2, h3, h4, h5, h6 { color:${fg} !important; }
@@ -306,6 +346,13 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
     ` : ``}
   `;
 
+
+   // --- Skeleton anti-salto: reserva el alto previo ---
+  const lastH = parseInt(container.dataset.lastH || '0', 10);
+  const currentH = container.offsetHeight || lastH || 160;
+  container.style.minHeight = currentH + 'px';
+
+  // CSS base + srcdoc ya construidos arriba…
   const srcdoc = `
     <!doctype html>
     <html>
@@ -318,27 +365,59 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
       <body>${safeHtml}</body>
     </html>
   `;
-  iframe.srcdoc = srcdoc;
 
-  // Inserta y ajusta altura
-  container.innerHTML = '';
-  container.appendChild(iframe);
+  // --- PROBE offscreen: medimos altura real sin pintar nada visible ---
+  const probe = document.createElement('iframe');
+  probe.setAttribute('sandbox', 'allow-same-origin'); // para leer scrollHeight
+  probe.style.position = 'absolute';
+  probe.style.visibility = 'hidden';
+  probe.style.pointerEvents = 'none';
+  probe.style.width  = container.clientWidth + 'px';
+  probe.style.height = '0';
+  probe.srcdoc = srcdoc;
+  document.body.appendChild(probe);
 
-  const onReady = () => {
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    const resize = () => { iframe.style.height = (doc.body.scrollHeight + 16) + 'px'; };
-    // primera medida
-    resize();
-    // al cargar imágenes
-    Array.from(doc.images || []).forEach(img => img.addEventListener('load', resize));
-    // si hay cambios de layout
-    if ('ResizeObserver' in window) {
-      new ResizeObserver(resize).observe(doc.body);
-    } else {
-      setTimeout(resize, 300);
-    }
-  };
-  iframe.addEventListener('load', onReady, { once: true });
+  probe.addEventListener('load', () => {
+    const pdoc = probe.contentDocument || probe.contentWindow.document;
+    const measured = ((pdoc?.body?.scrollHeight) || currentH) + 16;
+    probe.remove();
+
+    // --- IFRAME REAL: se inserta ya con la altura final ---
+    const iframe = document.createElement('iframe');
+    iframe.className = 'gmail-frame';
+    iframe.setAttribute(
+      'sandbox',
+      'allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation'
+    );
+    iframe.style.display = 'block';
+    iframe.style.width = '100%';
+    iframe.style.border = '0';
+    iframe.style.height = measured + 'px';
+    iframe.style.transition = 'height .12s ease';
+    iframe.srcdoc = srcdoc;
+
+    container.innerHTML = '';
+    container.appendChild(iframe);
+
+    container.dataset.lastH = String(measured);
+    requestAnimationFrame(() => { container.style.minHeight = '0'; });
+
+    // Ajustes suaves si cambian cosas dentro (imágenes, fuentes, etc.)
+    const fix = () => {
+      const idoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!idoc) return;
+      const h = (idoc.body?.scrollHeight || measured) + 16;
+      iframe.style.height = h + 'px';
+      container.dataset.lastH = String(h);
+    };
+
+    iframe.addEventListener('load', () => {
+      const idoc = iframe.contentDocument || iframe.contentWindow.document;
+      Array.from(idoc.images || []).forEach(img => img.addEventListener('load', fix));
+      if ('ResizeObserver' in window) new ResizeObserver(fix).observe(idoc.body);
+      setTimeout(fix, 300);
+    });
+  });
 }
 
 
@@ -415,6 +494,14 @@ class EmailView {
     this.nextBtn = document.getElementById('nextEmail');
     this.sendBtn = document.getElementById('sendReply');
     this.deleteBtn = document.getElementById('deleteEmail');
+    this.fileInput = document.getElementById('replyFilesInput');
+    this.filesPreview = document.getElementById('replyFilesPreview');
+    this.pendingFiles = []; // File[]
+
+    this.attachBtn = document.getElementById('attachBtn');
+    if (this.attachBtn && this.fileInput) {
+      this.attachBtn.addEventListener('click', () => this.fileInput.click());
+    }
 
     if (!this.prevBtn || !this.nextBtn) {
       console.error("No encuentro los botones de navegación en el DOM");
@@ -424,10 +511,80 @@ class EmailView {
     this.prevBtn.addEventListener('click', () => this.navigate(-1));
     this.nextBtn.addEventListener('click', () => this.navigate(1));
 
+    if (this.fileInput) {
+      this.fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        this.addPendingFiles(files);
+        this.fileInput.value = ''; // reset para poder elegir el mismo archivo otra vez
+      });
+    }
+
     // acciones de enviar / borrar
     if (this.sendBtn) this.sendBtn.addEventListener('click', () => this.sendReply());
     if (this.deleteBtn) this.deleteBtn.addEventListener('click', () => this.deleteEmail());
   }
+
+  // Añadir y validar adjuntos para la respuesta
+  addPendingFiles(files){
+    const MAX_FILES = 10;
+
+    let curr = this.pendingFiles.slice();
+    for (const f of files){
+      if (curr.length >= MAX_FILES) {
+        notify?.error?.('Máximo 10 adjuntos.');
+        break;
+      }
+
+      // 1) Límite por archivo
+      if ((f.size || 0) > GMAIL_MAX_PER_FILE){
+        notify?.error?.(`"${f.name}" es demasiado grande (${formatBytes(f.size)}). Límite ~24 MB por archivo.`);
+        continue; // no lo añadimos
+      }
+
+      // 2) Límite total
+      const nextTotal = curr.reduce((s, x) => s + (x.size || 0), 0) + (f.size || 0);
+      if (nextTotal > GMAIL_MAX_TOTAL_BYTES){
+        notify?.error?.(
+          `Superas el límite total (~24 MB). Intento con "${f.name}" → ${formatBytes(nextTotal)}`
+        );
+        continue; // no lo añadimos
+      }
+
+      curr.push(f);
+    }
+
+    this.pendingFiles = curr;
+    this.renderPendingFiles();
+  }
+
+  removePendingFile(idx){
+    this.pendingFiles.splice(idx,1);
+    this.renderPendingFiles();
+  }
+
+  renderPendingFiles(){
+    if (!this.filesPreview) return;
+    // usa el mismo grid de entrantes
+    this.filesPreview.classList.add('attachments-grid');
+    this.filesPreview.innerHTML = '';
+
+    this.pendingFiles.forEach((f, i) => {
+      const kind = getAttachmentKind({ mimeType: f.type, filename: f.name });
+      const chip = document.createElement('div');      // div como chip, igual look
+      chip.className = 'attachment-chip outgoing';
+
+      chip.innerHTML = `
+        <span class="att-icon" aria-hidden="true">${svgForKind(kind)}</span>
+        <span class="att-name" title="${f.name}">${f.name}</span>
+        <button class="rm" title="Quitar" aria-label="Quitar">x</button>
+      `;
+
+      chip.querySelector('.rm').addEventListener('click', () => this.removePendingFile(i));
+      this.filesPreview.appendChild(chip);
+    });
+  }
+
 
   async loadBatch(page, { replace = false, prepend = false } = {}) {
     console.log(`[loadBatch] page=${page} replace=${replace} prepend=${prepend}`);
@@ -605,52 +762,53 @@ class EmailView {
       renderHtmlEmail(rc, email.body_html, '', email.attachments || []);
     } else {
       // Fallback a texto plano
+      console.log("texto plano:", email.body);
       const rec = (email.body || '')
         .split('\n').map(p => `<p>${p}</p>`).join('');
       rc.innerHTML = DOMPurify.sanitize(rec);
     }
+    const incomingPanel = rc.closest('.panel');
 
-    // Adjuntos visibles (no inline)
-    let attWrap = document.getElementById('attachmentsContainer');
-    if (!attWrap) {
-      attWrap = document.createElement('div');
+    // --- Adjuntos visibles (no inline) ---
+
+    // Limpia cualquier grid anterior de este panel (evita “residuos” al navegar)
+    const oldAttWrap = incomingPanel?.querySelector('#attachmentsContainer');
+    if (oldAttWrap) oldAttWrap.remove();
+
+    const visibleAttachments = (email.attachments || []);
+
+    // Crea e inserta el grid SOLO si hay adjuntos (evita el “salto”)
+    if (visibleAttachments.length > 0 && incomingPanel) {
+      const attWrap = document.createElement('div');
       attWrap.id = 'attachmentsContainer';
       attWrap.className = 'attachments-grid';
       // debajo del cuerpo recibido
       rc.parentNode.insertBefore(attWrap, rc.nextSibling);
-    }
-    attWrap.innerHTML = '';
 
-    const visibleAttachments = (email.attachments || []);
+      visibleAttachments.forEach(a => {
+        const aEl = document.createElement('a');
+        aEl.href = '#';
+        aEl.title = a.filename || 'archivo';
+        aEl.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          openAttachmentAuth(a, email.id);
+        });
 
-    visibleAttachments.forEach(a => {
-      const aEl = document.createElement('a');
-
-      // NO ponemos href real para que no intente ir sin auth
-      aEl.href = '#';
-      aEl.title = a.filename || 'archivo';
-      aEl.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        openAttachmentAuth(a, email.id);
+        const kind = getAttachmentKind(a);
+        aEl.className = 'attachment-chip';
+        aEl.innerHTML = `
+          <span class="att-icon" aria-hidden="true">${svgForKind(kind)}</span>
+          <span class="att-name">${a.filename || 'archivo'}</span>
+        `;
+        attWrap.appendChild(aEl);
       });
-
-      const kind = getAttachmentKind(a);
-      const svg  = svgForKind(kind);
-
-      aEl.innerHTML = `
-        <span class="att-icon" aria-hidden="true">${svg}</span>
-        <span class="att-name">${a.filename || 'archivo'}</span>
-      `;
-      aEl.className = 'attachment-chip';
-      attWrap.appendChild(aEl);
-    });
-
-    // si no queda nada que mostrar, elimina el contenedor
-    if (visibleAttachments.length === 0) {
-      attWrap.remove();
     }
 
-
+    // --- Footer del panel entrante ---
+    // Por defecto está oculto por CSS. Lo mostramos solo si NO hay adjuntos.
+    if (incomingPanel) {
+      incomingPanel.classList.toggle('show-footer', visibleAttachments.length === 0);
+    }
 
     const respSubj = document.getElementById('responseSubject');
     respSubj.textContent = email.asunto_respuesta;
@@ -820,18 +978,41 @@ class EmailView {
         notify.error(`El cuerpo del correo supera ${LIMITS.email_body} caracteres.`);
         return;
       }
+      const totalBytes = (this.pendingFiles || []).reduce((acc, f) => acc + (f?.size || 0), 0);
+      if (totalBytes > GMAIL_MAX_TOTAL_BYTES) {
+        notify.error(`Los adjuntos superan el límite (~24 MB). Peso total: ${formatBytes(totalBytes)}.`);
+        return;
+      }
+      const tooBig = (this.pendingFiles || []).find(f => (f?.size || 0) > GMAIL_MAX_PER_FILE);
+      if (tooBig) {
+        notify.error(`"${tooBig.name}" es demasiado grande (${formatBytes(tooBig.size)}). Límite ~24 MB por archivo.`);
+        return;
+      }
+
+
+      // 👉 FormData para adjuntos
+      const fd = new FormData();
+      fd.append('email_id', emailId);           // reply
+      fd.append('recipient', recipient);        // por si tu back lo usa
+      fd.append('subject', subject);
+      fd.append('message', message);
+      this.pendingFiles.forEach(f => fd.append('files', f, f.name));
+
 
       const res = await fetchWithAuth('/emails/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ "emailId": emailId, recipient, subject, message })
+        body: fd
       });
+
       if (!res.ok) {
         const err = await res.json();
         console.error('Error al enviar la respuesta:', res.status, err);
         notify.error('Error al enviar el correo ❌');
         return;
       }
+
+      this.pendingFiles = [];
+      this.renderPendingFiles();
 
       // 1) Quitarlo igual que delete
       const removedId = this.ids.splice(this.index, 1)[0];

@@ -242,9 +242,22 @@
   transition: max-height 0.3s ease;
 }
 
+/* Este bloque se empuja al fondo y queda justo encima del perfil */
+.sidebar-bottom-control {
+  margin-top: auto;                         /* empuja al fondo */
+  padding: 0;                               /* sin padding extra */
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+/* Misma rejilla que el resto de items */
+.sidebar-bottom-control .menu-link {
+  height: 4vh;
+  padding: 0 0 0 3vh;                       /* igual que .menu-link general */
+  border-radius: 8px;
+}
+
 /* User Profile */
 .sidebar-footer {
-  margin-top: auto;
   position: sticky;
   bottom: 0;
   background-color: #2a2a2a;
