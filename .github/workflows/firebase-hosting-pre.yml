@@ -20,27 +20,89 @@ jobs:
 
       - name: Append version to ESM imports
         run: |
-          node -e "
-          const fs=require('fs'), path=require('path');
-          const ASSET=process.env.ASSET_VERSION;
-          function walk(dir){
-            for(const e of fs.readdirSync(dir,{withFileTypes:true})){
-              const p=path.join(dir,e.name);
-              if(e.isDirectory()) walk(p);
-              else if(p.endsWith('.js')){
-                let s=fs.readFileSync(p,'utf8');
-                // from '.../x.js'
-                s=s.replace(/(from\\s+['\"])(\\/?js\\/[^'\"\\n]+\\.js)(['\"])/g, (_,a,b,c)=> a + (b.includes('?v=')?b:`${b}?v=${ASSET}`) + c);
-                s=s.replace(/(from\\s+['\"])(\\.\\.?(?:\\/)[^'\"\\n]+\\.js)(['\"])/g, (_,a,b,c)=> a + (b.includes('?v=')?b:`${b}?v=${ASSET}`) + c);
-                // dynamic import('.../x.js')
-                s=s.replace(/(import\\(['\"])(\\/?js\\/[^'\"\\n]+\\.js)(['\"]\\))/g, (_,a,b,c)=> a + (b.includes('?v=')?b:`${b}?v=${ASSET}`) + c);
-                s=s.replace(/(import\\(['\"])(\\.\\.?(?:\\/)[^'\"\\n]+\\.js)(['\"]\\))/g, (_,a,b,c)=> a + (b.includes('?v=')?b:`${b}?v=${ASSET}`) + c);
-                fs.writeFileSync(p,s);
-              }
+          node <<'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          const ASSET = process.env.ASSET_VERSION || 'dev';
+
+          function addVer(p) {
+            if (p.includes('?v=')) return p;
+            return p + (p.includes('?') ? '&v=' + ASSET : '?v=' + ASSET);
+          }
+
+          function processFile(file) {
+            let s = fs.readFileSync(file, 'utf8');
+
+            // import ... from '/js/...'
+            s = s.replace(/(from\s+['"])(\/?js\/[^'"\n]+\.m?js)(['"])/g,
+              (_, a, b, c) => a + addVer(b) + c);
+
+            // import ... from './...' o '../...'
+            s = s.replace(/(from\s+['"])(\.{1,2}\/[^'"\n]+\.m?js)(['"])/g,
+              (_, a, b, c) => a + addVer(b) + c);
+
+            // dynamic import('/js/...')
+            s = s.replace(/(import\(['"])(\/?js\/[^'"\n]+\.m?js)(['"]\))/g,
+              (_, a, b, c) => a + addVer(b) + c);
+
+            // dynamic import('./...' | '../...')
+            s = s.replace(/(import\(['"])(\.{1,2}\/[^'"\n]+\.m?js)(['"]\))/g,
+              (_, a, b, c) => a + addVer(b) + c);
+
+            fs.writeFileSync(file, s);
+          }
+
+          function walk(dir) {
+            for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+              const p = path.join(dir, e.name);
+              if (e.isDirectory()) walk(p);
+              else if (p.endsWith('.js') || p.endsWith('.mjs')) processFile(p);
             }
           }
-          walk('site/js');
-          "
+
+          // Si prefieres cubrir TODO site (por si hay JS fuera de /js/), cambia a: walk('site');
+          if (fs.existsSync('site/js')) {
+            walk('site/js');
+          }
+
+          console.log('ESM imports versioned with', ASSET);
+          EOF
+
+      - name: Verify all ESM imports have ?v=
+        run: |
+          node <<'EOF'
+          const fs=require('fs'), path=require('path');
+          const offenders=[];
+          function walk(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){
+            const p=path.join(d,e.name);
+            if(e.isDirectory()) walk(p);
+            else if(p.endsWith('.js')||p.endsWith('.mjs')){
+              const s=fs.readFileSync(p,'utf8');
+              const patterns=[
+                /(from\s+['"])(\/?js\/[^'"\n]+\.m?js)(['"])/g,
+                /(from\s+['"])(\.{1,2}\/[^'"\n]+\.m?js)(['"])/g,
+                /(import\(['"])(\/?js\/[^'"\n]+\.m?js)(['"]\))/g,
+                /(import\(['"])(\.{1,2}\/[^'"\n]+\.m?js)(['"]\))/g,
+              ];
+              for(const re of patterns){
+                let m;
+                while((m=re.exec(s))){
+                  const spec=m[2];
+                  if(!spec.includes('?v=')) offenders.push(`${p}:${m.index} -> ${spec}`);
+                }
+              }
+            }
+          }}
+          // Igual que arriba: usa 'site' si quieres barrer todo.
+          if(fs.existsSync('site/js')) walk('site/js');
+          if(offenders.length){
+            console.error('Found unversioned imports:\\n' + offenders.join('\\n'));
+            process.exit(1);
+          } else {
+            console.log('All ESM imports are versioned ✔');
+          }
+          EOF
 
       - name: Deploy to PRE
         uses: FirebaseExtended/action-hosting-deploy@v0
