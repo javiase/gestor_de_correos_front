@@ -82,19 +82,48 @@ export async function logout(opts = {}) {
   setTimeout(() => { isLoggingOut = false; }, 3000); // por si no navega
 }
 
+// --- helpers base64url + JWT seguro ---
+function b64urlDecode(input) {
+  if (!input || typeof input !== "string") return null;
+  // base64url -> base64
+  let s = input.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = s.length % 4;
+  if (pad === 2) s += "==";
+  else if (pad === 3) s += "=";
+  else if (pad !== 0) s += "==="; // por si acaso
+  try { return atob(s); } catch { return null; }
+}
+
+function parseJwt(token) {
+  try {
+    const part = token.split(".")[1];
+    const json = b64urlDecode(part);
+    if (!json) return null;
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 // ──────────────────────────────────────────────────────────────
 // Helpers de token (renovación y modal)
 // ──────────────────────────────────────────────────────────────
+// Reemplaza tokenExpiraEnMenosDe() por estas dos funciones:
+function tokenEstaVencido() {
+  const token = getToken();
+  if (!token) return true;
+  const payload = parseJwt(token);
+  if (!payload?.exp) return true;
+  return (payload.exp * 1000) <= Date.now();
+}
+
 function tokenExpiraEnMenosDe(minutos = 10) {
   const token = getToken();
   if (!token) return true;
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const expMs = payload.exp * 1000;
-    return expMs - Date.now() < minutos * 60 * 1000;
-  } catch {
-    return true; // token corrupto → forzar renovación
-  }
+  const payload = parseJwt(token);
+  if (!payload?.exp) return true; // si no podemos leerlo, nos ponemos conservadores
+  const expMs = payload.exp * 1000;
+  return (expMs - Date.now()) < minutos * 60 * 1000;
 }
 
 async function renovarToken() {
@@ -142,38 +171,64 @@ function mostrarModalSesionCaducada() {
 // ──────────────────────────────────────────────────────────────
 // 4) fetch con auth + refresh automático
 // ──────────────────────────────────────────────────────────────
+// Sustituye fetchWithAuth() completo por esta versión más robusta:
 export async function fetchWithAuth(path, opts = {}) {
-  if (tokenExpiraEnMenosDe(10)) {
+  // Construye headers sin romper FormData
+  const buildHeaders = (baseHeaders, tk, body) => {
+    const headers = new Headers(baseHeaders || {});
+    headers.set("Authorization", `Bearer ${tk}`);
+    if (body && !(body instanceof FormData)) {
+      if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    }
+    return headers;
+  };
+
+  // 1) Preflight: refresh si toca
+  const expired = tokenEstaVencido();
+  const stale   = !expired && tokenExpiraEnMenosDe(10); // ajusta umbral si quieres (p. ej. 5)
+
+  if (expired || stale) {
     try {
       await renovarToken();
     } catch (err) {
-      logout({ showModal: true });
-      return Promise.reject(err);
+      if (expired) {
+        // si estaba vencido y no pudimos refrescar -> fuera
+        logout({ showModal: true });
+        return Promise.reject(err);
+      }
+      // si solo estaba "stale", seguimos con el token viejo
+      console.warn("No se pudo refrescar (stale). Continúo con el token actual.");
     }
   }
 
-  const token = getToken();
+  // 2) Haz la petición con el (posible) token nuevo
+  let token = getToken();
   if (!token) {
     logout();
     return Promise.reject(new Error("No autenticado"));
   }
 
-  const headers = new Headers(opts.headers || {});
-  headers.set("Authorization", `Bearer ${token}`);
+  let headers = buildHeaders(opts.headers, token, opts.body);
+  let res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
 
-  // ⚠️ Solo poner Content-Type si el body NO es FormData
-  if (opts.body && !(opts.body instanceof FormData)) {
-    if (!headers.has("Content-Type")) {
-      headers.set("Content-Type", "application/json");
-    }
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
-
+  // 3) Si da 401, intenta 1 refresh + 1 reintento
   if (res.status === 401) {
-    logout({ showModal: true });
-    return Promise.reject(new Error("No autenticado"));
+    try {
+      await renovarToken();
+      token = getToken();
+      if (!token) throw new Error("No token after refresh");
+      headers = buildHeaders(opts.headers, token, opts.body);
+      res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+    } catch (_) {
+      // ignoramos, evaluamos status abajo
+    }
+
+    if (res.status === 401) {
+      logout({ showModal: true });
+      return Promise.reject(new Error("No autenticado"));
+    }
   }
 
   return res;
 }
+
