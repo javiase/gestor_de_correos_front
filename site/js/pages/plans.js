@@ -111,34 +111,43 @@ function initPlanHelpPopover() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Espera a que config acabe su setup
-    const ok = await (window.tokenReadyPromise || Promise.resolve(!!getToken()));
-    if (!ok) { window.location.replace("/index.html"); return; }
+  // 0) Primero: deja que config.js termine (token/appUser/cache)
+  if (window.configReady) {
+    try { await window.configReady; } catch (_) {}
+  }
 
-    // Ejecuta los gates ahora, ya con token
-    enforceSessionGate();
-    await enforceProfileGate();
-    if (window.configReady) {
-        try { await window.configReady; } catch(_) {}
-    }
+  // 1) Asegura token con un pequeño helper (tolerante, 10s de margen)
+  const waitToken = async (timeoutMs = 10000) => {
+    if (getToken()) return true;
+    const start = Date.now();
 
-    // Si no hay token, espera breve al evento del login
-    let tk = getToken();
-    if (!tk) {
-        await new Promise(resolve => {
-            const to = setTimeout(resolve, 3000); // hasta 3s
-            const onReady = () => { clearTimeout(to); resolve(); };
-            window.addEventListener("auth-token-ready", onReady, { once: true });
-        });
-        tk = getToken();
-    }
-    if (!tk) { window.location.replace("/index.html"); return; }
+    return await new Promise(resolve => {
+      const onReady = () => { cleanup(); resolve(true); };
+      const iv = setInterval(() => {
+        if (getToken()) { cleanup(); resolve(true); }
+        else if (Date.now() - start > timeoutMs) { cleanup(); resolve(false); }
+      }, 250);
 
-    // Ya con token, espera a appUser
-    if (window.appUserPromise) {
-        try { await window.appUserPromise; } catch(_) {}
-    }
+      const cleanup = () => {
+        clearInterval(iv);
+        window.removeEventListener('auth-token-ready', onReady);
+      };
 
+      window.addEventListener('auth-token-ready', onReady, { once: true });
+    });
+  };
+
+  const hasToken = await waitToken();
+  if (!hasToken) { window.location.replace("/index.html"); return; }
+
+  // 2) Ahora sí, gates (en plans el profile gate no bloquea, pero no molesta)
+  try { enforceSessionGate?.(); } catch {}
+  try { await enforceProfileGate(); } catch {}
+
+  // 3) Si existe, espera a appUserPromise (creada en config.js)
+  if (window.appUserPromise) {
+    try { await window.appUserPromise; } catch(_) {}
+  }
     // Coge datos del usuario (del store cacheado o de window.appUser)
     let cached = localStorage.getItem("store");
     let data   = cached ? JSON.parse(cached) : (window.appUser || null);

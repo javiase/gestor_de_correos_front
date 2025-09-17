@@ -93,10 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
+      const fd = new FormData();
+      fd.set('recipient', to);
+      fd.set('subject', subject);
+      fd.set('message', message); // HTML permitido
+      // si añades adjuntos: for (const f of fileInput.files) fd.append('files', f)
       const res = await fetchWithAuth('/emails/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipient: to, subject, message })
+        body: fd
       });
       const data = await res.json();
       if (!res.ok) {

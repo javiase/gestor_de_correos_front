@@ -1,11 +1,11 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, logout, getToken } from '/js/utils/api.js';
-import { LIMITS } from '/js/config.js?v=1'; 
+import { LIMITS } from '/js/config.js?'; 
 import { isProfileComplete } from '/js/utils/profile-gate.js';
 import { enforceSessionGate } from '/js/utils/session-gate.js';
 import { notify } from '/js/utils/notify.js';
 
-enforceSessionGate();
+
 const PLAN_LABEL = {
   free:      "Plan Free",
   starter:   "Plan Starter",
@@ -91,6 +91,7 @@ class UserProfile {
         
         console.log('User Profile initialized');
     }
+    
     applyMaxLengthConstraints() {
         const DEFAULT_MAX = LIMITS.profile_field; // 1000
         // Overrides por id de campo para que el límite sea razonable en UI
@@ -153,34 +154,39 @@ class UserProfile {
             console.error('Load error:', err);
         }
     }
+    _setValue(id, val, fallback = '') {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = (val ?? fallback);
+    }
     
     populateForm() {
-        // Store Information
-        document.getElementById('storeName').value = this.currentData.storeName;
-        document.getElementById('storeUrl').value = this.currentData.storeUrl;
-        document.getElementById('storeDescription').value = this.currentData.storeDescription;
-        
-        // Physical Location
-        document.getElementById('hasPhysicalLocation').checked = this.currentData.hasPhysicalLocation;
-        document.getElementById('storeAddress').value = this.currentData.storeAddress;
-        document.getElementById('storeCity').value = this.currentData.storeCity;
-        document.getElementById('storeState').value = this.currentData.storeState;
-        document.getElementById('storeZip').value = this.currentData.storeZip;
-        document.getElementById('storeCountry').value = this.currentData.storeCountry;
-        document.getElementById('storePhone').value = this.currentData.storePhone;
-        
-        // Personal Information
-        document.getElementById('firstName').value = this.currentData.firstName;
-        document.getElementById('lastName').value = this.currentData.lastName;
-        document.getElementById('personalEmail').value = this.currentData.personalEmail;
-        document.getElementById('personalPhone').value = this.currentData.personalPhone;
-        document.getElementById('timezone').value = this.currentData.timezone;
-        document.getElementById('language').value = this.currentData.language;
-        
-        // Notifications
-        document.getElementById('emailNotifications').checked = this.currentData.emailNotifications;
-        document.getElementById('smsNotifications').checked = this.currentData.smsNotifications;
-        document.getElementById('marketingNotifications').checked = this.currentData.marketingNotifications;
+        // Store
+        this._setValue('storeName',        this.currentData.storeName);
+        this._setValue('storeUrl',         this.currentData.storeUrl);
+        this._setValue('storeDescription', this.currentData.storeDescription);
+
+        // Physical
+        document.getElementById('hasPhysicalLocation').checked = !!this.currentData.hasPhysicalLocation;
+        this._setValue('storeAddress', this.currentData.storeAddress);
+        this._setValue('storeCity',    this.currentData.storeCity);
+        this._setValue('storeState',   this.currentData.storeState);
+        this._setValue('storeZip',     this.currentData.storeZip);
+        document.getElementById('storeCountry').value = this.currentData.storeCountry || 'ES';
+        this._setValue('storePhone',   this.currentData.storePhone);
+
+        // Personal
+        this._setValue('firstName',     this.currentData.firstName);
+        this._setValue('lastName',      this.currentData.lastName);
+        this._setValue('personalEmail', this.currentData.personalEmail || this.currentData.storeEmail || '');
+        this._setValue('personalPhone', this.currentData.personalPhone);
+        document.getElementById('timezone').value = this.currentData.timezone || 'UTC+1';
+        document.getElementById('language').value = this.currentData.language || 'es';
+
+        // Notificaciones (booleans)
+        document.getElementById('emailNotifications').checked     = !!this.currentData.emailNotifications;
+        document.getElementById('smsNotifications').checked       = !!this.currentData.smsNotifications;
+        document.getElementById('marketingNotifications').checked = !!this.currentData.marketingNotifications;
         
         const storeHours = this.currentData.storeHours || {};
         document.querySelectorAll('.hours-day').forEach(dayElement => {
@@ -1173,32 +1179,43 @@ class UserProfile {
 
 // Initialize the profile when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-    // espera a config
-    if (window.configReady) { try { await window.configReady; } catch(_) {} }
+  // 1) espera a config.js (pone token/appUser/cache)
+  if (window.configReady) { try { await window.configReady; } catch (_) {} }
 
-    // espera a que exista el token (o redirige)
-    let tk = getToken();
-    if (!tk) {
-        await new Promise(resolve => {
-        const to = setTimeout(resolve, 3000);
-        const onReady = () => { clearTimeout(to); resolve(); };
-        window.addEventListener('auth-token-ready', onReady, { once: true });
-        });
-        tk = getToken();
-    }
-    if (!tk) { window.location.replace('/index.html'); return; }
+  // 2) asegura token (tolerante)
+  const waitToken = async (timeoutMs = 10000) => {
+    if (getToken()) return true;
+    return await new Promise(resolve => {
+      const start = Date.now();
+      const onReady = () => { cleanup(); resolve(true); };
+      const iv = setInterval(() => {
+        if (getToken()) { cleanup(); resolve(true); }
+        else if (Date.now() - start > timeoutMs) { cleanup(); resolve(false); }
+      }, 250);
+      const cleanup = () => {
+        clearInterval(iv);
+        window.removeEventListener('auth-token-ready', onReady);
+      };
+      window.addEventListener('auth-token-ready', onReady, { once: true });
+    });
+  };
+  const hasToken = await waitToken();
+  if (!hasToken) { window.location.replace('/index.html'); return; }
 
-    // espera a appUser si existe
-    if (window.appUserPromise) { try { await window.appUserPromise; } catch(_) {} }
+  // 3) ahora sí, gate de sesión
+  try { enforceSessionGate?.(); } catch {}
 
-    try{
-        await initSidebar('#sidebarContainer');
-        const userProfile = new UserProfile();
-        window.userProfile = userProfile;
-    }catch (err) {
-        // Make profile globally accessible for debugging
-        console.error('No pude inicializar la sidebar:', err);
-    }
+  // 4) espera a appUser si existe
+  if (window.appUserPromise) { try { await window.appUserPromise; } catch(_) {} }
+
+  // 5) sidebar + perfil
+  try {
+    await initSidebar('#sidebarContainer');
+    const userProfile = new UserProfile();
+    window.userProfile = userProfile;
+  } catch (err) {
+    console.error('No pude inicializar la sidebar:', err);
+  }
 });
 
 // Add some CSS for error states
