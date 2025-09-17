@@ -1,6 +1,6 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, logout, getToken } from '/js/utils/api.js';
-import { LIMITS } from '/js/config.js?'; 
+import { LIMITS } from '/js/config.js'; 
 import { isProfileComplete } from '/js/utils/profile-gate.js';
 import { enforceSessionGate } from '/js/utils/session-gate.js';
 import { notify } from '/js/utils/notify.js';

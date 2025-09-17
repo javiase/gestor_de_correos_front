@@ -59,7 +59,13 @@
         {
           "source": "**/*.{png,webp,svg,woff2,ttf}",
           "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-        }
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, private" }
+          ]
+        }  
       ],
       "redirects": [],
       "rewrites": [
@@ -125,6 +131,12 @@
         {
           "source": "**/*.{png,webp,svg,woff2,ttf}",
           "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, private" }
+          ]
         }
       ],
       "ignore": [

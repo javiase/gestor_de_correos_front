@@ -1,7 +1,7 @@
 //js/pages/info.js
 import { fetchWithAuth } from '/js/utils/api.js';
 import { initSidebar } from '/js/components/sidebar.js';
-import { LIMITS } from '/js/config.js?v=1';
+import { LIMITS } from '/js/config.js';
 import { enforceProfileGate } from '/js/utils/profile-gate.js';
 import { enforceSessionGate } from '/js/utils/session-gate.js';
 import { notify } from '/js/utils/notify.js';
