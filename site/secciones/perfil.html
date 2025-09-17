@@ -63,7 +63,7 @@
                             </div>
                         </div>
                     </div>
-                    <a href="plans.html" class="btn-manage-plan">
+                    <a href="plans.html" class="btn-manage-plan" id="managePlanBtn" data-requires-complete="true">
                         <i class="fas fa-cogs"></i> Gestionar plan
                     </a>
                 </div>
@@ -77,6 +77,15 @@
                     </div> -->
                 </div>
                 
+            </div>
+            <div id="profileGateNotice" class="profile-lock-banner hidden" role="alert" aria-live="polite">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>Tu perfil está incompleto.</strong>
+                    <span id="profileGateText">
+                        Rellena los campos obligatorios marcados con * para desbloquear todas las funciones.
+                    </span>
+                </div>
             </div>
 
             <!-- Profile Content -->

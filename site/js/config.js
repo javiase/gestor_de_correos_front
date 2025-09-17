@@ -37,6 +37,10 @@ async function waitForTokenIfNeeded() {
     }
   }
 }
+window.tokenReadyPromise = (async () => {
+  await waitForTokenIfNeeded();
+  return !!getToken();
+})();
 
 window.configReady = (async function initConfig() {
   const params = new URLSearchParams(window.location.search);

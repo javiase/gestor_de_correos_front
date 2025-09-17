@@ -4,8 +4,7 @@ import { enforceProfileGate } from '/js/utils/profile-gate.js';
 import { enforceSessionGate } from '/js/utils/session-gate.js';
 import { notify } from '/js/utils/notify.js';
 
-enforceSessionGate();
-enforceProfileGate();
+
 
 async function fetchStoreFresh() {
   try {
@@ -113,6 +112,12 @@ function initPlanHelpPopover() {
 
 document.addEventListener("DOMContentLoaded", async () => {
     // Espera a que config acabe su setup
+    const ok = await (window.tokenReadyPromise || Promise.resolve(!!getToken()));
+    if (!ok) { window.location.replace("/index.html"); return; }
+
+    // Ejecuta los gates ahora, ya con token
+    enforceSessionGate();
+    await enforceProfileGate();
     if (window.configReady) {
         try { await window.configReady; } catch(_) {}
     }

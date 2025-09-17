@@ -146,6 +146,8 @@ class UserProfile {
             this.currentData = { ...data };
             this.populateForm();
             this.toggleHoursFields();
+            const locked = !isProfileComplete(this.currentData);
+            this.setProfileLockUI(locked, this.computeMissingFields(this.currentData));
             //this.updateProfileProgress();
         }catch (err) {
             console.error('Load error:', err);
@@ -547,6 +549,66 @@ class UserProfile {
         }
 
     }
+
+    computeMissingFields(data) {
+        const missing = [];
+        const req = [
+            ['storeName', 'Nombre de la tienda'],
+            ['firstName', 'Nombre'],
+            ['lastName', 'Apellido'],
+            ['personalEmail', 'Correo electrónico'],
+        ];
+        if (data?.hasPhysicalLocation) {
+            req.push(['storeAddress','Dirección'],['storeCity','Ciudad'],['storeState','Provincia'],['storeCountry','País']);
+        }
+        for (const [k,label] of req) {
+            const v = (data?.[k] ?? '').toString().trim();
+            if (!v) missing.push(label);
+        }
+        return missing;
+        }
+
+        setProfileLockUI(locked, missing = []) {
+        // Banner
+        const notice = document.getElementById('profileGateNotice');
+        const textEl = document.getElementById('profileGateText');
+        if (notice) {
+            if (locked) {
+            const extra = missing.length ? ` Falta: ${missing.slice(0,4).join(', ')}${missing.length>4?'…':''}.` : '';
+            textEl && (textEl.textContent = `Rellena los campos obligatorios marcados con * para desbloquear todas las funciones.${extra}`);
+            notice.classList.remove('hidden');
+            } else {
+            notice.classList.add('hidden');
+            }
+        }
+
+        // Botón "Gestionar plan"
+        const planBtn = document.getElementById('managePlanBtn');
+        if (planBtn) {
+            if (locked) {
+            planBtn.setAttribute('aria-disabled','true');
+            planBtn.classList.add('disabled');
+            planBtn.dataset.titleOriginal = planBtn.getAttribute('title') || '';
+            planBtn.setAttribute('title','Completa tu perfil para gestionar el plan');
+            // Evita navegación
+            planBtn.addEventListener('click', this._blockerClick, { once:false });
+            } else {
+            planBtn.removeAttribute('aria-disabled');
+            planBtn.classList.remove('disabled');
+            const t = planBtn.dataset.titleOriginal || '';
+            if (t) planBtn.setAttribute('title', t); else planBtn.removeAttribute('title');
+            planBtn.removeEventListener('click', this._blockerClick);
+            }
+        }
+        }
+
+        // handler usado arriba para cancelar el click
+        _blockerClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        notify.warning('Completa tu perfil para acceder a esta sección.');
+        };
+
 
     getTrialDaysLeft(data) {
         // Solo calculamos a partir de trial_end (si no existe, no hay trial)
@@ -959,6 +1021,8 @@ class UserProfile {
             this.populateForm();
             this.toggleHoursFields();
             this.updateDisplayInfo();
+            const locked = !isProfileComplete(this.currentData);
+            this.setProfileLockUI(locked, this.computeMissingFields(this.currentData));
             //this.updateProfileProgress();
 
             // Reset button states

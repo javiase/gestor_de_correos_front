@@ -307,6 +307,20 @@ body {
     border-color: #666;
 }
 
+.profile-lock-banner {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: #1f2937; color: #e5e7eb; border: 1px solid #374151;
+  padding: 12px 14px; border-radius: 8px; margin: 12px 0 0 0;
+}
+.profile-lock-banner i { margin-top: 3px; }
+
+.btn-manage-plan.disabled,
+a[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: .6;
+  cursor: not-allowed;
+}
+
 /* Profile Content */
 .profile-content {
     padding: 32px;
