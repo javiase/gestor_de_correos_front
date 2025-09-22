@@ -178,7 +178,7 @@ class UserProfile {
         // Personal
         this._setValue('firstName',     this.currentData.firstName);
         this._setValue('lastName',      this.currentData.lastName);
-        this._setValue('personalEmail', this.currentData.personalEmail || this.currentData.storeEmail || '');
+        this._setValue('personalEmail', this.currentData.personalEmail || '');
         this._setValue('personalPhone', this.currentData.personalPhone);
         document.getElementById('timezone').value = this.currentData.timezone || 'UTC+1';
         document.getElementById('language').value = this.currentData.language || 'es';

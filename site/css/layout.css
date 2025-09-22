@@ -29,14 +29,12 @@ body.has-sidebar.sidebar-collapsed{
 /* El contenido principal rellena y se contrae (clave: min-width:0) */
 .main-content{
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  overflow-y: auto;
+  display: block;          /* ← fuera flex: sticky va fino */
+  overflow-y: auto;        /* scroller real de la página */
+  overflow-x: hidden;
   background: var(--color-bg);
-  margin-left: 0;                  /* ❌ fuera el hack de margen */
-  transition: none;                /* ya animamos el grid del body */
+  margin-left: 0;
+  transition: none;
 }
 
 /* Móvil: el grid no aporta; el sidebar se gestiona como off-canvas */

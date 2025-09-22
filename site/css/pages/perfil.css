@@ -20,6 +20,7 @@ body {
 
 /* Header */
 .profile-header {
+    position: sticky;
     background: #2a2a2a;
     padding: 32px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -27,7 +28,6 @@ body {
     border-radius: 12px;
     align-items: center;
     justify-content: space-between;
-    position: sticky;
     top: 0;
     z-index: 100;
 }
@@ -745,6 +745,7 @@ input:checked + .toggle-slider:before {
 /* Responsive Design */
 @media (max-width: 768px) {
     .profile-header {
+        position: sticky;
         flex-direction: column;
         gap: 24px;
         align-items: stretch;
