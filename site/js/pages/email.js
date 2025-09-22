@@ -1,7 +1,7 @@
 // js/pages/email.js
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth } from '/js/utils/api.js';
-import { LIMITS } from '/js/config.js';
+import { LIMITS } from '/js/config.js?v=1';
 import { enforceProfileGate } from '/js/utils/profile-gate.js';
 import { enforceSessionGate } from '/js/utils/session-gate.js';
 import { notify } from '/js/utils/notify.js';
@@ -428,6 +428,10 @@ class EmailView {
     this.container = document.getElementById('chatContainer');
     this.prevBtn = null;
     this.nextBtn = null;
+
+    const params = new URLSearchParams(location.search);
+    this.targetId = params.get('id') || null;
+
     this.ids = JSON.parse(sessionStorage.getItem('inbox_ids') || '[]');
     this.index = parseInt(sessionStorage.getItem('inbox_index') || '0', 10);
     this.page = parseInt(sessionStorage.getItem('inbox_page') || '1', 10);
@@ -445,11 +449,7 @@ class EmailView {
     // 1) Construye botones de navegación
     this.buildNavButtons();
 
-    // 2) Precarga el batch que contiene tu índice actual
-    await this.loadBatch(this.page, { replace: true });
-    this.loadedPages.add(this.page);
-
-    sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
+    await this.ensureSelectedEmail();
 
     // **PRE‑FETCH** de siguiente batch si entraste directamente en un correo >=15
     let localPos = this.index % this.emailsPerPage;
@@ -487,6 +487,78 @@ class EmailView {
     // 3) Renderiza
     this.renderCurrent();
   }
+
+  // Devuelve true si consigue fijar this.index por id
+  setIndexById(id) {
+    const pos = this.ids.indexOf(id);
+    if (pos !== -1) {
+      this.index = pos;
+      return true;
+    }
+    return false;
+  }
+
+  // Carga la página actual y, si no encuentra targetId, expande a páginas vecinas
+  async ensureSelectedEmail() {
+    // Carga la página que tenías guardada (o 1 si no existe)
+    await this.loadBatch(this.page, { replace: true });
+    this.loadedPages.add(this.page);
+
+    // Si no viene id en la URL, conserva el comportamiento anterior
+    if (!this.targetId) {
+      sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
+      return;
+    }
+
+    // ¿Está ya en la página actual?
+    if (this.setIndexById(this.targetId)) {
+      sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
+      return;
+    }
+
+    // Necesitaremos saber cuántas páginas hay
+    // (this.pages quedó ajustado en loadBatch)
+    let radius = 1;
+    let found = false;
+
+    // Expande: +1, -1, +2, -2, ...
+    while (!found && (this.page - radius >= 1 || this.page + radius <= this.pages)) {
+      // Prueba página siguiente
+      if (this.page + radius <= this.pages) {
+        const p = this.page + radius;
+        if (!this.loadedPages.has(p)) {
+          await this.loadBatch(p, { replace: false });
+          this.loadedPages.add(p);
+        }
+        if (this.setIndexById(this.targetId)) { found = true; break; }
+      }
+
+      // Prueba página anterior (prepend para mantener orden y desplazar ids al frente)
+      if (this.page - radius >= 1) {
+        const p = this.page - radius;
+        if (!this.loadedPages.has(p)) {
+          await this.loadBatch(p, { replace: false, prepend: true });
+          this.loadedPages.add(p);
+        }
+        if (this.setIndexById(this.targetId)) { found = true; break; }
+      }
+
+      radius++;
+    }
+
+    if (!found) {
+      console.warn('[email] targetId no encontrado; mostrando primer correo cargado.');
+      this.index = 0;
+    }
+
+    // Ajusta derivados
+    this.page = Math.floor(this.index / this.emailsPerPage) + 1;
+    sessionStorage.setItem('inbox_page', this.page);
+    sessionStorage.setItem('inbox_index', this.index);
+    sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
+  }
+
+
 
   buildNavButtons() {
     // Ya no creamos nada, tomamos los que has puesto en el HTML
