@@ -442,6 +442,11 @@ class EmailView {
     this.cache = [];      // aquí replicaremos ids → datos
     this.sendBtn = null;
     this.deleteBtn = null;
+
+    // orden heredado del inbox (defaults seguros)
+    this.sortOrder = sessionStorage.getItem('inbox_sort')    || 'desc';
+    this.sortBy    = sessionStorage.getItem('inbox_sort_by') || 'id';
+
     this.init();
   }
 
@@ -666,8 +671,10 @@ class EmailView {
       return;
     }
 
-    console.log(`  ↳ fetch /emails/get?page=${page}…`);
-    const res = await fetchWithAuth(`/emails/get?page=${page}`);
+    console.log(`  ↳ fetch /emails/get?page=${page}&sort=${this.sortOrder}&sort_by=${this.sortBy}…`);
+    const res = await fetchWithAuth(
+      `/emails/get?page=${page}&sort=${this.sortOrder}&sort_by=${this.sortBy}`
+    );
     const { emails, pages } = await res.json();
     this.pages = pages;
 

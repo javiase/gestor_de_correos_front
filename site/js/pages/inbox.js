@@ -111,6 +111,9 @@ class EmailInbox {
     this.allLoaded      = false;
     this.searchTerm     = '';
 
+    this.sortOrder = sessionStorage.getItem('inbox_sort')    || 'desc'; // 'desc' | 'asc'
+    this.sortBy    = sessionStorage.getItem('inbox_sort_by') || 'id';   // 'id' | 'date'
+
     this.spinner = document.getElementById('loadingIndicator');
     this.init();
   }
@@ -194,9 +197,10 @@ class EmailInbox {
   async loadEmails(page = 1) {
     this.showSpinner();
     try {
-      const res = await fetchWithAuth(`/emails/get?page=${page}`, {
-        method: 'GET',
-      });
+      const res = await fetchWithAuth(
+        `/emails/get?page=${page}&sort=${this.sortOrder}&sort_by=${this.sortBy}`,
+        { method: 'GET' }
+      );
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const { emails, total, pages } = await res.json();
       this.allEmails      = emails;
@@ -217,10 +221,36 @@ class EmailInbox {
   // listeners de búsqueda, paginación y atajos
   bindEvents() {
     document.getElementById('searchInput')
-      .addEventListener('input', e => {
-        this.searchTerm = e.target.value.toLowerCase();
-        this.filterEmails();
+    .addEventListener('input', e => {
+      this.searchTerm = e.target.value.toLowerCase();
+      this.filterEmails();
+    });
+
+    const sortBtn   = document.getElementById('sortToggle');
+    const sortLabel = document.getElementById('sortLabel');
+    if (sortBtn) {
+      // estado inicial de UI
+      if (sortLabel) sortLabel.textContent = this.sortOrder === 'desc' ? 'Recientes' : 'Antiguos';
+      const icon = sortBtn.querySelector('i');
+      if (icon) icon.className = this.sortOrder === 'desc' ? 'fas fa-sort-amount-down' : 'fas fa-sort-amount-up';
+
+      sortBtn.addEventListener('click', async () => {
+        this.sortOrder = this.sortOrder === 'desc' ? 'asc' : 'desc';
+        sessionStorage.setItem('inbox_sort', this.sortOrder);
+        sessionStorage.setItem('inbox_sort_by', this.sortBy);
+
+        // refresca desde página 1 con el nuevo orden
+        await this.loadEmails(1);
+        this.currentPage = 1;
+        this.updatePagination();
+        this.renderEmails();
+
+        // actualiza UI
+        if (sortLabel) sortLabel.textContent = this.sortOrder === 'desc' ? 'Recientes' : 'Antiguos';
+        const icon = sortBtn.querySelector('i');
+        if (icon) icon.className = this.sortOrder === 'desc' ? 'fas fa-sort-amount-down' : 'fas fa-sort-amount-up';
       });
+    }
 
     document.getElementById('prevBtn')
       .addEventListener('click', () => this.changePage(-1));
@@ -245,7 +275,9 @@ class EmailInbox {
       if (!this.allLoaded) {
         let all = [];
         for (let p = 1; p <= this.totalPages; p++) {
-          const resp = await fetchWithAuth(`/emails/get?page=${p}`);
+          const resp = await fetchWithAuth(
+            `/emails/get?page=${p}&sort=${this.sortOrder}&sort_by=${this.sortBy}`
+          );
           const { emails } = await resp.json();
           all = all.concat(emails);
         }
@@ -354,6 +386,9 @@ class EmailInbox {
       sessionStorage.setItem('inbox_ids', JSON.stringify(allIds));
       sessionStorage.setItem('inbox_index', index);
       sessionStorage.setItem('inbox_page', this.currentPage);
+      // persiste el orden elegido
+      sessionStorage.setItem('inbox_sort', this.sortOrder);
+      sessionStorage.setItem('inbox_sort_by', this.sortBy);
 
       // Redirige
       window.location.href = `/secciones/email.html?id=${encodeURIComponent(email.id)}`;  

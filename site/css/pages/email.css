@@ -8,6 +8,7 @@
   height: 100%;
   overflow-y: auto;
   justify-content: space-around;
+  scrollbar-color: #8f8f8f var(--color-bg);
 }
 
 #historyContainer {
@@ -171,16 +172,6 @@
   padding: 2.5vh;
   overflow-y: auto;
   position: relative;
-}
-.panel-scroll::-webkit-scrollbar {
-  width: 0.6vh;
-}
-.panel-scroll::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-.panel-scroll::-webkit-scrollbar-thumb {
-  background: #333333;
-  border-radius: 0.3vh;
 }
 .panel-content {
   display: flex;

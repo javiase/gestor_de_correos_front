@@ -35,6 +35,8 @@ body.has-sidebar.sidebar-collapsed{
   background: var(--color-bg);
   margin-left: 0;
   transition: none;
+  scrollbar-color: #8f8f8f transparent;
+
 }
 
 /* Móvil: el grid no aporta; el sidebar se gestiona como off-canvas */
