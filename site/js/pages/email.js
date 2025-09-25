@@ -66,23 +66,14 @@ const ATT_SVGS = {
   `
 };
 
-function isViewableInBrowser(a){
-  const mime = (a.mimeType || '').toLowerCase();
-  const name = (a.filename || '').toLowerCase();
-  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name)) return true;
-  if (mime === 'application/pdf' || /\.pdf$/.test(name)) return true;
-  return false;
-}
-
 async function openAttachmentAuth(a, emailId){
+
   const baseUrl =
     a.url ||
     `/emails/attachment?email_id=${encodeURIComponent(emailId)}&att_id=${encodeURIComponent(a.attachmentId)}`;
 
-  const preOpen = isViewableInBrowser(a) ? window.open('', '_blank', 'noopener') : null;
-
   try {
-    const res = await fetchWithAuth(baseUrl);
+    const res = await fetchWithAuth(baseUrl, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const ctHeader = (res.headers.get('Content-Type') || '').toLowerCase();
@@ -96,24 +87,20 @@ async function openAttachmentAuth(a, emailId){
     }
 
     const blobUrl = URL.createObjectURL(blob);
-    const viewable = /^image\//.test(blob.type) || blob.type === 'application/pdf' || isViewableInBrowser(a);
+    const fileName = a.filename || 'archivo';
 
-    if (viewable) {
-      if (preOpen) preOpen.location.href = blobUrl;
-      else window.open(blobUrl, '_blank', 'noopener');
-    } else {
-      const tmp = document.createElement('a');
-      tmp.href = blobUrl;
-      tmp.download = a.filename || 'archivo';
-      document.body.appendChild(tmp);
-      tmp.click();
-      tmp.remove();
-    }
+
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;            // ← fuerza descarga
+    // iOS/Safari necesita que esté en el DOM
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 
     // Limpieza
     setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
   } catch (err) {
-    if (preOpen && !preOpen.closed) preOpen.close();
     console.error('Adjunto no accesible:', err);
     notify?.error?.('No se pudo abrir/descargar el archivo.');
   }
@@ -503,6 +490,19 @@ class EmailView {
     return false;
   }
 
+  async markAsRead(emailId) {
+    try {
+      if (!emailId) return;
+      await fetchWithAuth('/emails/mark_read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email_id: emailId })
+      });
+    } catch (e) {
+      console.warn('No se pudo marcar como leído:', e);
+    }
+  }
+
   // Carga la página actual y, si no encuentra targetId, expande a páginas vecinas
   async ensureSelectedEmail() {
     // Carga la página que tenías guardada (o 1 si no existe)
@@ -760,6 +760,7 @@ class EmailView {
 
   renderCurrent() {
     const id = this.ids[this.index];
+    this.markAsRead(id);
     const email = this.cache.find(e => e.id === id);
     if (!email) return console.error('Email no cargado aún');
 
@@ -823,9 +824,6 @@ class EmailView {
     }
     console.log('attachments:', email.attachments);
 
-
-
-
     // vuelca en los IDs de tu HTML
     document.getElementById('emailFrom').textContent =
       'De: ' + (email.return_mail.replace(/^<(.+)>$/, '$1') || 'Desconocido');
@@ -870,7 +868,12 @@ class EmailView {
         aEl.title = a.filename || 'archivo';
         aEl.addEventListener('click', (ev) => {
           ev.preventDefault();
-          openAttachmentAuth(a, email.id);
+          ev.stopPropagation();
+          if (aEl.dataset.opening === '1') return;   // ← reentrancia
+          aEl.dataset.opening = '1';
+          openAttachmentAuth(a, email.id)
+            .catch(err => console.error('openAttachmentAuth error', err))
+            .finally(() => { aEl.dataset.opening = '0'; });
         });
 
         const kind = getAttachmentKind(a);

@@ -77,7 +77,11 @@ function resetPolicyView(card) {
   const userBox  = card.querySelector('.user-policy-box');
   const tip      = card.querySelector('.policy-tip');
 
-  if (form) form.classList.remove('hidden');
+  if (form) {
+    form.classList.remove('hidden');
+    // ⬅️ clave: reactivar inputs/textarea/select (incluye el textarea de política pegada)
+    disableForm(form, false);
+  }
   if (sendBtn) sendBtn.classList.remove('hidden');
   if (spinner) spinner.classList.add('hidden');
   if (result) result.innerHTML = '';
@@ -484,7 +488,7 @@ function initPolicySubmit(card, form, policyTitle) {
         // Llevar el mensaje a la vista
         setTimeout(() => { result.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 0);
       } else {
-        notify.error('Respuesta inesperada del servidor.');
+        notify.error('Se ha guardado la política parcialmente, algunas reglas se han obviado.');
       }
     } catch (err) {
       console.error(err);
