@@ -1,6 +1,6 @@
 // config.js
 import { API_BASE, getToken, setToken, logout, fetchWithAuth  } from '/js/utils/api.js';
-export const LIMITS = { policies: 5000, faq_q: 200, faq_a: 1200, email_body: 3000, profile_field: 1000 };
+export const LIMITS = { policies: 5000, faq_q: 200, faq_a: 1200, email_body: 5000, profile_field: 1000 };
 
 function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
 

@@ -149,18 +149,19 @@ function stripInlineImages(html = '', attachments = []) {
 
 
 function enforceContentEditableMax(el, max) {
-  el.addEventListener('input', () => {
+  let lastHtml = el.innerHTML;
+  el.addEventListener('beforeinput', (e) => {
     const plain = (el.textContent || '');
-    if (plain.length > max) {
-      // recorta manteniendo caret al final
-      const sel = window.getSelection();
-      const range = document.createRange();
-      el.textContent = plain.slice(0, max);
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
+    // Permite borrado/navegación sin límite
+    if (e.inputType.startsWith('delete') || e.inputType === 'historyUndo' || e.inputType === 'historyRedo') return;
+    // Si ya estás en el límite, cancela nuevas entradas
+    if (plain.length >= max) {
+      e.preventDefault();
     }
+  });
+  el.addEventListener('input', () => {
+    // Guarda último HTML válido por si quieres tener undo manual
+    lastHtml = el.innerHTML;
   });
 }
 
@@ -1053,7 +1054,7 @@ class EmailView {
     const recipient = (email.return_mail || email.sender || '').replace(/^<(.+)>$/, '$1');
     const subject = document.getElementById('responseSubject').textContent.trim();
     const message = DOMPurify.sanitize(document.getElementById('responseContent').innerHTML.trim());
-
+    console.log("message:", message);
 
     try {
       if ((message || '').length > LIMITS.email_body) {

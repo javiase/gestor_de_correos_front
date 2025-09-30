@@ -76,6 +76,10 @@ function truncateMiddle(str = '', max = 22) {
   return str.slice(0, keep) + '…' + str.slice(-keep);
 }
 
+function isRenderableEmail(email) {
+  return !!(email && typeof email.return_mail === 'string' && email.return_mail.trim());
+}
+
 function renderDocIconsStrip(email){
   const atts = email.attachments || email.attachments_meta || [];
   if (!Array.isArray(atts) || atts.length === 0) return '';
@@ -203,10 +207,11 @@ class EmailInbox {
       );
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const { emails, total, pages } = await res.json();
-      this.allEmails      = emails;
-      this.filteredEmails = [...emails];
+      const valid = (emails || []).filter(isRenderableEmail);
+      this.allEmails      = valid;
+      this.filteredEmails = [...valid];
       this.currentPage    = page;
-      this.totalEmails    = total;                        
+      this.totalEmails    = valid.length;                        
       this.totalPages     = pages;                         
       this.allLoaded      = false; 
     } catch (err) {
@@ -281,7 +286,7 @@ class EmailInbox {
           const { emails } = await resp.json();
           all = all.concat(emails);
         }
-        this.allEmails = all;
+        this.allEmails = all.filter(isRenderableEmail);
         this.allLoaded = true;
       }
       // ahora filtra sobre el conjunto completo
@@ -315,7 +320,7 @@ class EmailInbox {
     const listContainer = document.getElementById('emailList');
     listContainer.innerHTML = '';
 
-    const pageEmails = this.getCurrentPageEmails();
+    const pageEmails = this.getCurrentPageEmails().filter(isRenderableEmail);
 
     if (pageEmails.length === 0) {
       listContainer.innerHTML = `

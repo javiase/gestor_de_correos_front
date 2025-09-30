@@ -156,7 +156,7 @@ function mostrarModalSesionCaducada() {
   modal.innerHTML = `
     <div style="background: #2a2a2a; padding: 2rem; border-radius: 8px; text-align: center; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
       <h2 style="color: #fff;">Sesión caducada</h2>
-      <p style="color: #ddd;">Tu sesión ha expirado. Por favor, vuelve a iniciar sesión para continuar.</p>
+      <p style="color: #ddd;">Tu sesión ha expirado por inactividad. Por favor, vuelve a iniciar sesión para continuar.</p>
       <button id="cerrar-modal-sesion" style="margin-top: 1rem; padding: 0.5rem 1rem; border: none; background: #20ab7a; color: white; border-radius: 5px; cursor: pointer;">
         Entendido
       </button>
