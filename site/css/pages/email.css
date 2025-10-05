@@ -1,436 +1,107 @@
-.chat-container {
-  position: relative;       
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-m);
-  padding: var(--space-m);
-  width: 90%;
-  height: 100%;
-  overflow-y: auto;
-  justify-content: space-around;
-  scrollbar-color: #8f8f8f var(--color-bg);
-}
-
-#historyContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 2vh;
-  padding: var(--space-s);
-  border-radius: var(--radius);
-  padding-bottom: 8vh;
-}
-
-.history-note{
-    margin-top: 10vh;
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-s) var(--space-m);
-  background: var(--color-surface);
-  border-bottom: 0.1vh solid rgba(255,255,255,0.1);
-  border-radius: var(--radius);
-  margin-bottom: var(--space-s);
-}
-
-.chat-header-left,
-.chat-header-center,
-.chat-header-right {
-  font-size: 1.4vh;
-  color: var(--color-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.chat-header-center {
-  font-weight: 500;
-}
-
-.grid-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8vh;
-    margin-bottom: 12vh;
-}
-
-.mail-container.client{
-    display: flex;
-    flex-direction: column;
-    gap: 2vh;
-    align-self: flex-start;
-    min-width: 70vh;
-    max-width: 100vh;
-}
-
-.gmail-frame { border-radius: 10px; background: transparent; }
-
-/* añade a tu CSS */
-.attachments {
-  margin-top: 1.2vh;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8vh;
-}
-.attachment-chip{
-  display:inline-flex; align-items:center; gap:0.6vh;
-  padding:0.6vh 1vh; border-radius:1.2vh;
-  text-decoration:none; color:inherit; background:rgba(255,255,255,.06);
-  max-width:16vh; /* limita el ancho */
-  font: inherit;   /* hereda tipografía del panel */
-}
+.chat-container { position: relative; display: flex; flex-direction: column; gap: var(--space-m); padding: var(--space-m); width: 90%; height: 100%; overflow-y: auto;
+  justify-content: space-around; scrollbar-color: #8f8f8f var(--color-bg);}
+#historyContainer { display: flex; flex-direction: column; gap: 2vh; padding: var(--space-s); border-radius: var(--radius); padding-bottom: 8vh;}
+.history-note{ margin-top: 10vh;}
+.grid-container { display: flex; flex-direction: column; gap: 8vh; margin-bottom: 12vh;}
+.mail-container.client{ display: flex; flex-direction: column; gap: 2vh; align-self: flex-start; min-width: 70vh; max-width: 100vh;}
+/* Adjuntos en línea (chips) */
+.attachments { margin-top: 1.2vh; display: flex; flex-wrap: wrap; gap: 0.8vh;}
+.attachment-chip{ display:inline-flex; align-items:center; gap:0.6vh; padding:0.6vh 1vh; border-radius:1.2vh; text-decoration:none; color:inherit; 
+  background:rgba(255,255,255,.06); max-width:16vh; font: inherit;}
 .attachment-chip:hover{ opacity:.9 }
-
-.attachment-chip .att-icon{
-  width:5vh; height:5vh; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
-}
-.attachment-chip .att-icon img{
-  width:100%; height:100%; object-fit:contain;
-  image-rendering:-webkit-optimize-contrast; /* nítido en PNG */
-}
-.attachment-chip .att-name{
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-/* Grid contenedor de adjuntos */
-.attachments-grid{
-  display:flex; flex-wrap:wrap; gap:0.8vh; margin-top:5vh;
-}
-
-/* Tarjeta */
-.att-card{
-  width:9.6vh; height:9.6vh;
-  padding:1vh;
-  border-radius:1.2vh;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  text-decoration:none;
-  color:inherit;
-  box-shadow:0 1px 2px rgba(0,0,0,.12);
-  background:rgba(0,0,0,.04);
-  transition:.15s transform ease, .15s box-shadow ease;
-}
-.att-card:hover{ transform:translateY(-.1vh); box-shadow:0 .2vh .6vh rgba(0,0,0,.18); }
-
-@media (prefers-color-scheme:dark){
-  .att-card{ background:rgba(255,255,255,.06); }
-}
-
-/* Icono + nombre */
+.attachment-chip .att-icon{ width:5vh; height:5vh; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;}
+.attachment-chip .att-icon img{ width:100%; height:100%; object-fit:contain; image-rendering:-webkit-optimize-contrast; /* nítido en PNG */}
+.attachment-chip .att-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.attachments-grid{ display:flex; flex-wrap:wrap; gap:0.8vh; margin-top:5vh;}
 .att-icon svg{ width:3.6vh; height:3.6vh; display:block; }
-.att-name{
-  margin-top:0.8vh; font-size:1.2vh; text-align:center;
-  width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-
-
+.att-name{ margin-top:0.8vh; font-size:1.2vh; text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .attachment-chip:hover { background: rgba(255,255,255,.06); }
 
-.mail-container.bot{
-    display: flex;
-    flex-direction: column;
-    gap: 2vh;
-    align-self: flex-end;
-    align-items: flex-end;
-    min-width: 70vh;
-    max-width: 100vh;
-}
-.panel {
-  background-color:var(--color-surface);
-  border-radius: 1.6vh;
-  box-shadow: 0 0.4vh 0.8vh rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 auto;  
-  width: 100%;
-}
-
-.panel-header {
-  padding: 2.5vh;
-  border-bottom: 0.1vh solid #333333;
-  flex-shrink: 0;
-}
-.panel-header-content {
-  display: flex;
-  justify-content: flex-start;
-  align-items: baseline;
-}
+/* Mensajes entrantes y salientes */
+.mail-container.bot{ display: flex; flex-direction: column; gap: 2vh; align-self: flex-end; align-items: flex-end; min-width: 70vh; max-width: 100vh;}
+.panel { background-color:var(--color-surface); border-radius: 1.6vh; box-shadow: 0 0.4vh 0.8vh rgba(0, 0, 0, 0.3); display: flex; flex-direction: column;
+  flex: 0 0 auto;   width: 100%;}
+.panel-header { padding: 2.5vh; border-bottom: 0.1vh solid #333333; flex-shrink: 0;}
+.panel-header-content { display: flex; justify-content: flex-start; align-items: baseline;}
 .panel-header-content p,
 .panel-header-content span,
 .panel-subject,
-.panel-content p {
-  font-size: 1.1rem;
-  line-height: 2.3vh;
-  color: #e5e5e5;
-}
-.panel-subject {
-  color: #d4d4d8;
-}
-.panel-scroll {
-  flex: 1;
-  padding: 2.5vh;
-  overflow-y: auto;
-  position: relative;
-}
-.panel-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1vh;
-  color: #e5e5e5;
-}
-.panel-footer {
-  display: flex;
-  justify-content: center;
-  gap: 1vh;
-  padding: 2.5vh;
-  flex-shrink: 0;
-}
-
-
-/* Footer del entrante oculto por defecto */
-.mail-container.client .panel .panel-footer {
-  display: none;
-}
-
-/* Muéstralo solo cuando haya que mostrarlo */
-.mail-container.client .panel.show-footer .panel-footer {
-  display: flex;           /* lo que uses normalmente */
-  align-items: center;
-  gap: .5rem;
-}
+.panel-content p { font-size: 1.1rem; line-height: 2.3vh; color: #e5e5e5;}
+.panel-subject { color: #d4d4d8;}
+.panel-scroll { flex: 1; padding: 2.5vh; overflow-y: auto; position: relative;}
+.panel-content { display: flex; flex-direction: column; gap: 1vh; color: #e5e5e5;}
+.panel-footer { display: flex; justify-content: center; gap: 1vh; padding: 2.5vh; flex-shrink: 0;}
+.mail-container.client .panel .panel-footer { display: none;}
+.mail-container.client .panel.show-footer .panel-footer { display: flex;           /* lo que uses normalmente */ align-items: center; gap: .5rem;}
 .gmail-frame { display:block; width:100%; border:0; border-radius:10px; background:transparent; }
-
-
 .left-actions { display: flex; align-items: center; gap: 10px; }
 .right-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 :root { --icon-btn-size: 42px; /* ajusta si tu papelera ya tenía otro tamaño */ }
-.icon-button {
-  width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255,255,255,.15);
-  background: transparent;
-  color: #e2e8f0;
-  cursor: pointer;
-  transition: transform .12s ease, background-color .15s ease,
-              color .15s ease, border-color .15s ease, box-shadow .15s ease;
-}
+.icon-button { width: var(--icon-btn-size); height: var(--icon-btn-size); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+ border: 1px solid rgba(255,255,255,.15); background: transparent; color: #e2e8f0; cursor: pointer; transition: transform .12s ease, background-color .15s ease,
+              color .15s ease, border-color .15s ease, box-shadow .15s ease;}
+.trash-button { background-color: #2A2A2A; border: 0.2vh solid #d4d4d8; width: 4vh; height: 4vh; border-radius: 50%; cursor: pointer; transition: all 0.2s ease;
+ display: flex; align-items: center; justify-content: center;}
+.trash-button svg { width: 1.8vh; height: 1.8vh; color: #d4d4d8; stroke: #d4d4d8;}
 .icon-button svg { width: 20px; height: 20px; pointer-events: none; }
-/* Botón circular "Adjuntar" como la papelera pero en azul al hover */
-
-.trash-button:hover {
-    background-color: #ec2929;
-    border-color: #666666;
-}
-.trash-button:hover svg {
-    stroke: #666666;
-}
-
-.trash-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(244,63,94,.45);
-}
-
-.attach-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59,130,246,.45);
-}
-
-.attach-button {
-  width: 4vh;
-  height: 4vh;
-  border-radius: 50%;
-  border: 1px solid rgba(0,0,0,.15);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;              /* igual que trash-button por defecto */
-  color: #333;
-  cursor: pointer;
-  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .06s ease;
-  margin: 0 8px;
-}
-
+.trash-button:hover { background-color: #ec2929; border-color: #666666;}
+.trash-button:hover svg { stroke: #666666;}
+.trash-button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(244,63,94,.45);}
+.attach-button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,.45);}
+.attach-button { width: 4vh; height: 4vh; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); display: inline-flex; align-items: center; justify-content: center;
+  background: #fff; color: #333; cursor: pointer; transition: background .2s ease, color .2s ease, border-color .2s ease, transform .06s ease; margin: 0 8px;}
 .attach-button svg { width: 20px; height: 20px; }
-
-.attach-button:hover {
-  background: rgba(59, 130, 246, .12);
-  border-color: rgba(59, 130, 246, .5);
-  color: #60a5fa;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(59, 130, 246, .25);
-}
-
+.attach-button:hover { background: rgba(59, 130, 246, .12); border-color: rgba(59, 130, 246, .5); color: #60a5fa; transform: translateY(-1px);
+ box-shadow: 0 4px 14px rgba(59, 130, 246, .25);}
 .attach-button:active { transform: scale(.98); }
-
-.attach-button:focus-visible {
-  outline: 2px solid #1877f2;
-  outline-offset: 2px;
-}
-#replyFilesPreview{ 
-  margin-top:.5rem; 
-  padding: 2.5vh 2.5vh 0 2.5vh; 
-  gap:.5rem; 
-  display:flex; 
-  flex-wrap:wrap; 
-}
-
-.reply-up-chip{
-  display:inline-flex; align-items:center; gap:.35rem;
-  padding:.35rem .55rem; border-radius:10px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.08);
-  max-width: 280px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  font-size:.85rem;
-}
+.attach-button:focus-visible { outline: 2px solid #1877f2; outline-offset: 2px;}
+.send-button { background-color:var(--color-primary); border: none; color: #fff; padding: 1.4vh 1.8vh; font-size: 1.8vh; border-radius: 0.6vh; cursor: pointer;
+ transition: background-color 0.2s ease;}
+.send-button:hover { background-color: var(--color-primary-dark);}
+/* Attachments de la respuesta */
+#replyFilesPreview{  margin-top:.5rem;  padding: 2.5vh 2.5vh 0 2.5vh;  gap:.5rem;  display:flex;  flex-wrap:wrap; }
+.reply-up-chip{ display:inline-flex; align-items:center; gap:.35rem; padding:.35rem .55rem; border-radius:10px; background: rgba(255,255,255,.06);
+ border: 1px solid rgba(255,255,255,.08); max-width: 280px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.85rem;}
 .reply-up-chip .rm { cursor:pointer; opacity:.8; margin-left:.2rem; }
 .reply-up-chip .rm:hover{ opacity:1; }
 .reply-up-chip svg{ width:18px; height:18px; }
-
-/* Botón “quitar” en chips salientes */
-.attachment-chip.outgoing {
-  position: relative;
-}
-
-.attachment-chip.outgoing .rm {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1px solid rgba(0,0,0,.12);
-  background: #fff;
-  color: #333;
-  font-size: 14px;
-  line-height: 18px;
-  text-align: center;
-  cursor: pointer;
-}
-
-.attachment-chip.outgoing .rm:hover {
-  background: #eee;
-}
-
-.conversation-message {
-  background-color: var(--color-surface);
-  border-radius: 1.2vh;
-  padding: 1vh;
-  margin-bottom: 1vh;
-  white-space: pre-wrap;
-  font-size: 2vh;
-  line-height: 2.3vh;
-  color: #e5e5e5;
-  max-width: 70%;
-}
-.conversation-message.client { align-self: flex-start; }
-.conversation-message.bot    { align-self: flex-end; }
-
-.response-subject {
-  display: block;          /* para que ocupe toda la línea */
-  width: 100%;             /* o un ancho concreto si lo prefieres */
-  min-height: 2.5vh;       /* para que siempre tenga “clicable” algo */
-  padding: 0.2vh 0;        /* un pelín de padding vertical */
-  cursor: text;            /* fuerza el cursor I-beam */
-  outline: none;           /* quita el outline por defecto al hacer focus */
-}
-
-/* 3) Quita el borde blanco al enfocar */
+.attachment-chip.outgoing { position: relative;}
+.attachment-chip.outgoing .rm { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(0,0,0,.12);
+ background: #fff; color: #333; font-size: 14px; line-height: 18px; text-align: center; cursor: pointer;}
+.attachment-chip.outgoing .rm:hover { background: #eee;}
+.response-subject { display: block; width: 100%; min-height: 2.5vh; padding: 0.2vh 0; cursor: text; outline: none;}
 .response-subject:focus,
-.response-body:focus {
-  outline: none;
-}
-
-/* 2) Placeholder cuando están vacíos */
+.response-body:focus { outline: none;}
 .response-subject:empty::before,
-.response-body:empty::before {
-  content: attr(data-placeholder);
-  color: #888;
-}
-
-/* 4) Fondo transparente (hereda el del panel) */
+.response-body:empty::before { content: attr(data-placeholder); color: #888;}
 .response-subject,
-.response-body {
-  background: transparent;
-}
+.response-body { background: transparent;}
+.left-container { display: flex; flex-direction: column; align-items: center; width: 90%; height: 100%;}
 
+/* === PREVIEW IMAGENES Y PDF estilos === */
+.attpv-backdrop{ position: fixed; inset: 0; background: rgba(0,0,0,.55); opacity: 0; transition: opacity .15s ease; z-index: 1000;}
+#attPreviewBackdrop.open .attpv-backdrop{ opacity: 1; }
+.attpv-modal{ position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(.98); background: #111; color: #eee; border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.45); display: flex; flex-direction: column; width: max-content; height: max-content; max-width: 94vw; max-height: 88vh;
+  opacity: 0; transition: opacity .15s ease, transform .15s ease; z-index: 1001;}
+#attPreviewBackdrop.open .attpv-modal{ opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.attpv-toolbar{ display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem; background:#1b1b1b; border-bottom:1px solid #333;}
+.attpv-toolbar .left,.attpv-toolbar .right{ display:flex; gap:.5rem; }
+.attpv-toolbar .center{ flex:1; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.attpv-title{ font-weight:600; color:#ddd; }
+.attpv-btn{ background:#2a2a2a; color:#eee; border:1px solid #3a3a3a; border-radius:8px; padding:.35rem .6rem; cursor:pointer;}
+.attpv-btn:hover{ background:#333; }
+.attpv-viewport{ position:relative; flex:1; overflow:auto; background:#0e0e0e; cursor: grab; padding: 1.2vh;max-width: 94vw; max-height: calc(88vh - 46px);}
+.attpv-viewport.dragging{ cursor: grabbing; }
+ /* el zoom se aplica aquí */
+.attpv-canvas{ transform-origin: top left; display:inline-block; max-width: none; max-height: none;}
+.attpv-img{ display:block; max-width: 100%; max-height: 100%; width: auto; height: auto; }
+.attpv-pdf{ display:block; width: 80vw; height: 70vh; border:0;}
 
-.send-button {
-    background-color:var(--color-primary);
-    border: none;
-    color: #fff;
-    padding: 1.4vh 1.8vh;
-    font-size: 1.8vh;
-    border-radius: 0.6vh;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-.send-button:hover {
-    background-color: var(--color-primary-dark);
-}
-.trash-button {
-    background-color: #2A2A2A;
-    border: 0.2vh solid #d4d4d8;
-    width: 4vh;
-    height: 4vh;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.trash-button svg {
-    width: 1.8vh;
-    height: 1.8vh;
-    color: #d4d4d8;
-    stroke: #d4d4d8;
-}
-
-/* 2. Añade estas reglas al principio de email.css */
-.left-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 90%;
-  height: 100%;
-}
-
-.pagination {
-  flex-shrink: 0;        /* que no crezca ni se encoja */
-}
-
-.pagination-btn {
-    background: transparent;
-    border: none;
-    color: #888;
-    cursor: pointer;
-    padding: 1vh;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-.pagination-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-}
-
-.pagination-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.pagination-btn.prev-btn {
-  position: absolute;
-  bottom: var(--space-m);
-  left: var(--space-s);
-}
-.pagination-btn.next-btn {
-  position: absolute;
-  bottom: var(--space-m);
-  right: var(--space-s);
-}
+/* Paginación */
+.pagination { flex-shrink: 0;}
+.pagination-btn { background: transparent; border: none; color: #888; cursor: pointer; padding: 1vh; border-radius: 4px; transition: all 0.2s ease;}
+.pagination-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); color: #ffffff;}
+.pagination-btn:disabled { opacity: 0.3; cursor: not-allowed;}
+.pagination-btn.prev-btn { position: absolute; bottom: var(--space-m); left: var(--space-s);}
+.pagination-btn.next-btn { position: absolute; bottom: var(--space-m); right: var(--space-s);}

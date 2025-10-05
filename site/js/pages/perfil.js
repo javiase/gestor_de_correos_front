@@ -25,6 +25,16 @@ const PHONE_RULES = {
 };
 const DEFAULT_NSN_MIN = 8, DEFAULT_NSN_MAX = 15;
 
+const DAY_LABELS = {
+  monday: 'Lunes',
+  tuesday: 'Martes',
+  wednesday: 'Miércoles',
+  thursday: 'Jueves',
+  friday: 'Viernes',
+  saturday: 'Sábado',
+  sunday: 'Domingo'
+};
+
 function findPhoneRuleByE164(e164) {
   const digits = e164.replace(/^\+/, '');
   const codes = Object.keys(PHONE_RULES).sort((a,b) => b.length - a.length); // longest match
@@ -949,6 +959,100 @@ class UserProfile {
         
         return isValid;
     }
+
+    _formatStoreHours(storeHours = {}) {
+        const days = Object.keys(DAY_LABELS);
+        const lines = [];
+
+        // Detecta si hay algún día abierto
+        const anyOpen = days.some(d => storeHours?.[d]?.open);
+
+        if (!anyOpen) {
+            lines.push("Horario: sin horario configurado");
+            return lines.join(". ");
+        }
+
+        for (const d of days) {
+            const info = storeHours?.[d];
+            if (!info?.open) continue;
+
+            // slots: [{start:'HH:MM', end:'HH:MM'}, ...]
+            const slots = Array.isArray(info.slots) ? info.slots : [];
+            if (slots.length === 0) continue;
+
+            const rango = slots
+                .filter(s => s?.start && s?.end)
+                .map(s => `${s.start}–${s.end}`)
+                .join(", ");
+
+            if (rango) {
+                lines.push(`${DAY_LABELS[d]}: ${rango}`);
+            }
+        }
+
+        if (lines.length === 0) {
+            return "Horario: sin horario configurado";
+        }
+        return `Horario:\n- ${lines.join("\n- ")}`;
+    }
+
+
+    _generateProfileSummary(info) {
+        if (!info) return "";
+
+        const lines = [];
+
+        // Nombre y URL
+        if (info.storeName) lines.push(`El nombre de la tienda es: ${info.storeName}`);
+        if (info.storeUrl)  lines.push(`Su URL principal es: ${info.storeUrl}`);
+
+        // Descripción
+        if (info.storeDescription) lines.push(`Se trata de: ${info.storeDescription}`);
+
+        // Ubicación física u online
+        if (info.hasPhysicalLocation) {
+            const dirParts = [info.storeAddress, info.storeCity, info.storeState, info.storeZip, info.storeCountry]
+                .filter(Boolean).join(", ");
+            lines.push(`La tienda tiene ubicación física en: ${dirParts || "dirección no especificada"}`);
+        } else {
+            lines.push("La tienda funciona solo online");
+        }
+
+        // Teléfono
+        if (info.storePhone) {
+            lines.push(`Teléfono de contacto: ${info.storePhone}`);
+        }
+
+        // Idioma y zona horaria
+        if (info.language) lines.push(`Idioma principal: ${info.language}`);
+        if (info.timezone) lines.push(`Zona horaria: ${info.timezone}`);
+
+        // Notificaciones (si te interesa que el escritor/crítico las conozcan)
+        if (typeof info.emailNotifications === "boolean") {
+            lines.push(`Notificaciones por email: ${info.emailNotifications ? "activadas" : "desactivadas"}`);
+        }
+        if (typeof info.smsNotifications === "boolean") {
+            lines.push(`Notificaciones por SMS: ${info.smsNotifications ? "activadas" : "desactivadas"}`);
+        }
+        if (typeof info.marketingNotifications === "boolean") {
+            lines.push(`Comunicaciones de marketing: ${info.marketingNotifications ? "activadas" : "desactivadas"}`);
+        }
+
+        // Categoría
+        if (info.businessCategory) {
+            const cat = info.businessCategory === 'other' && info.businessCategoryOther
+                ? `${info.businessCategory} (${info.businessCategoryOther})`
+                : info.businessCategory;
+            lines.push(`Categoría del negocio: ${cat}`);
+        }
+
+        // Horario (storeHours)
+        const hoursText = this._formatStoreHours(info.storeHours || {});
+        if (hoursText) lines.push(hoursText);
+
+        return lines.join(". ") + (lines.length ? "." : "");
+    }
+
     
     async saveChanges() {
         if (!this.validateForm()) {
@@ -978,6 +1082,7 @@ class UserProfile {
         
         try {
             const formData = this.collectFormData();
+            formData.profile_info_text = this._generateProfileSummary(formData);
 
             // ⛔ Límite por campo (mismo mapa que en applyMaxLengthConstraints)
             const DEFAULT_MAX = LIMITS.profile_field; // 1000
@@ -1023,6 +1128,9 @@ class UserProfile {
             this.currentData  = { ...updated };
             this.originalData = { ...updated };
             this.hasUnsavedChanges = false;
+
+            this.currentData.profile_info_text = this._generateProfileSummary(this.currentData);
+
 
             this.populateForm();
             this.toggleHoursFields();

@@ -80,6 +80,31 @@ function isRenderableEmail(email) {
   return !!(email && typeof email.return_mail === 'string' && email.return_mail.trim());
 }
 
+// === Badges (solo render, sin fallback) ===
+const BADGE_LABEL = {
+  postventa: 'Postventa',
+  envios: 'Envios',
+  producto: 'Producto',
+  tienda: 'Tienda',
+  shopify: 'Shopify',
+  comerciales: 'Comerciales',
+  otros: 'Otros'
+};
+
+function renderBadges(email) {
+  const arr = Array.isArray(email.badges) ? email.badges.slice(0, 2) : [];
+  if (!arr.length) return '';
+  const pills = arr.map(k => {
+    const key = String(k || '').toLowerCase();
+    const label = BADGE_LABEL[key] || (key.charAt(0).toUpperCase() + key.slice(1));
+    // usa tus clases EXACTAS: email-badge + badge-<key>
+    // si quieres el estilo de “planes”, añade también feature-badge
+    return `<span class="email-badge feature-badge badge-${key}" data-badge="${key}">${label}</span>`;
+  }).join('');
+  return `<div class="email-badges">${pills}</div>`;
+}
+
+
 function renderDocIconsStrip(email){
   const atts = email.attachments || email.attachments_meta || [];
   if (!Array.isArray(atts) || atts.length === 0) return '';
@@ -360,6 +385,7 @@ class EmailInbox {
       ${renderDocIconsStrip(email)}
       </div>
       <div class="email-meta">
+        ${renderBadges(email)}
         ${email.hasAttachment ? '<i class="fas fa-paperclip"></i>' : ''}
         ${email.isDraft      ? '<span class="draft-badge">Draft</span>' : ''}
       </div>

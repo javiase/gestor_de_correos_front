@@ -86,8 +86,20 @@ async function openAttachmentAuth(a, emailId){
       blob = new Blob([ab], { type: fallbackType || 'application/octet-stream' });
     }
 
+    const mime = (blob.type || fallbackType || 'application/octet-stream').toLowerCase();
     const blobUrl = URL.createObjectURL(blob);
     const fileName = a.filename || 'archivo';
+
+    if (mime.startsWith('image/')) {
+      ensurePreviewUI();
+      showAttachmentPreview({ url: blobUrl, mime, filename: fileName, kind: 'image' });
+      return;
+    }
+    if (mime === 'application/pdf' || /\.pdf$/i.test(fileName)) {
+      ensurePreviewUI();
+      showAttachmentPreview({ url: blobUrl, mime: 'application/pdf', filename: fileName, kind: 'pdf' });
+      return;
+    }
 
 
     const link = document.createElement('a');
@@ -104,6 +116,184 @@ async function openAttachmentAuth(a, emailId){
     console.error('Adjunto no accesible:', err);
     notify?.error?.('No se pudo abrir/descargar el archivo.');
   }
+}
+
+// === PREVIEW POPUP (imágenes / PDF) ===
+let __preview = null;
+
+function ensurePreviewUI(){
+  if (__preview) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'attPreviewBackdrop';
+  wrap.innerHTML = `
+    <div class="attpv-backdrop" data-action="close"></div>
+    <div class="attpv-modal" role="dialog" aria-modal="true" aria-label="Vista previa">
+      <div class="attpv-toolbar">
+        <div class="left">
+          <button class="attpv-btn" data-action="zoom-out" title="Alejar">-</button>
+          <button class="attpv-btn" data-action="zoom-in" title="Acercar">+</button>
+          <button class="attpv-btn" data-action="zoom-reset" title="Tamaño 100%">100%</button>
+          <button class="attpv-btn" data-action="zoom-fit" title="Ajustar a ventana">Ajustar</button>
+        </div>
+        <div class="center"><span class="attpv-title"></span></div>
+        <div class="right">
+          <button class="attpv-btn" data-action="close" title="Cerrar">✕</button>
+        </div>
+      </div>
+      <div class="attpv-viewport">
+        <div class="attpv-canvas"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+
+  const state = {
+    scale: 1,
+    fit: false,
+    url: null,
+    kind: null,
+  };
+
+  const qs = (sel) => wrap.querySelector(sel);
+  const titleEl = qs('.attpv-title');
+  const canvas  = qs('.attpv-canvas');
+  const viewport= qs('.attpv-viewport');
+
+  function applyScale(newScale){
+    state.scale = Math.max(0.1, Math.min(8, newScale || 1));
+    canvas.style.transform = `scale(${state.scale})`;
+  }
+
+  function zoomFit(){
+    state.fit = true;
+    // Para "ajustar", dejamos scale=1 y que el contenido limite por CSS (max-width/height)
+    applyScale(1);
+  }
+
+  function zoomReset(){
+    state.fit = false;
+    applyScale(1);
+  }
+
+  function cleanupUrl(){
+    if (state.url) {
+      try { URL.revokeObjectURL(state.url); } catch(e) {}
+      state.url = null;
+    }
+  }
+
+  function close(){
+    cleanupUrl();
+    canvas.innerHTML = '';
+    wrap.classList.remove('open');
+    state.scale = 1;
+    state.fit   = false;
+    state.kind  = null;
+  }
+
+  wrap.addEventListener('click', (e) => {
+    const a = (e.target && e.target.getAttribute && e.target.getAttribute('data-action')) || '';
+    if (a === 'close') {
+      close();
+      e.preventDefault();
+    }
+  });
+
+  wrap.querySelector('[data-action="zoom-in"]').addEventListener('click', () => {
+    state.fit = false;
+    applyScale(state.scale * 1.2);
+  });
+  wrap.querySelector('[data-action="zoom-out"]').addEventListener('click', () => {
+    state.fit = false;
+    applyScale(state.scale / 1.2);
+  });
+  wrap.querySelector('[data-action="zoom-reset"]').addEventListener('click', zoomReset);
+  wrap.querySelector('[data-action="zoom-fit"]').addEventListener('click', zoomFit);
+
+  // Wheel-zoom (Ctrl+rueda o trackpad pinch emulado)
+  viewport.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+      state.fit = false;
+      const delta = e.deltaY > 0 ? (1/1.15) : 1.15;
+      applyScale(state.scale * delta);
+    }
+  }, { passive:false });
+
+  // Drag para desplazar (cuando el contenido es más grande)
+  let dragging = false, sx=0, sy=0, sl=0, st=0;
+  viewport.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true;
+    sx = e.clientX; sy = e.clientY;
+    sl = viewport.scrollLeft; st = viewport.scrollTop;
+    viewport.classList.add('dragging');
+  });
+  window.addEventListener('mouseup', () => {
+    dragging = false;
+    viewport.classList.remove('dragging');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    viewport.scrollLeft = sl - (e.clientX - sx);
+    viewport.scrollTop  = st - (e.clientY - sy);
+  });
+
+  __preview = {
+    el: wrap,
+    titleEl,
+    canvas,
+    viewport,
+    state,
+    applyScale,
+    zoomFit,
+    zoomReset,
+    close,
+    setContent({ url, kind, filename }){
+      cleanupUrl();
+      state.url = url;
+      state.kind = kind;
+      titleEl.textContent = filename || '';
+      canvas.innerHTML = '';
+
+      if (kind === 'image') {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = filename || 'imagen';
+        img.className = 'attpv-img';
+        canvas.appendChild(img);
+      } else if (kind === 'pdf') {
+        // Iframe con el PDF (el scale se aplica al canvas contenedor)
+        const frame = document.createElement('iframe');
+        frame.className = 'attpv-pdf';
+        frame.src = url;
+        frame.setAttribute('title', filename || 'PDF');
+        frame.setAttribute('loading', 'lazy');
+        canvas.appendChild(frame);
+      }
+
+      // Estado inicial: "Ajustar"
+      __preview.zoomFit();
+      wrap.classList.add('open');
+      // Asegura que el scroll arranca centrado arriba
+      requestAnimationFrame(() => {
+        __preview.viewport.scrollTop = 0;
+        __preview.viewport.scrollLeft = 0;
+      });
+    }
+  };
+
+  // Cerrar con ESC
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && wrap.classList.contains('open')) {
+      __preview.close();
+    }
+  });
+}
+
+function showAttachmentPreview({ url, mime, filename, kind }){
+  ensurePreviewUI();
+  __preview.setContent({ url, kind, filename });
 }
 
 
@@ -430,6 +620,7 @@ class EmailView {
     this.cache = [];      // aquí replicaremos ids → datos
     this.sendBtn = null;
     this.deleteBtn = null;
+    this.anchorId = null;
 
     // orden heredado del inbox (defaults seguros)
     this.sortOrder = sessionStorage.getItem('inbox_sort')    || 'desc';
@@ -439,6 +630,8 @@ class EmailView {
   }
 
   async init() {
+    this.anchorId = null;
+    this.anchorDate = null;
     // 1) Construye botones de navegación
     this.buildNavButtons();
 
@@ -455,6 +648,20 @@ class EmailView {
       console.log(`init(): prefetch page ${nextPage}`);
       await this.loadBatch(nextPage, { replace: false });
       this.loadedPages.add(nextPage);
+
+      // Fija anchor según sort_by y sort (vale para desc y asc)
+      if (this.ids && this.ids.length > 0 && !this.anchorId && !this.anchorDate) {
+        if (this.sortBy === 'id') {
+          // en desc el “más nuevo” está al principio; en asc, al final
+          this.anchorId = (this.sortOrder === 'desc') ? this.ids[0] : this.ids[this.ids.length - 1];
+        } else if (this.sortBy === 'date') {
+          // toma la fecha del primer/último elemento como ancla
+          const first = this.cache[0];
+          const last  = this.cache[this.cache.length - 1];
+          const ref   = (this.sortOrder === 'desc') ? first : last;
+          this.anchorDate = ref?.date || null; // ISO/fecha que tengas en los docs
+        }
+      }
     }
 
     // **PRE‑FETCH anterior** si index < 5
@@ -673,8 +880,19 @@ class EmailView {
     }
 
     console.log(`  ↳ fetch /emails/get?page=${page}&sort=${this.sortOrder}&sort_by=${this.sortBy}…`);
+    let anchorQS = '';
+    if (this.sortBy === 'id' && this.anchorId) {
+      anchorQS = (this.sortOrder === 'desc')
+        ? `&anchor_max_id=${encodeURIComponent(this.anchorId)}`
+        : `&anchor_min_id=${encodeURIComponent(this.anchorId)}`;
+    } else if (this.sortBy === 'date' && this.anchorDate) {
+      anchorQS = (this.sortOrder === 'desc')
+        ? `&anchor_max_date=${encodeURIComponent(this.anchorDate)}`
+        : `&anchor_min_date=${encodeURIComponent(this.anchorDate)}`;
+    }
+
     const res = await fetchWithAuth(
-      `/emails/get?page=${page}&sort=${this.sortOrder}&sort_by=${this.sortBy}`
+      `/emails/get?page=${page}&sort=${this.sortOrder}&sort_by=${this.sortBy}${anchorQS}`
     );
     const { emails, pages } = await res.json();
     this.pages = pages;

@@ -230,6 +230,35 @@
   color: #ffffff;
 }
 
+/* Puntito rojo genérico (oculto por defecto) */
+.notif-dot{
+  display: none;
+  width: .9vh;
+  height: .9vh;
+  background: #ef4444;
+  border-radius: 999px;
+  margin-left: .6vh;
+  box-shadow: 0 0 0 .2vh rgba(239,68,68,.45);
+}
+
+/* Activa el puntito en el item de menú “Datos y Reglas” */
+.has-pending-ideas .menu-item[data-section="info"] .notif-dot{
+  display: inline-block;
+}
+
+/* Puntito en la lengüeta del panel de info (si está en la página) */
+.has-pending-ideas .info-tab::after{
+  content: "";
+  position: absolute;
+  top: .6vh;
+  right: .4vh;
+  width: .9vh;
+  height: .9vh;
+  background: #ef4444;
+  border-radius: 999px;
+  box-shadow: 0 0 0 .2vh rgba(239,68,68,.45);
+}
+
 /* Collapsible Menu */
 .sidebar-menu.collapsed {
   max-height: 0;

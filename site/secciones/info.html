@@ -12,7 +12,6 @@
   </head>
   <body id="app">
     <div id="sidebarContainer"></div>
-
     <div class="main-content">
       <div class="info-container-main">
         <div class="main-heading" id="mainHeading">
@@ -499,8 +498,27 @@
           </div> <!-- /cards-grid -->
         </div>
       </div>
-    </div>
+      <!-- 🔹 Barra lateral de info faltante a la derecha -->
+      <aside class="info-sidebar is-popup is-collapsed" aria-label="Bandeja de entrada">
+        <button class="info-tab" aria-expanded="false" aria-label="Mostrar panel">
+          Info
+        </button>
+        <div class="info-sidebar-header">
+          <h3>Propuestas de información a añadir</h3>
+        </div>
 
+        <div class="info-scroll">
+          <div class="info-messages">
+            <!-- 🔹 aqui van los mensajes -->
+            
+          </div>
+        </div>
+
+        <div class="info-sidebar-footer"></div>
+      </aside>
+    </div>
+    
+    <script src="/js/vendor/purify.min.js?v=%ASSET_VERSION%"></script>
     <script type="module" src="/js/config.js?v=%ASSET_VERSION%"></script>
     <script type="module" src="/js/utils/api.js?v=%ASSET_VERSION%"></script>
     <script type="module" src="/js/components/sidebar.js?v=%ASSET_VERSION%"></script>

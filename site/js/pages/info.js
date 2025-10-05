@@ -5,13 +5,16 @@ import { initSidebar } from '/js/components/sidebar.js';
 import { enforceProfileGate } from '/js/utils/profile-gate.js';
 import { enforceSessionGate } from '/js/utils/session-gate.js';
 import { notify } from '/js/utils/notify.js';
+import { renderHtmlEmail } from '/js/utils/render-email.js';
+import { LIMITS } from '/js/config.js';
 
 enforceSessionGate();
 enforceProfileGate();
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initSidebar('#sidebarContainer');
   setupCards();
+  await loadPastEmailsSidebar();
 });
 
 /* ──────────────────────────────────────────────────────────────
@@ -68,6 +71,79 @@ function collapseCard(card, grid, heading) {
     heading?.classList.remove('hidden-heading');
   }
 }
+
+/* ──────────────────────────────────────────────────────────────
+ * Contadores de caracteres (inputs/textarea/contenteditable)
+ * ────────────────────────────────────────────────────────────── */
+
+function attachCounter(el, max) {
+  if (!el || !max) return;
+  // evita duplicar
+  if (el._charCounter) return;
+
+  const counter = document.createElement('div');
+  counter.className = 'char-counter';
+  counter.setAttribute('aria-live', 'polite');
+  counter.style.marginTop = '0.5rem';
+  counter.style.fontSize  = '0.85rem';
+  counter.style.textAlign = 'right';
+  counter.style.color     = '#9CA3AF';
+
+  const update = () => {
+    const val = (el.value || '').length;
+    counter.textContent = `${val}/${max} caracteres`;
+    if (val > max) counter.classList.add('over'); else counter.classList.remove('over');
+  };
+
+  // colocar después del elemento
+  el.insertAdjacentElement('afterend', counter);
+  el.addEventListener('input', update);
+  update();
+
+  el._charCounter = counter;
+}
+
+function attachCounterForContentEditable(el, max) {
+  if (!el || !max) return;
+  if (el._charCounter) return;
+
+  const counter = document.createElement('div');
+  counter.className = 'char-counter';
+  counter.setAttribute('aria-live', 'polite');
+  counter.style.marginTop = '0.5rem';
+  counter.style.fontSize  = '0.85rem';
+  counter.style.textAlign = 'right';
+  counter.style.color     = '#9CA3AF';
+
+  const update = () => {
+    const val = (el.textContent || '').length;
+    counter.textContent = `${val}/${max} caracteres`;
+    if (val > max) counter.classList.add('over'); else counter.classList.remove('over');
+  };
+
+  el.insertAdjacentElement('afterend', counter);
+  el.addEventListener('input', update);
+  update();
+
+  el._charCounter = counter;
+}
+
+function initCharCounters(scope) {
+  const root = scope || document;
+
+  // Políticas: textarea pegada por el usuario
+  const policyTA = root.querySelector('textarea[name="policy_pasted"]');
+  if (policyTA) attachCounter(policyTA, LIMITS.policies);
+
+  // FAQs: respuestas
+  root.querySelectorAll('.faq-answer').forEach(ta => attachCounter(ta, LIMITS.faq_a));
+
+  // FAQs: preguntas (contenteditable)
+  root.querySelectorAll('.faq-question-text[contenteditable="true"]').forEach(p =>
+    attachCounterForContentEditable(p, LIMITS.faq_q)
+  );
+}
+
 function resetPolicyView(card) {
   const form    = card.querySelector('form.policy-form');
   const result  = card.querySelector('.result-container');
@@ -112,6 +188,7 @@ async function initCard(card) {
   initRateTable(form);
   initNAToggles(form);
   initPolicySubmit(card, form, title);
+  initCharCounters(card);
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -459,6 +536,12 @@ function initPolicySubmit(card, form, policyTitle) {
 
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const payload = await resp.json();
+      const ignored = payload?.ignored_info || payload?.ignoredInfo; // soporte snake/camel
+      console.log('Policy save response:', payload);
+      if (Array.isArray(ignored) && ignored.length) {
+        console.warn('Ignored info:', ignored);
+        notify.warning('Se ha detectado una instrucción al bot en la información subida y se ha ignorado ese tramo.');
+      }
 
       if (payload?.status === 'complete') {
         wasSuccess = true;
@@ -664,6 +747,11 @@ function initFAQ(card) {
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
+      const ignored = data?.ignored_info || data?.ignoredInfo; // soporte snake/camel
+      if (Array.isArray(ignored) && ignored.length) {
+        notify.warning('Se ha detectado una instrucción al bot en alguna respuesta y se ha ignorado ese tramo.');
+      }
+
       if (data?.status === 'complete') {
         wasSuccess = true;
         // Ocultamos formulario
@@ -701,12 +789,23 @@ function createFAQBlock({ question = '', answer = '' } = {}) {
     '<button type="button" class="faq-del-btn" aria-label="Eliminar bloque">Eliminar</button>' +
     `<p class="faq-question-text" contenteditable="true" tabindex="0" role="textbox" aria-label="Pregunta">${escapeHTML(question)}</p>` +
     '<textarea class="faq-answer" placeholder="Escribe la respuesta aquí..." aria-label="Respuesta"></textarea>';
-  const ta = block.querySelector('.faq-answer');
+
+  const qEl = block.querySelector('.faq-question-text');
+  const ta  = block.querySelector('.faq-answer');
+
   ta.value = answer || '';
-  // Ajusta altura inicial si hay contenido precargado
+
+  // Auto-resize inicial
   setTimeout(() => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }, 0);
+
+  // Contadores
+  attachCounterForContentEditable(qEl, LIMITS.faq_q);
+  attachCounter(ta, LIMITS.faq_a);
+
   return block;
 }
+
+
 
 async function prefillFAQ(card) {
   const blocksWrap = card.querySelector('#faqBlocks');
@@ -1113,6 +1212,505 @@ function validateRateTable(field) {
   }
   return { ok: true };
 }
+async function loadPastEmailsSidebar() {
+  const list = document.querySelector('.info-sidebar.is-popup .info-messages');
+  if (!list) return;
+
+  list.innerHTML = ''; // limpia placeholders
+
+  // skeleton simple
+  const sk = document.createElement('div');
+  sk.textContent = 'Cargando mensajes…';
+  sk.style.color = '#a1a1aa';
+  list.appendChild(sk);
+
+  try {
+    const res = await fetchWithAuth('/emails/past?limit=100', { method: 'GET' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+    console.log('[past] raw data', data);
+    console.log(`[past] ${items.length} items loaded`);
+
+
+    list.innerHTML = '';
+
+    if (!items.length) {
+      const empty = document.createElement('p');
+      empty.textContent = 'No hay correos procesados todavía.';
+      empty.style.color = '#a1a1aa';
+      empty.style.textAlign = 'center';
+      list.appendChild(empty);
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+
+    items.forEach(it => {
+      const ideas = normalizeIdeas(it.ideas_clave_sin_informacion);
+      if (ideas.length) {
+        ideas.forEach((idea, idx) => {
+          // duplicamos el item con metadatos de idea
+          frag.appendChild(makeInfoMessageButton({
+            ...it,
+            _idea: idea,
+            _ideaIndex: idx
+          }));
+        });
+      } else {
+        // fallback por si llegara alguno sin ideas
+        frag.appendChild(makeInfoMessageButton(it));
+      }
+    });
+
+    list.appendChild(frag);
+    // marca el primero como seleccionado (opcional)
+    list.querySelector('.info-message')?.classList.add('selected');
+
+    // dentro de loadPastEmailsSidebar(), reemplaza la delegación existente por esto:
+    list.addEventListener('click', async (e) => {
+    // ⬇️ Click directo en la zona roja de la papelera => eliminar sin abrir modal
+    const trash = e.target.closest('.trash-reveal');
+    if (trash) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const btn = trash.closest('.info-message');
+      if (!btn) return;
+
+      const emailId = btn.dataset.emailId || '';
+      const idea    = btn.dataset.idea || '';
+
+      if (!idea) {
+        // Si este item no trae idea concreta, abrimos modal como fallback
+        // (para evitar marcar una clave vacía en backend)
+        const p = btn._payload || {};
+        openIdeaModal({
+          emailId,
+          idea,
+          subject:  p.subject,
+          sender:   p.sender,
+          date:     p.date,
+          bodyHtml: p.body_html
+        });
+        return;
+      }
+
+      try {
+        await markIdeaProcessed(emailId, idea);
+        removeIdeaFromSidebar(emailId, idea);
+        notify.success('Idea eliminada de pendientes');
+        // fetchWithAuth ya dispara el ping del badge, así que el puntito se refresca solo
+      } catch (err) {
+        console.error(err);
+        notify.error('No se pudo eliminar la idea');
+      }
+      return; // ⬅️ no seguir (no abrir modal)
+    }
+
+    // ⬇️ Comportamiento normal: abrir modal
+    const btn = e.target.closest('.info-message');
+    if (!btn) return;
+
+    list.querySelectorAll('.info-message.selected').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+
+    const p = btn._payload || {};
+    openIdeaModal({
+      emailId:  btn.dataset.emailId,
+      idea:     btn.dataset.idea,
+      subject:  p.subject,
+      sender:   p.sender,
+      date:     p.date,
+      bodyHtml: p.body_html
+    });
+  });
+
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = '';
+    const errP = document.createElement('p');
+    errP.textContent = 'No se pudieron cargar los correos.';
+    errP.style.color = '#ef4444';
+    errP.style.textAlign = 'center';
+    list.appendChild(errP);
+  }
+}
+
+function makeInfoMessageButton(item) {
+  const primary =
+    (item._idea || '').trim() ||
+    (item.texto_combinado || '').trim() ||
+    (item.subject || '').trim() ||
+    (item.sender ? `De ${item.sender}` : 'Mensaje');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'info-item';
+  const ideaIndex = (item._ideaIndex != null ? String(item._ideaIndex) : '0');
+  wrap.dataset.id = `${item.id || 'mail'}#${ideaIndex}`;
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'info-message has-trash';
+  btn.dataset.emailId = item.id || '';
+  btn.dataset.ideaIndex = ideaIndex;
+  if (item._idea != null) btn.dataset.idea = item._idea;
+
+  // 👉 guarda el resto para el modal
+  btn._payload = {
+    id: item.id,
+    subject: item.subject || '',
+    sender: item.sender || '',
+    date: item.date || '',
+    body_html: item.body_html || '',
+  };
+
+  btn.innerHTML = `
+    <div class="info-msg-header">
+      <span class="info-msg-title"></span>
+    </div>
+    <span class="trash-reveal" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6l-1.35 14.11A2 2 0 0 1 15.66 22H8.34A2 2 0 0 1 6.35 20.11L5 6"></path>
+        <path d="M14 10v6"></path>
+        <path d="M10 10v6"></path>
+        <line x1="9" y1="6" x2="9" y2="4"></line>
+        <line x1="15" y1="6" x2="15" y2="4"></line>
+      </svg>
+    </span>
+  `;
+  btn.querySelector('.info-msg-title').textContent = truncate(primary, 120);
+  wrap.appendChild(btn);
+  return wrap;
+}
+
+
+
+
+function normalizeIdeas(raw) {
+  if (!raw) return [];
+  // Si viene como JSON de array en string, intenta parsearlo
+  if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+    try {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr.map(s => stripBullet(String(s))).filter(Boolean);
+    } catch { /* sigue */ }
+  }
+  // Si ya es array
+  if (Array.isArray(raw)) {
+    return raw.map(s => stripBullet(String(s))).filter(Boolean);
+  }
+  // Si es string plano con posibles viñetas/separadores
+  if (typeof raw === 'string') {
+    return raw
+      .split(/\r?\n|[;|]/g)               // separa por líneas, ; o |
+      .map(s => s.split(/•|·|—|-|\*/g))   // parte adicional por viñetas
+      .flat()
+      .map(s => stripBullet(s))
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function stripBullet(s) {
+  return String(s || '')
+    .replace(/^[\s•\-\*\u2013\u2014·]+/, '') // quita viñetas y espacios iniciales
+    .trim();
+}
+
+
+
+function truncate(s, n) {
+  s = String(s || '');
+  return s.length > n ? s.slice(0, n - 1) + '…' : s;
+}
+
+function formatDateHint(d) {
+  // acepta ISO o cadenas de cabecera de email
+  const dt = new Date(d);
+  if (!isNaN(dt.getTime())) {
+    return dt.toLocaleString();
+  }
+  return d; // si no se puede parsear, muestra tal cual
+}
+
+
+// --- Toggle del popup derecho con lengüeta y click fuera ---
+const popup = document.querySelector('.info-sidebar.is-popup');
+if (popup) {
+  const tab = popup.querySelector('.info-tab');
+
+  // Cerrar al hacer click fuera del popup
+  document.addEventListener('click', (e) => {
+    // ⛔️ Si el click viene del modal (overlay o contenido), no cierres la sidebar
+    if (e.target.closest('.idea-modal') || e.target.closest('.idea-modal-overlay')) {
+      return;
+    }
+
+    if (!popup.contains(e.target)) {
+      popup.classList.add('is-collapsed');
+      if (tab) tab.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Evitar que clicks dentro del popup lo cierren
+  popup.addEventListener('click', (e) => e.stopPropagation());
+
+  // Abrir/cerrar con la lengüeta
+  if (tab) {
+    tab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const collapsed = popup.classList.toggle('is-collapsed');
+      tab.setAttribute('aria-expanded', String(!collapsed));
+      tab.setAttribute('aria-label', collapsed ? 'Mostrar panel' : 'Ocultar panel');
+    });
+  }
+}
+
+async function markIdeaProcessed(emailId, ideaText) {
+  const res = await fetchWithAuth('/emails/past/mark_idea', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ email_id: emailId, idea: ideaText, processed: true })
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json(); // { remaining, deleted }
+}
+
+function removeIdeaFromSidebar(emailId, ideaText){
+  const list = document.querySelector('.info-sidebar.is-popup .info-messages');
+  if (!list) return;
+  const btn = list.querySelector(`.info-message[data-email-id="${CSS.escape(emailId)}"][data-idea="${CSS.escape(ideaText)}"]`);
+  if (btn) btn.closest('.info-item')?.remove();
+}
+
+
+let _escCloser = null;
+function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
+  closeIdeaModal(); // cierra si hay uno
+
+  const overlay = document.createElement('div');
+  overlay.className = 'idea-modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  const modal = document.createElement('div');
+  modal.className = 'idea-modal';
+
+  // HEADER
+  const header = document.createElement('div');
+  header.className = 'idea-modal-header';
+  header.innerHTML = `
+    <div class="idea-modal-title">
+      <h3>Completar información</h3>
+      <p>A continuacion, podras interpretar la información que le ha faltado al bot en este correo para poder reescribir la pregunta si estuviera mal formulada, y responderla con la información que creas que puede venir bien para responder la siguiente vez. Basicamente, como si crearamos un bloque de preguntas frecuentes, las preguntas que escribas aqui, se guardarán en esa sección. (si ves que la pregunta no tiene sentido,<strong> eliminala</strong>)</p>
+    </div>
+    <button type="button" class="idea-modal-close" aria-label="Cerrar">&times;</button>
+  `;
+
+  // BODY → 2 columnas
+  const body = document.createElement('div');
+  body.className = 'idea-modal-body';
+
+  // LEFT: email entrante
+  const left = document.createElement('div');
+  left.className = 'idea-left';
+  left.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-content" style="justify-content: space-between;">
+          <p>
+            <span>${sender ? escapeHTML(sender) : ''}</span>
+            <strong>${subject ? escapeHTML(subject) : '(sin asunto)'}</strong>
+          </p>
+          <span>${date ? formatDateHint(date) : ''}</span>
+        </div>
+      </div>
+      <div class="panel-scroll">
+        <div id="ideaEmailBody"></div>
+      </div>
+    </div>
+  `;
+
+  // RIGHT: formulario
+  const right = document.createElement('div');
+  right.className = 'idea-right';
+  right.innerHTML = `
+    <div class="idea-card" 
+         data-email-id="${escapeHTML(emailId || '')}"
+         data-original-idea="${escapeHTML(idea || '')}">
+      <div class="idea-question-row">
+        <h4 class="idea-question" title="${escapeHTML(idea || '')}">
+          ${escapeHTML(idea || 'Idea sin título')}
+        </h4>
+        <button type="button" class="idea-edit-btn" aria-label="Editar pregunta" title="Editar">Editar</button>
+      </div>
+
+      <label class="idea-label">Añade la información:</label>
+      <textarea class="idea-textarea" placeholder="Escribe aquí la información que falta…" rows="10"></textarea>
+      <div class="idea-actions">
+        <button type="button" class="btn btn-save">Guardar</button>
+        <button type="button" class="btn btn-delete">Eliminar</button>
+      </div>
+    </div>
+  `;
+
+  body.append(left, right);
+  modal.append(header, body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Render del email
+  const container = left.querySelector('#ideaEmailBody');
+  renderHtmlEmail(container, bodyHtml || '', '');
+
+  // Cerrar por X / overlay
+  const closeBtn = header.querySelector('.idea-modal-close');
+  const stopIt = (e) => e.stopPropagation();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) { e.stopPropagation(); closeIdeaModal(); } else { e.stopPropagation(); } });
+  modal.addEventListener('click', stopIt);
+  closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeIdeaModal(); });
+  _escCloser = (ev) => { if (ev.key === 'Escape') closeIdeaModal(); };
+  document.addEventListener('keydown', _escCloser);
+
+  // ====== Handlers internos (EDITAR / GUARDAR / ELIMINAR) ======
+  const cardEl = right.querySelector('.idea-card');
+  const qEl    = right.querySelector('.idea-question');
+  const editBt = right.querySelector('.idea-edit-btn');
+  const saveBt = right.querySelector('.btn.btn-save');
+  const delBt  = right.querySelector('.btn.btn-delete');
+  const answerEl = right.querySelector('.idea-textarea');
+  const emailId_ = cardEl.dataset.emailId;
+  const origIdea = cardEl.dataset.originalIdea;
+
+  attachCounterForContentEditable(qEl, LIMITS.faq_q);
+  attachCounter(answerEl, LIMITS.faq_a);
+
+  function enterEdit(){
+    qEl.setAttribute('contenteditable','true');
+    qEl.classList.add('editing-underline');
+    editBt.classList.add('is-editing');
+    editBt.textContent = 'Listo';
+    editBt.setAttribute('aria-label','Terminar edición');
+    editBt.title = 'Terminar edición';
+    qEl.focus();
+    const sel = window.getSelection?.(); const range = document.createRange?.();
+    if(sel && range){ range.selectNodeContents(qEl); sel.removeAllRanges(); sel.addRange(range); }
+  }
+  function leaveEdit(){
+    qEl.removeAttribute('contenteditable');
+    qEl.classList.remove('editing-underline');
+    editBt.classList.remove('is-editing');
+    editBt.textContent = 'Editar';
+    editBt.setAttribute('aria-label','Editar pregunta');
+    editBt.title = 'Editar';
+  }
+  editBt.addEventListener('click', () => {
+    const isEditing = qEl.getAttribute('contenteditable') === 'true';
+    if (isEditing) leaveEdit(); else enterEdit();
+  });
+  qEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); leaveEdit(); }
+  });
+
+  async function appendFAQEntry(question, answer) {
+    const r1 = await fetchWithAuth('/policies/get?policy_name=' + encodeURIComponent('Preguntas Frecuentes'), { method:'GET' });
+    const j1 = await r1.json();
+    const list = Array.isArray(j1?.content) ? j1.content : [];
+    list.push({ question: (question || '').trim(), answer: (answer || '').trim() });
+    const r2 = await fetchWithAuth('/policies/process', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ policy_type:'Preguntas Frecuentes', content:list })
+    });
+    if (!r2.ok) throw new Error('HTTP ' + r2.status);
+    const j2 = await r2.json();
+    if (j2?.status !== 'complete') throw new Error('Respuesta inesperada al guardar FAQ');
+  }
+
+  // VALIDACIÓN + acciones
+  saveBt.addEventListener('click', async () => {
+    const newQuestion = (qEl.textContent || '').trim();
+    const answer = (answerEl.value || '').trim();
+
+    if (!newQuestion){
+      notify.warning('La pregunta no puede estar vacía');
+      enterEdit(); // ayuda a que el usuario la edite
+      return;
+    }
+    if (!answer){
+      notify.warning('Añade una respuesta');
+      answerEl.focus();
+      return;
+    }
+    if (newQuestion.length > LIMITS.faq_q){
+      notify.warning(`La pregunta supera el máximo de ${LIMITS.faq_q} caracteres.`);
+      enterEdit();
+      return;
+    }
+    if (answer.length > LIMITS.faq_a){
+      notify.warning(`La respuesta supera el máximo de ${LIMITS.faq_a} caracteres.`);
+      answerEl.focus();
+      return;
+    }
+
+    try{
+      await appendFAQEntry(newQuestion, answer);
+      await markIdeaProcessed(emailId_, origIdea);
+      removeIdeaFromSidebar(emailId_, origIdea);
+      notify.success('Pregunta guardada en FAQ');
+      closeIdeaModal();
+    }catch(e){
+      console.error(e);
+      notify.error('No se pudo guardar la FAQ');
+    }
+  });
+
+  delBt.addEventListener('click', async () => {
+    try{
+      await markIdeaProcessed(emailId_, origIdea);
+      removeIdeaFromSidebar(emailId_, origIdea);
+      notify.success('Idea eliminada de pendientes');
+      closeIdeaModal();
+    }catch(e){
+      console.error(e);
+      notify.error('No se pudo eliminar la idea');
+    }
+  });
+}
+
+
+function closeIdeaModal() {
+  const overlay = document.querySelector('.idea-modal-overlay');
+  if (overlay) overlay.remove();
+  if (_escCloser) {
+    document.removeEventListener('keydown', _escCloser);
+    _escCloser = null;
+  }
+}
+
+// Sanitizador simple: quita <script> y on*=
+function sanitizeHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html || '';
+
+  // elimina scripts
+  tmp.querySelectorAll('script, iframe').forEach(n => n.remove());
+  // elimina on* handlers
+  tmp.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(a => {
+      if (/^on/i.test(a.name)) el.removeAttribute(a.name);
+      // evita javascript: en href/src
+      if ((a.name === 'href' || a.name === 'src') && /^javascript:/i.test(a.value)) {
+        el.removeAttribute(a.name);
+      }
+    });
+  });
+  return tmp.innerHTML;
+}
+
 
 /* ──────────────────────────────────────────────────────────────
  * Fin

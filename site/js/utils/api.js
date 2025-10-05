@@ -168,6 +168,34 @@ function mostrarModalSesionCaducada() {
   };
 }
 
+async function pingPendingIdeasBadge() {
+  try {
+    const tk = getToken();
+    if (!tk) return; // no logueado
+
+    // usa el MISMO endpoint de info, pero liviano
+    const res = await fetch(`${API_BASE}/emails/past?limit=1`, {
+      headers: { Authorization: `Bearer ${tk}` }
+    });
+    if (!res.ok) return;
+
+    const data = await res.json().catch(() => ({}));
+    const items = Array.isArray(data?.items) ? data.items : [];
+    const has = items.length > 0;
+
+    // 1) Clase en <body> para que el CSS pinte los puntitos
+    document.body.classList.toggle('has-pending-ideas', has);
+
+    // 2) (opcional) evento por si alguna vista quiere reaccionar
+    window.dispatchEvent(new CustomEvent('pending-ideas:count', {
+      detail: { count: has ? items.length : 0 }
+    }));
+  } catch (_) {
+    // silencioso; no rompemos UX si falla
+  }
+}
+
+
 // ──────────────────────────────────────────────────────────────
 // 4) fetch con auth + refresh automático
 // ──────────────────────────────────────────────────────────────
@@ -228,7 +256,7 @@ export async function fetchWithAuth(path, opts = {}) {
       return Promise.reject(new Error("No autenticado"));
     }
   }
-
+  try { pingPendingIdeasBadge(); } catch (_) {}
   return res;
 }
 
