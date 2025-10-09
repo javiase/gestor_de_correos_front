@@ -1,7 +1,6 @@
 // plans.js
 import { fetchWithAuth, logout, API_BASE, getToken} from '/js/utils/api.js';
-import { enforceProfileGate } from '/js/utils/profile-gate.js';
-import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
 
@@ -141,8 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!hasToken) { window.location.replace("/index.html"); return; }
 
   // 2) Ahora sí, gates (en plans el profile gate no bloquea, pero no molesta)
-  try { enforceSessionGate?.(); } catch {}
-  try { await enforceProfileGate(); } catch {}
+  try { await enforceFlowGate(); } catch {}
 
   // 3) Si existe, espera a appUserPromise (creada en config.js)
   if (window.appUserPromise) {

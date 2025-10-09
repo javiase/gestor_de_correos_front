@@ -2,12 +2,10 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js?v=1';
-import { enforceProfileGate } from '/js/utils/profile-gate.js';
-import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
-enforceSessionGate();
-enforceProfileGate();
+enforceFlowGate();
 
 // Límites prudentes (≈25MB Gmail, dejamos margen por base64)
 const GMAIL_MAX_TOTAL_BYTES = 24 * 1024 * 1024; // ~24 MiB total
@@ -1255,6 +1253,13 @@ class EmailView {
   }
 
 
+  // Solo reflejo local (sin red)
+  reflectPendingIdeasUI(has) {
+    const cached = JSON.parse(localStorage.getItem('store') || '{}');
+    cached.has_pending_ideas = !!has;
+    localStorage.setItem('store', JSON.stringify(cached));
+    document.body.classList.toggle('has-pending-ideas', !!has);
+  }
 
   async sendReply() {
     const emailId = this.ids[this.index];
@@ -1311,6 +1316,8 @@ class EmailView {
         notify.error('Error al enviar el correo ❌');
         return;
       }
+      const payload = await res.json().catch(()=> ({}));
+      this.reflectPendingIdeasUI(!!payload.has_pending_ideas);
 
       this.pendingFiles = [];
       this.renderPendingFiles();
@@ -1335,7 +1342,6 @@ class EmailView {
         window.location.href = '/secciones/inbox.html';
         return;
       }
-
     } catch (e) {
       console.error('Error al enviar la respuesta:', e);
     }
@@ -1352,6 +1358,8 @@ class EmailView {
         console.error('Error al borrar el email:', res.status, err);
         return;
       }
+      const payload = await res.json().catch(()=> ({}));
+      this.reflectPendingIdeasUI(!!payload.has_pending_ideas);
 
       // 1) Eliminar de ids y cache
       const removedId = this.ids.splice(this.index, 1)[0];
@@ -1373,7 +1381,6 @@ class EmailView {
         // Si no quedan, vuelve al inbox
         window.location.href = '/secciones/inbox.html';
       }
-
     } catch (e) {
       console.error('Error al borrar el email:', e);
     }

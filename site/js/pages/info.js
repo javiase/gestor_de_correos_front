@@ -2,17 +2,20 @@
 
 import { fetchWithAuth } from '/js/utils/api.js';
 import { initSidebar } from '/js/components/sidebar.js';
-import { enforceProfileGate } from '/js/utils/profile-gate.js';
-import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { seedOnboardingFromServer, markOnboardingStep, isOnboardingComplete, enforceFlowGate, resolveStepKey } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 import { renderHtmlEmail } from '/js/utils/render-email.js';
 import { LIMITS } from '/js/config.js';
 
-enforceSessionGate();
-enforceProfileGate();
-
 document.addEventListener('DOMContentLoaded', async () => {
-  initSidebar('#sidebarContainer');
+
+  await enforceFlowGate({
+    allowOnboarding: ['/secciones/info.html', '/secciones/perfil.html']
+  })
+  await seedOnboardingFromServer();
+
+  initSidebar('#sidebarContainer', { skipSeed: true });
+  applyPendingDotFromCache();
   setupCards();
   await loadPastEmailsSidebar();
 });
@@ -20,6 +23,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* ──────────────────────────────────────────────────────────────
  * Helpers de UI
  * ────────────────────────────────────────────────────────────── */
+
+const POLICY_CACHE = new Map();         // key: título normalizado → {state, ts}
+const FAQ_CACHE = { items: null, ts: 0 };
+const CACHE_TTL_MS = 60_000;            // 60s; sube a 5 min si quieres
+const normKey = (s) => String(s||'').toLowerCase().trim();
 
 function setupCards() {
   const cardsGrid   = document.getElementById('cardsGrid');
@@ -72,6 +80,28 @@ function collapseCard(card, grid, heading) {
   }
 }
 
+function applyPendingDotFromCache() {
+  try {
+    const cached = JSON.parse(localStorage.getItem('store') || '{}');
+    const has = !!cached.has_pending_ideas;   // ← leemos el flag guardado por perfil.js
+    document.body.classList.toggle('has-pending-ideas', has); // ← pinta/quita el puntito
+  } catch {}
+}
+function announceOnboardingProgress() {
+  const complete = isOnboardingComplete();
+  window.dispatchEvent(new CustomEvent('onboarding-complete-changed', {
+    detail: { complete }
+  }));
+}
+
+// Solo reflejo local/UI (sin red)
+function reflectPendingIdeasUI(has) {
+  const cached = JSON.parse(localStorage.getItem('store') || '{}');
+  cached.has_pending_ideas = !!has;
+  localStorage.setItem('store', JSON.stringify(cached));
+  document.body.classList.toggle('has-pending-ideas', !!has);
+}
+
 /* ──────────────────────────────────────────────────────────────
  * Contadores de caracteres (inputs/textarea/contenteditable)
  * ────────────────────────────────────────────────────────────── */
@@ -102,6 +132,7 @@ function attachCounter(el, max) {
 
   el._charCounter = counter;
 }
+
 
 function attachCounterForContentEditable(el, max) {
   if (!el || !max) return;
@@ -544,6 +575,12 @@ function initPolicySubmit(card, form, policyTitle) {
       }
 
       if (payload?.status === 'complete') {
+        // 💾 refresca caché de esta política para próximas aperturas
+        const k = normKey(policyTitle);
+        POLICY_CACHE.set(k, { state: envelope, ts: Date.now() });
+        const stepKey = resolveStepKey(policyTitle);
+        if (stepKey) markOnboardingStep(stepKey, true);
+
         wasSuccess = true;
 
         // Ocultamos formulario + aviso + caja de política
@@ -926,19 +963,26 @@ async function maybeLoadPolicyFromDB(card) {
   if (!form) return;
 
   try {
-    const res = await fetchWithAuth(`/policies/get?policy_name=${encodeURIComponent(title)}`, { method: 'GET' });
-    const data = await res.json();
-    if (!data?.found) return;
-
-    const raw = data.content;
-    if (typeof raw !== 'string') return;
-
+    // ➊ mira caché
+    const k = normKey(title);
     let state = null;
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && parsed.__schema === 'policy-v1') state = parsed;
-    } catch { /* legacy texto plano, sin prefill */ }
-
+    const cached = POLICY_CACHE.get(k);
+    if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
+      state = cached.state;
+    } else {
+      const res = await fetchWithAuth(`/policies/get?policy_name=${encodeURIComponent(title)}`, { method: 'GET' });
+      const data = await res.json();
+      if (!data?.found) return;
+      const raw = data.content;
+      if (typeof raw !== 'string') return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.__schema === 'policy-v1') {
+          state = parsed;
+          POLICY_CACHE.set(k, { state, ts: Date.now() });
+        }
+      } catch { /* legacy texto plano */ }
+    }
     if (!state) return; // si es texto simple anterior, no hacemos prefill
 
     // Normaliza la vista: muestra form, limpia mensajes, resetea NA
@@ -1297,7 +1341,8 @@ async function loadPastEmailsSidebar() {
       }
 
       try {
-        await markIdeaProcessed(emailId, idea);
+        const r = await markIdeaProcessed(emailId, idea, 'eliminado');
+        if ((r?.remaining ?? 0) === 0) reflectPendingIdeasUI(false);
         removeIdeaFromSidebar(emailId, idea);
         notify.success('Idea eliminada de pendientes');
         // fetchWithAuth ya dispara el ping del badge, así que el puntito se refresca solo
@@ -1469,11 +1514,13 @@ if (popup) {
   }
 }
 
-async function markIdeaProcessed(emailId, ideaText) {
+async function markIdeaProcessed(emailId, ideaText, state) {
+  const body = { email_id: emailId, idea: ideaText, processed: true };
+  if (state) body.state = state;
   const res = await fetchWithAuth('/emails/past/mark_idea', {
     method:'POST',
     headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify({ email_id: emailId, idea: ideaText, processed: true })
+    body: JSON.stringify(body)
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json(); // { remaining, deleted }
@@ -1615,20 +1662,44 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
     if (e.key === 'Enter') { e.preventDefault(); leaveEdit(); }
   });
 
-  async function appendFAQEntry(question, answer) {
-    const r1 = await fetchWithAuth('/policies/get?policy_name=' + encodeURIComponent('Preguntas Frecuentes'), { method:'GET' });
-    const j1 = await r1.json();
-    const list = Array.isArray(j1?.content) ? j1.content : [];
-    list.push({ question: (question || '').trim(), answer: (answer || '').trim() });
-    const r2 = await fetchWithAuth('/policies/process', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ policy_type:'Preguntas Frecuentes', content:list })
+  async function appendFAQEntry(question, answer, marks = {}) {
+    const payload = {
+      question: (question || '').trim(),
+      answer: (answer || '').trim(),
+      is_na: Boolean(marks.isNA || marks.invalid) // alias para "inválido"
+    };
+
+    const r = await fetchWithAuth('/policies/append-faq-item', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-    if (!r2.ok) throw new Error('HTTP ' + r2.status);
-    const j2 = await r2.json();
-    if (j2?.status !== 'complete') throw new Error('Respuesta inesperada al guardar FAQ');
+
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+
+    // Si el back decidió ignorarlo (p. ej. porque todo era “inválido” tras el saneado)
+    if (j?.status === 'ignored') {
+      notify.warning('La entrada de FAQ se descartó (contenido inválido/filtrado).');
+      if (Array.isArray(j?.ignored_info) && j.ignored_info.length) {
+        console.warn('FAQ ignored_info:', j.ignored_info);
+      }
+      return; // no seguimos: no se guardó
+    }
+
+    if (j?.status !== 'complete') {
+      throw new Error('Respuesta inesperada al guardar FAQ');
+    }
+
+    // Aviso si hubo trozos filtrados
+    const ignored = j?.ignored_info || j?.ignoredInfo;
+    if (Array.isArray(ignored) && ignored.length) {
+      notify.warning('Se ignoraron partes potencialmente inválidas de la respuesta.');
+      console.warn('FAQ ignored_info:', ignored);
+    }
+
   }
+
 
   // VALIDACIÓN + acciones
   saveBt.addEventListener('click', async () => {
@@ -1658,7 +1729,8 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
 
     try{
       await appendFAQEntry(newQuestion, answer);
-      await markIdeaProcessed(emailId_, origIdea);
+      const r = await markIdeaProcessed(emailId_, origIdea, 'usado');
+      if ((r?.remaining ?? 0) === 0) reflectPendingIdeasUI(false);
       removeIdeaFromSidebar(emailId_, origIdea);
       notify.success('Pregunta guardada en FAQ');
       closeIdeaModal();
@@ -1670,7 +1742,8 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
 
   delBt.addEventListener('click', async () => {
     try{
-      await markIdeaProcessed(emailId_, origIdea);
+      const r = await markIdeaProcessed(emailId_, origIdea, 'eliminado');
+      if ((r?.remaining ?? 0) === 0) reflectPendingIdeasUI(false);
       removeIdeaFromSidebar(emailId_, origIdea);
       notify.success('Idea eliminada de pendientes');
       closeIdeaModal();

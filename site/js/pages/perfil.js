@@ -1,8 +1,7 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, logout, getToken } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js'; 
-import { isProfileComplete } from '/js/utils/profile-gate.js';
-import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { isProfileComplete, enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
 
@@ -1311,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!hasToken) { window.location.replace('/index.html'); return; }
 
   // 3) ahora sí, gate de sesión
-  try { enforceSessionGate?.(); } catch {}
+  try { enforceFlowGate?.(); } catch {}
 
   // 4) espera a appUser si existe
   if (window.appUserPromise) { try { await window.appUserPromise; } catch(_) {} }

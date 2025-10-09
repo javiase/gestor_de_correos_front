@@ -80,10 +80,11 @@
 
 /* === PREVIEW IMAGENES Y PDF estilos === */
 .attpv-backdrop{ position: fixed; inset: 0; background: rgba(0,0,0,.55); opacity: 0; transition: opacity .15s ease; z-index: 1000;}
+#attPreviewBackdrop{ position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
 #attPreviewBackdrop.open .attpv-backdrop{ opacity: 1; }
 .attpv-modal{ position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(.98); background: #111; color: #eee; border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,.45); display: flex; flex-direction: column; width: max-content; height: max-content; max-width: 94vw; max-height: 88vh;
-  opacity: 0; transition: opacity .15s ease, transform .15s ease; z-index: 1001;}
+  opacity: 0; transition: opacity .15s ease, transform .15s ease; z-index: 1001; pointer-events: auto;}
 #attPreviewBackdrop.open .attpv-modal{ opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .attpv-toolbar{ display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem; background:#1b1b1b; border-bottom:1px solid #333;}
 .attpv-toolbar .left,.attpv-toolbar .right{ display:flex; gap:.5rem; }
@@ -98,6 +99,7 @@
 .attpv-img{ display:block; max-width: 100%; max-height: 100%; width: auto; height: auto; }
 .attpv-pdf{ display:block; width: 80vw; height: 70vh; border:0;}
 
+
 /* Paginación */
 .pagination { flex-shrink: 0;}
 .pagination-btn { background: transparent; border: none; color: #888; cursor: pointer; padding: 1vh; border-radius: 4px; transition: all 0.2s ease;}
@@ -105,3 +107,5 @@
 .pagination-btn:disabled { opacity: 0.3; cursor: not-allowed;}
 .pagination-btn.prev-btn { position: absolute; bottom: var(--space-m); left: var(--space-s);}
 .pagination-btn.next-btn { position: absolute; bottom: var(--space-m); right: var(--space-s);}
+
+

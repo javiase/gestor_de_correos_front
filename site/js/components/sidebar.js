@@ -1,8 +1,8 @@
 
-import { isProfileComplete, getStoreCached } from '/js/utils/profile-gate.js';
+import { isProfileComplete, getStoreCached, isOnboardingComplete, seedOnboardingFromServer} from '/js/utils/flow-gate.js';
 
 // Módulo sidebar.js
-export function initSidebar(containerSelector) {
+export function initSidebar(containerSelector, opts={}) {
   const container = document.querySelector(containerSelector);
   if (!container) return console.warn("No existe " + containerSelector);
   return fetch("/partials/sidebar.html")
@@ -14,66 +14,115 @@ export function initSidebar(containerSelector) {
       container.innerHTML = html;
       // 👇 Señal universal: esta página tiene sidebar
       document.body.classList.add('has-sidebar');
-      initEmailSidebar();
+      initEmailSidebar(opts);
     })
     .catch(console.error);
 }
 
 class EmailSidebar {
-  constructor() {
-    this.sidebar = document.getElementById("sidebar");
-    this.overlay = document.getElementById("sidebarOverlay");
-    this.toggleBtn = document.getElementById("toggleSidebar");
-    this.items = document.querySelectorAll(".menu-item[data-section]");
-    this.settingsHeader = document.getElementById("settingsHeader");
-    this.settingsMenu = document.getElementById("settingsMenu");
-    this.createBtn = document.querySelector(".create-email");
-    this.userProfile = document.getElementById("userProfile");
-    this.isMobile = window.innerWidth <= 768;
-    this.isCollapsed = false;
-    this.userProfile = document.getElementById("userProfile");
+  constructor(opts={}) {
+    this.skipSeed = !!opts.skipSeed;
+    this.sidebar       = document.getElementById("sidebar");
+    this.overlay       = document.getElementById("sidebarOverlay");
+    this.toggleBtn     = document.getElementById("toggleSidebar");
+    this.items         = document.querySelectorAll(".menu-item[data-section]");
+    this.settingsHeader= document.getElementById("settingsHeader");
+    this.settingsMenu  = document.getElementById("settingsMenu");
+    this.createBtn     = document.querySelector(".create-email");
+    this.userProfile   = document.getElementById("userProfile");
+    this.isMobile      = window.innerWidth <= 768;
+    this.isCollapsed   = false;
+
+    this.profileComplete   = false;
+    this.onboardingComplete= false;
+
     this.loadUserProfile();
     this.bind();
-    this.setupProfileLock();
+    this.setupFlowLocks();
   }
 
-  async setupProfileLock() {
+  /* ───────── Estado de locks (perfil + onboarding) ───────── */
+  async setupFlowLocks() {
     const store = await getStoreCached();
     this.profileComplete = isProfileComplete(store);
+
+    // Solo tiene sentido chequear onboarding si el perfil ya está completo
+    if (this.profileComplete) {
+      // Sembramos desde backend por si el local no está al día
+      if (!this.skipSeed) await seedOnboardingFromServer();
+      this.onboardingComplete = isOnboardingComplete();
+    } else {
+      this.onboardingComplete = false;
+    }
+
     this.updateDisabledMenu();
-    // Si Perfil se guarda y queda completo, lo re-habilitamos
-    window.addEventListener('profile-complete-changed', (e) => {
+
+    // Cuando el perfil cambie a “completo”, re-evaluamos
+    window.addEventListener('profile-complete-changed', async (e) => {
       this.profileComplete = !!e.detail?.complete;
+      if (this.profileComplete) {
+        if (!this.skipSeed) await seedOnboardingFromServer();
+        this.onboardingComplete = isOnboardingComplete();
+      } else {
+        this.onboardingComplete = false;
+      }
+      this.updateDisabledMenu();
+    });
+
+    // Si en tu app emites un evento al completar onboarding, lo soportamos:
+    window.addEventListener('onboarding-complete-changed', (e) => {
+      this.onboardingComplete = !!e.detail?.complete;
       this.updateDisabledMenu();
     });
   }
 
+   /* ───────── Habilitar/deshabilitar elementos según el flujo ───────── */
   updateDisabledMenu() {
-    const lock = !this.profileComplete;
+    // Reglas:
+    //  - Perfil incompleto  → solo “perfil”
+    //  - Perfil ok, info incompleta → solo “perfil” + “info”
+    //  - Todo ok → todo habilitado
+    let allowed = null; // null = todo permitido
+    if (!this.profileComplete) {
+      allowed = new Set(['perfil']);
+    } else if (!this.onboardingComplete) {
+      allowed = new Set(['perfil', 'info']);
+    }
+
     this.items.forEach(item => {
-      const sec = item.dataset.section;
-      const a = item.querySelector('a');
-      const lockThis = lock && sec !== 'perfil';
+      const sec = item.dataset.section;               // p.ej. 'inbox', 'compose', 'perfil', 'info'…
+      const a   = item.querySelector('a');
+      const lockThis = allowed ? !allowed.has(sec) : false;
+
       item.classList.toggle('is-disabled', lockThis);
       a.setAttribute('aria-disabled', lockThis ? 'true' : 'false');
-      if (lockThis) {
-        a.addEventListener('click', this.blockClick, { passive: false });
-      } else {
-        a.removeEventListener('click', this.blockClick, { passive: false });
-      }
+
+      // Evita duplicar listeners
+      a.removeEventListener('click', this.blockClick, { passive: false });
+      if (lockThis) a.addEventListener('click', this.blockClick, { passive: false });
     });
-    // Botón "Redactar"
+
+    // Botón "Redactar": solo habilitado cuando TODO está completo
+    const lockCompose = !this.profileComplete || !this.onboardingComplete;
     if (this.createBtn) {
-      this.createBtn.classList.toggle('is-disabled', lock);
-      if (lock) this.createBtn.addEventListener('click', this.blockClick, { passive:false });
-      else this.createBtn.removeEventListener('click', this.blockClick, { passive:false });
+      this.createBtn.classList.toggle('is-disabled', lockCompose);
+      this.createBtn.removeEventListener('click', this.blockClick, { passive:false });
+      if (lockCompose) this.createBtn.addEventListener('click', this.blockClick, { passive:false });
     }
   }
 
+  /* ───────── Redirección cuando algo está bloqueado ───────── */
   blockClick = (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
-    window.location.href = '/secciones/perfil.html?msg=Completa%20tu%20perfil%20para%20continuar.';
+    if (!this.profileComplete) {
+      window.location.href = '/secciones/perfil.html?msg=Completa%20tu%20perfil%20para%20continuar.';
+      return;
+    }
+    if (!this.onboardingComplete) {
+      window.location.href = '/secciones/info.html?msg=Completa%20esta%20secci%C3%B3n%20antes%20de%20continuar.';
+      return;
+    }
   };
 
   async loadUserProfile() {
@@ -193,6 +242,22 @@ class EmailSidebar {
   }
 }
 
-function initEmailSidebar() {
-  new EmailSidebar();
+function initEmailSidebar(opts) {
+  new EmailSidebar(opts);
 }
+
+function applyPendingDotFromCache() {
+  try {
+    const cached = JSON.parse(localStorage.getItem('store') || '{}');
+    document.body.classList.toggle('has-pending-ideas', !!cached.has_pending_ideas);
+  } catch {}
+}
+
+// en initSidebar()…
+applyPendingDotFromCache();
+
+// escucha cambios en caliente enviados por otras páginas
+window.addEventListener('pending-ideas:count', (e) => {
+  const count = e?.detail?.count ?? 0;
+  document.body.classList.toggle('has-pending-ideas', count > 0);
+});

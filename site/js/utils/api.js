@@ -43,6 +43,7 @@ if (bc) {
   bc.onmessage = (ev) => {
     if (ev?.data === "logout") {
       clearToken();
+      clearClientStateOnLogout();
       mostrarModalSesionCaducada();
     }
   };
@@ -51,6 +52,49 @@ if (bc) {
 // ──────────────────────────────────────────────────────────────
 // 3) Logout
 // ──────────────────────────────────────────────────────────────
+
+// ──────────────────────────────────────────────────────────────
+// Limpieza de estado cliente (onboarding + cache tienda)
+// ──────────────────────────────────────────────────────────────
+function getCurrentOwnerIdFromStore() {
+  try {
+    const s = JSON.parse(localStorage.getItem('store') || 'null');
+    return s?.id || s?._id || s?.userId || s?.owner_id || null;
+  } catch { return null; }
+}
+
+function removeOnboardingProgress(ownerId) {
+  try {
+    // legacy sin namespace
+    localStorage.removeItem('onboarding_progress_v1');
+    // namespaced (por owner)
+    if (ownerId) localStorage.removeItem(`onboarding_progress_v1:${ownerId}`);
+    // por si hubiera más namespaces (cinturón + tirantes)
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('onboarding_progress_v1:')) {
+        localStorage.removeItem(k);
+        i--; // ajustar índice al mutar localStorage
+      }
+    }
+    localStorage.removeItem('onboarding_progress_owner');
+  } catch {}
+}
+
+function clearClientStateOnLogout() {
+  try {
+    const ownerId = getCurrentOwnerIdFromStore();
+    removeOnboardingProgress(ownerId);
+    localStorage.removeItem('store'); // cache de tienda
+    // Señales para que UI (sidebar, etc.) se bloquee al instante
+    try {
+      window.dispatchEvent(new CustomEvent('profile-complete-changed',   { detail:{ complete:false }}));
+      window.dispatchEvent(new CustomEvent('onboarding-complete-changed',{ detail:{ complete:false }}));
+    } catch {}
+    document.body?.classList?.remove('has-pending-ideas');
+  } catch {}
+}
+
 export async function logout(opts = {}) {
   const {
     showModal = false,            // ← si true, enseña modal; si false, redirige
@@ -73,6 +117,7 @@ export async function logout(opts = {}) {
     // si falla, cortamos client-side igualmente
   }
   clearToken();
+  clearClientStateOnLogout();
   if (bc && broadcast) bc.postMessage("logout");
   if (showModal) {
     mostrarModalSesionCaducada();
@@ -164,36 +209,42 @@ function mostrarModalSesionCaducada() {
   document.body.appendChild(modal);
   document.getElementById("cerrar-modal-sesion").onclick = () => {
     clearToken();
+    clearClientStateOnLogout();
     window.location.href = "/index.html";
   };
 }
 
-async function pingPendingIdeasBadge() {
+// Llama al back y sincroniza navegador (localStorage + clase en <body> + evento)
+export async function setPendingIdeasFlag(has, count = null) {
   try {
-    const tk = getToken();
-    if (!tk) return; // no logueado
-
-    // usa el MISMO endpoint de info, pero liviano
-    const res = await fetch(`${API_BASE}/emails/past?limit=1`, {
-      headers: { Authorization: `Bearer ${tk}` }
+    const res = await fetchWithAuth('/stores/pending_ideas', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(count == null ? { has: !!has } : { has: !!has, count })
     });
-    if (!res.ok) return;
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
 
-    const data = await res.json().catch(() => ({}));
-    const items = Array.isArray(data?.items) ? data.items : [];
-    const has = items.length > 0;
+    // 1) Actualiza caché local
+    const cached = JSON.parse(localStorage.getItem('store') || '{}');
+    cached.has_pending_ideas  = !!data.has_pending_ideas;
+    cached.pending_ideas_count = Number(data.pending_ideas_count || 0);
+    localStorage.setItem('store', JSON.stringify(cached));
 
-    // 1) Clase en <body> para que el CSS pinte los puntitos
-    document.body.classList.toggle('has-pending-ideas', has);
-
-    // 2) (opcional) evento por si alguna vista quiere reaccionar
+    // 2) UI global (clase en <body> + evento)
+    const on = !!cached.has_pending_ideas;
+    document.body.classList.toggle('has-pending-ideas', on);
     window.dispatchEvent(new CustomEvent('pending-ideas:count', {
-      detail: { count: has ? items.length : 0 }
+      detail: { count: on ? (cached.pending_ideas_count || 1) : 0 }
     }));
-  } catch (_) {
-    // silencioso; no rompemos UX si falla
+    return data;
+  } catch (e) {
+    console.error('setPendingIdeasFlag error', e);
+    // Aun así, asegura que el DOM refleje el estado pedido
+    document.body.classList.toggle('has-pending-ideas', !!has);
   }
 }
+
 
 
 // ──────────────────────────────────────────────────────────────
@@ -256,7 +307,6 @@ export async function fetchWithAuth(path, opts = {}) {
       return Promise.reject(new Error("No autenticado"));
     }
   }
-  try { pingPendingIdeasBadge(); } catch (_) {}
   return res;
 }
 

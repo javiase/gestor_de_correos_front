@@ -1,12 +1,10 @@
 // js/pages/inbox.js
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, getToken } from '/js/utils/api.js';
-import { enforceProfileGate } from '/js/utils/profile-gate.js';
-import { enforceSessionGate } from '/js/utils/session-gate.js';
+import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
-enforceSessionGate();
-enforceProfileGate();
+enforceFlowGate();
 
 // === Mismos SVGs que en email.js ===
 const ATT_SVGS = {
