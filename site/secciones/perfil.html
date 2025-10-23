@@ -390,49 +390,53 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Notification Preferences -->
-                <div class="profile-section hidden" id="notificationSelection">
+                <!-- Email Signature Section -->
+                <div class="profile-section" id="emailSignatureSection">
                     <div class="section-header-profile">
-                        <h2>Preferencias de Notificación</h2>
-                        <p>Elige cómo quieres recibir actualizaciones</p>
+                        <h2>Firma de correo</h2>
+                        <p>Personaliza la firma que el bot añadirá al final de los mensajes</p>
                     </div>
-                    
-                    <div class="notification-options">
-                        <div class="notification-item">
-                            <div class="notification-info">
-                                <h4>Notificaciones por Correo Electrónico</h4>
-                                <p>Recibe actualizaciones sobre pedidos, promociones y actividad de la cuenta</p>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="emailSignatureEditor">Tu firma</label>
+
+                            <!-- Contenedor relativo para posicionar el popover -->
+                            <div class="rte-container">
+                                <!-- Barra de herramientas -->
+                                <div class="rte-toolbar" aria-label="Editor toolbar">
+                                    <button type="button" class="rte-btn" data-cmd="bold" title="Negrita (Ctrl+B)"><i class="fas fa-bold"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="italic" title="Cursiva (Ctrl+I)"><i class="fas fa-italic"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="underline" title="Subrayado (Ctrl+U)"><i class="fas fa-underline"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="link" title="Insertar enlace" id="rteLinkBtn"><i class="fas fa-link"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="removeFormat" title="Quitar formato"><i class="fas fa-eraser"></i></button>
+                                </div>
+
+                                <!-- Editor -->
+                                <div id="emailSignatureEditor"
+                                    class="rte-editor form-textarea"
+                                    role="textbox"
+                                    aria-multiline="true"
+                                    contenteditable="true"
+                                    data-max-bytes="5120">
+                                </div>
+
+                                <!-- Popover de enlace -->
+                                <div id="rteLinkPopover" class="rte-link-popover hidden" aria-hidden="true">
+                                    <div class="rte-link-row">
+                                        <input type="url" id="rteLinkInput" class="form-input" placeholder="https://… o mailto:…">
+                                    </div>
+                                    <div class="rte-link-actions">
+                                        <button type="button" id="rteLinkInsertBtn" class="btn btn-primary">Insertar</button>
+                                        <button type="button" id="rteLinkCancelBtn" class="btn btn-secondary">Cancelar</button>
+                                    </div>
+                                </div>
                             </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="emailNotifications" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="notification-item">
-                            <div class="notification-info">
-                                <h4>Notificaciones por SMS</h4>
-                                <p>Recibe mensajes de texto para actualizaciones urgentes y estado de pedidos</p>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="smsNotifications">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="notification-item">
-                            <div class="notification-info">
-                                <h4>Comunicaciones de Marketing</h4>
-                                <p>Recibe ofertas promocionales y actualizaciones de marketing</p>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="marketingNotifications" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
                         </div>
                     </div>
                 </div>
+
+
                 <div class="profile-footer">
                     <button id="deleteAccountBtn" class="btn btn-danger">Eliminar cuenta</button>
                 </div>

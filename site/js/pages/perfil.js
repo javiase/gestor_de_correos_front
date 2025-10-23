@@ -34,6 +34,72 @@ const DAY_LABELS = {
   sunday: 'Domingo'
 };
 
+// ─────────────────────────────────────────────────────────────
+// Firma: saneado y helpers
+// ─────────────────────────────────────────────────────────────
+const RTE_ALLOWED_TAGS = new Set(['B','STRONG','I','EM','U','BR','P','UL','OL','LI','A']);
+const RTE_BLOCK_TAGS   = new Set(['P','UL','OL','LI']);
+
+function sanitizeSignatureHTML(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html ?? '';
+
+  const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_ELEMENT, null, false);
+  const toRemove = [];
+  while (walker.nextNode()) {
+    const el = walker.currentNode;
+    if (!RTE_ALLOWED_TAGS.has(el.tagName)) {
+      // Reemplaza por su contenido (p.ej. <span> -> texto)
+      el.replaceWith(...Array.from(el.childNodes));
+      continue;
+    }
+    if (el.tagName === 'A') {
+      // Mantén solo href, fuerza target + rel
+      const href = el.getAttribute('href') || '';
+      try {
+        // Valida protocolo permitido
+        const u = new URL(href, window.location.origin);
+        if (!/^https?:$/i.test(u.protocol) && !/^mailto:|tel:/.test(href)) {
+          el.replaceWith(...Array.from(el.childNodes));
+          continue;
+        }
+      } catch {
+        el.replaceWith(...Array.from(el.childNodes));
+        continue;
+      }
+      // Limpia atributos peligrosos
+      [...el.attributes].forEach(a => {
+        if (!['href','target','rel'].includes(a.name)) el.removeAttribute(a.name);
+      });
+      el.setAttribute('target','_blank');
+      el.setAttribute('rel','noopener noreferrer');
+    } else {
+      // Quita todos los atributos en tags no <a>
+      [...el.attributes].forEach(a => el.removeAttribute(a.name));
+    }
+  }
+  return tmp.innerHTML.trim();
+}
+
+function htmlToPlainTextPreservingBreaks(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html ?? '';
+  // <br> -> \n
+  tmp.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+  // Bloques -> \n\n entre párrafos/listas
+  const out = [];
+  tmp.childNodes.forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) out.push(node.textContent);
+    else if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = node.tagName;
+      if (RTE_BLOCK_TAGS.has(tag)) out.push(node.textContent.trim(), '\n');
+      else out.push(node.textContent);
+    }
+  });
+  return out.join('').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+
 function findPhoneRuleByE164(e164) {
   const digits = e164.replace(/^\+/, '');
   const codes = Object.keys(PHONE_RULES).sort((a,b) => b.length - a.length); // longest match
@@ -84,6 +150,7 @@ class UserProfile {
         }
 
         this.bindEvents();
+        this.initSignatureEditor();
 
         document.addEventListener('input', (e) => {
             const el = e.target;
@@ -163,6 +230,11 @@ class UserProfile {
             console.error('Load error:', err);
         }
     }
+    _setChecked(id, val = false) {
+        const el = document.getElementById(id);
+        if (el && 'checked' in el) el.checked = !!val;
+    }
+
     _setValue(id, val, fallback = '') {
         const el = document.getElementById(id);
         if (!el) return;
@@ -176,7 +248,7 @@ class UserProfile {
         this._setValue('storeDescription', this.currentData.storeDescription);
 
         // Physical
-        document.getElementById('hasPhysicalLocation').checked = !!this.currentData.hasPhysicalLocation;
+        this._setChecked('hasPhysicalLocation', this.currentData.hasPhysicalLocation);
         this._setValue('storeAddress', this.currentData.storeAddress);
         this._setValue('storeCity',    this.currentData.storeCity);
         this._setValue('storeState',   this.currentData.storeState);
@@ -192,18 +264,19 @@ class UserProfile {
         document.getElementById('timezone').value = this.currentData.timezone || 'UTC+1';
         document.getElementById('language').value = this.currentData.language || 'es';
 
-        // Notificaciones (booleans)
-        document.getElementById('emailNotifications').checked     = !!this.currentData.emailNotifications;
-        document.getElementById('smsNotifications').checked       = !!this.currentData.smsNotifications;
-        document.getElementById('marketingNotifications').checked = !!this.currentData.marketingNotifications;
+        // Maestro de horarios (off por defecto si no viene del backend)
+        const masterEl   = document.getElementById('hasOpeningHours');
+        const masterOpen = !!(this.currentData.hasOpeningHours);
+        if (masterEl) masterEl.checked = masterOpen;
         
         const storeHours = this.currentData.storeHours || {};
         document.querySelectorAll('.hours-day').forEach(dayElement => {
             const day = dayElement.dataset.day;
             const hours = storeHours[day] || null;
             const toggle = dayElement.querySelector('.day-toggle');
-            const isOpen = hours ? !!hours.open : false;
-            toggle.checked = isOpen;
+            // Solo abrimos el día si el maestro está ON y el día está open
+            const isOpen = masterOpen && (hours ? !!hours.open : false);
+            if (toggle) toggle.checked = isOpen;
 
             // Normaliza a array de tramos
             const slots = Array.isArray(hours?.slots)
@@ -243,6 +316,8 @@ class UserProfile {
                 this.currentData.businessCategoryOther || '';
             }
         }
+        // Firma (HTML seguro)
+        this.setSignatureHTML(this.currentData.signature_html || '');
         //this.updateProfileProgress();
         this.toggleLocationFields();
         this.applyMaxLengthConstraints();
@@ -251,7 +326,7 @@ class UserProfile {
     toggleHoursFields() {
         const checkbox  = document.getElementById('hasOpeningHours');
         const container = document.getElementById('openingHoursFields');
-        if (!container) return;            // evita el null
+        if (!container || !checkbox) return;
         const show = checkbox.checked;
         // show/hide y habilita inputs
         container.classList.toggle('hidden', !show);
@@ -382,6 +457,11 @@ class UserProfile {
         document.getElementById('deleteAccountBtn').addEventListener('click', () => {
             this.showDeleteModal();
         });
+
+        const sigEditor = document.getElementById('emailSignatureEditor');
+        if (sigEditor) {
+            sigEditor.addEventListener('input', () => this.markAsChanged());
+        }
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -397,6 +477,175 @@ class UserProfile {
             }
         });
     }
+
+        initSignatureEditor() {
+        const editor = document.getElementById('emailSignatureEditor');
+        if (!editor) return;
+
+        // Input/tecleo marca cambios y aplica límite de bytes
+        const maxBytes = parseInt(editor.dataset.maxBytes || '5120', 10);
+        const enc = new TextEncoder();
+
+        const enforceLimit = () => {
+            const clean = sanitizeSignatureHTML(editor.innerHTML);
+            let bytes = enc.encode(clean).length;
+            if (bytes <= maxBytes) return; // ok
+            // Recorta de forma progresiva
+            const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+            const texts = [];
+            while (walker.nextNode()) texts.push(walker.currentNode);
+
+            // Empieza por el final; quita hasta entrar en límite
+            for (let i = texts.length - 1; i >= 0 && bytes > maxBytes; i--) {
+                const t = texts[i];
+                if (!t.nodeValue) continue;
+                t.nodeValue = t.nodeValue.slice(0, Math.max(0, t.nodeValue.length - 1));
+                const cur = sanitizeSignatureHTML(editor.innerHTML);
+                bytes = enc.encode(cur).length;
+            }
+        };
+
+        editor.addEventListener('input', () => {
+            enforceLimit();
+            this.markAsChanged();
+        });
+
+        // Acciones toolbar
+        const toolbar = editor.parentElement.querySelector('.rte-toolbar');
+        const pop = editor.parentElement.querySelector('#rteLinkPopover');
+        const popInput = editor.parentElement.querySelector('#rteLinkInput');
+        const popInsert = editor.parentElement.querySelector('#rteLinkInsertBtn');
+        const popCancel = editor.parentElement.querySelector('#rteLinkCancelBtn');
+
+        if (toolbar) {
+            toolbar.addEventListener('click', (e) => {
+                const btn = e.target.closest('.rte-btn');
+                if (!btn) return;
+                const cmd = btn.dataset.cmd;
+                editor.focus();
+
+                if (cmd === 'link') {
+                    this._openLinkPopover(btn, pop, popInput);
+                    return;
+                }
+                if (cmd === 'removeFormat') {
+                    document.execCommand('removeFormat', false, null);
+                    editor.querySelectorAll('a').forEach(a => a.replaceWith(...a.childNodes));
+                } else {
+                    document.execCommand(cmd, false, null);
+                }
+
+                const safe = sanitizeSignatureHTML(editor.innerHTML);
+                editor.innerHTML = safe;
+                this._placeCursorAtEnd(editor);
+            });
+        }
+
+        // Acciones del popover
+        if (pop && popInput && popInsert && popCancel) {
+            popInsert.addEventListener('click', () => {
+                const url = (popInput.value || '').trim();
+                if (!url) { this._closeLinkPopover(pop); return; }
+                this._applyLink(url);
+                const safe = sanitizeSignatureHTML(editor.innerHTML);
+                editor.innerHTML = safe;
+                this._placeCursorAtEnd(editor);
+                this._closeLinkPopover(pop);
+            });
+            popCancel.addEventListener('click', () => this._closeLinkPopover(pop));
+
+            // Cierra con ESC
+            pop.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Escape') this._closeLinkPopover(pop);
+            });
+        }
+
+
+        // Atajos
+        editor.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && ['b','i','u'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+                const map = { b:'bold', i:'italic', u:'underline' };
+                document.execCommand(map[e.key.toLowerCase()], false, null);
+                const safe = sanitizeSignatureHTML(editor.innerHTML);
+                editor.innerHTML = safe;
+                this._placeCursorAtEnd(editor);
+            }
+        });
+    }
+
+    _placeCursorAtEnd(el) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+
+    getSignatureHTML() {
+        const editor = document.getElementById('emailSignatureEditor');
+        if (!editor) return '';
+        return sanitizeSignatureHTML(editor.innerHTML);
+    }
+
+    setSignatureHTML(html) {
+        const editor = document.getElementById('emailSignatureEditor');
+        if (!editor) return;
+        editor.innerHTML = sanitizeSignatureHTML(html || '');
+    }
+
+    _openLinkPopover(btn, pop, input) {
+        if (!pop || !btn) return;
+        const container = btn.closest('.rte-container');
+        const rectBtn = btn.getBoundingClientRect();
+        const rectContainer = container.getBoundingClientRect();
+
+        const top = (rectBtn.bottom - rectContainer.top) + (8/16); /* 0.5rem */
+        const left = (rectBtn.left - rectContainer.left);
+
+        pop.style.top = `${top}rem`;
+        pop.style.left = `0`;
+        pop.classList.remove('hidden');
+        pop.setAttribute('aria-hidden','false');
+
+        if (input) {
+            // Pre-rellenar con href si selección está dentro de un <a>
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount) {
+                const anchor = sel.anchorNode?.parentElement?.closest('a');
+                input.value = anchor?.getAttribute('href') || '';
+            }
+            input.focus();
+            input.select();
+        }
+    }
+
+    _closeLinkPopover(pop) {
+        if (!pop) return;
+        pop.classList.add('hidden');
+        pop.setAttribute('aria-hidden','true');
+    }
+
+    _applyLink(url) {
+        // Acepta https/http, mailto, tel
+        try {
+            const okProto = /^https?:/i.test(new URL(url, window.location.origin).protocol)
+                            || /^mailto:|^tel:/i.test(url);
+            if (!okProto) return;
+        } catch {
+            if (!/^mailto:|^tel:/i.test(url)) return;
+        }
+        document.execCommand('createLink', false, url);
+        // Normaliza atributos seguros en los <a> recién creados
+        const editor = document.getElementById('emailSignatureEditor');
+        editor?.querySelectorAll('a').forEach(a => {
+            a.setAttribute('target','_blank');
+            a.setAttribute('rel','noopener noreferrer');
+        });
+    }
+
+
 
     
     setupFormValidation() {
@@ -898,10 +1147,14 @@ class UserProfile {
             
             // Store Hours
             storeHours: {}
+            
         };
+         // Collect store hours (múltiples tramos)
+        const openingMaster = !!document.getElementById('hasOpeningHours')?.checked;
+        formData.hasOpeningHours = openingMaster;
         
         // Collect store hours (múltiples tramos)
-        if (document.getElementById('hasOpeningHours').checked) {
+        if (openingMaster) {
             formData.storeHours = {};
             document.querySelectorAll('.hours-day').forEach(dayElement => {
                 const day    = dayElement.dataset.day;
@@ -927,6 +1180,11 @@ class UserProfile {
         formData.businessCategoryOther =
             document.getElementById('businessCategoryOther').value.trim();
         }
+
+        // Firma de correo
+        const sigHTML = this.getSignatureHTML();
+        formData.signature_html = sigHTML;
+        formData.signature_text = htmlToPlainTextPreservingBreaks(sigHTML);
 
         
         return formData;
@@ -1099,6 +1357,7 @@ class UserProfile {
                 lastName: 120,
                 personalEmail: 320,
                 businessCategoryOther: 120,
+                signature_text: 300
             };
 
             for (const [k, v] of Object.entries(formData)) {
