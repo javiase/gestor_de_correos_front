@@ -16,6 +16,25 @@
 * { margin: 0; padding: 0; box-sizing: border-box;}
 html { height: 100%; margin: 0; background: #18181b; scroll-behavior: smooth;}
 body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; color: #e5e7eb; background: transparent; line-height: 1.5;}
+
+/* Custom scrollbar para landing page */
+body::-webkit-scrollbar {
+  width: 10px;
+}
+
+body::-webkit-scrollbar-track {
+  background: #18181b;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: #6b64e6;
+  border-radius: 10px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: #5750d9;
+}
+
 /* ---------------------- Navbar ------------------------- */
 .navbar { position: fixed; top: 1rem; left: 0; width: 100%; z-index: 100; background: transparent; pointer-events: auto;}
 .navbar-content { position: relative; max-width: 1200px; margin: 0 auto; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;

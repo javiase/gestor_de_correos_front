@@ -119,43 +119,6 @@ style.innerHTML = `
 `;
 document.head.appendChild(style); 
 
-// --- Botón “Iniciar sesión” (lanza el flujo de Google OAuth) ---
-async function iniciarOAuth() {
-  try {
-    const response = await fetch(`${API_BASE}/google/auth/start`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" }
-    });
-    if (!response.ok) {
-      throw new Error(`Error al iniciar la conexión con Google (status ${response.status})`);
-    }
-
-    const { auth_url, state } = await response.json();
-    if (!auth_url || !state) {
-      throw new Error("Respuesta inválida: falta auth_url o state");
-    }
-
-    // 👇👇 PUNTO 1: guardar el handle de login de un solo uso
-    localStorage.setItem("login_state", state);
-    localStorage.removeItem("store");
-
-    // Redirigir a Google
-    window.location.href = auth_url;
-  } catch (err) {
-    console.error("Error al solicitar flujo de Google:", err);
-    alert("No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.");
-  }
-}
-// Solo el botón de navbar con id="loginBtn" va directo
-const loginBtnEl = document.querySelector("#loginBtn");
-if (loginBtnEl) {
-  loginBtnEl.addEventListener('click', (e) => {
-    e.preventDefault();
-    iniciarOAuth();
-  });
-}
-
-// ——— 1) Scroll arriba al pulsar cualquier "Respondize" ———
 document.querySelectorAll('.logo-text').forEach(el => {
   el.addEventListener('click', (e) => {
     e.preventDefault();
@@ -163,7 +126,7 @@ document.querySelectorAll('.logo-text').forEach(el => {
   });
 });
 
-// ——— 2) Modal de introducción previo al login ———
+// ——— 2) Modal de introducción (ya no se usa para OAuth, pero lo dejamos por si acaso) ———
 const introModal = document.getElementById('introModal');
 const introContinueBtn = document.getElementById('introContinue');
 
@@ -180,23 +143,6 @@ function closeIntroModal() {
   if (!introModal) return;
   introModal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('modal-open');
-}
-
-// Abrir modal desde todos los botones marcados como trigger-intro
-document.querySelectorAll('.trigger-intro').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    openIntroModal();
-  });
-});
-
-// Continuar => cerrar modal y lanzar OAuth
-if (introContinueBtn) {
-  introContinueBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    closeIntroModal();
-    iniciarOAuth();
-  });
 }
 
 // Cerrar con backdrop o con la X

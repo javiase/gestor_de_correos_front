@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifica tu email - Gestor de Correos</title>
+  
+  <!-- Estilos -->
+  <link rel="stylesheet" href="/css/base.css?v=%ASSET_VERSION%">
+  <link rel="stylesheet" href="/css/fonts.css?v=%ASSET_VERSION%">
+  <link rel="stylesheet" href="/css/pages/auth.css?v=%ASSET_VERSION%">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/vendor/fontawesome-6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="auth-page verify-page">
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="verify-icon">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <h1>Verifica tu email</h1>
+          <p id="emailDisplay">Hemos enviado un código de 6 dígitos a tu correo</p>
+        </div>
+
+        <form id="verifyForm" class="auth-form">
+          <div class="form-group">
+            <label>Código de verificación</label>
+            <div class="code-inputs">
+              <input type="text" maxlength="1" class="code-input" id="code1" autocomplete="off">
+              <input type="text" maxlength="1" class="code-input" id="code2" autocomplete="off">
+              <input type="text" maxlength="1" class="code-input" id="code3" autocomplete="off">
+              <input type="text" maxlength="1" class="code-input" id="code4" autocomplete="off">
+              <input type="text" maxlength="1" class="code-input" id="code5" autocomplete="off">
+              <input type="text" maxlength="1" class="code-input" id="code6" autocomplete="off">
+            </div>
+            <span class="form-error" id="codeError"></span>
+          </div>
+
+          <button type="submit" class="auth-submit-btn" id="submitBtn">
+            <span class="btn-text">Verificar</span>
+            <span class="btn-spinner" style="display: none;">
+              <i class="fas fa-spinner fa-spin"></i>
+            </span>
+          </button>
+        </form>
+
+        <div class="resend-section">
+          <p class="resend-text">
+            ¿No recibiste el código? 
+            <button class="resend-btn" id="resendBtn">
+              <span class="resend-text-content">Reenviar código</span>
+              <span class="resend-spinner" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+              </span>
+            </button>
+          </p>
+          <p class="resend-timer" id="resendTimer" style="display: none;">
+            Puedes reenviar en <span id="timerSeconds">60</span>s
+          </p>
+        </div>
+
+        <div class="auth-footer">
+          <p><a href="/secciones/login.html" class="back-link">← Volver al inicio de sesión</a></p>
+        </div>
+      </div>
+
+      <!-- Partículas decorativas -->
+      <div class="auth-decoration">
+        <div class="decoration-circle decoration-circle-1"></div>
+        <div class="decoration-circle decoration-circle-2"></div>
+        <div class="decoration-circle decoration-circle-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/pages/verify-email.js?v=%ASSET_VERSION%"></script>
+</body>
+</html>

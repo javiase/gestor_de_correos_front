@@ -3,34 +3,60 @@ import { fetchWithAuth, getToken, API_BASE } from '/js/utils/api.js';
 import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
-// Función para iniciar OAuth de Google
-async function iniciarOAuth() {
-  try {
-    const response = await fetch(`${API_BASE}/google/auth/start`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" }
-    });
-    if (!response.ok) {
-      throw new Error(`Error al iniciar la conexión con Google (status ${response.status})`);
-    }
-
-    const { auth_url, state } = await response.json();
-    if (!auth_url || !state) {
-      throw new Error("Respuesta inválida: falta auth_url o state");
-    }
-
-    // Guardar el handle de login de un solo uso
-    localStorage.setItem("login_state", state);
-    localStorage.removeItem("store");
-
-    // Redirigir a Google
-    window.location.href = auth_url;
-  } catch (err) {
-    console.error("Error al solicitar flujo de Google:", err);
-    notify.error("No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.");
+// 🆕 EARLY CHECK: Si no hay token inmediatamente, muestra las cards sin esperar
+// Esto previene el flash de "sin contenido" en la landing page
+if (!getToken() && !localStorage.getItem("login_state")) {
+  // Ejecuta cuando el DOM esté listo, pero sin esperar otros checks
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showCardsForPublic);
+  } else {
+    showCardsForPublic();
   }
 }
 
+function showCardsForPublic() {
+  const freeCard = document.getElementById('freeCard');
+  const starterCard = document.getElementById('starterCard');
+  const packCard = document.getElementById('packCard');
+  const plansLoading = document.getElementById('plans-loading');
+  
+  if (freeCard) {
+    freeCard.classList.remove('preload-hidden');
+    freeCard.style.opacity = '1';
+  }
+  if (starterCard) {
+    starterCard.classList.remove('preload-hidden');
+    starterCard.style.opacity = '1';
+  }
+  if (packCard) {
+    packCard.classList.remove('preload-hidden');
+    packCard.style.opacity = '1';
+  }
+  if (plansLoading) plansLoading.classList.add('hidden');
+  
+  // 🆕 Redirigir botones de planes a registro cuando no hay sesión
+  setupPublicButtons();
+}
+
+// 🆕 Configurar botones para usuarios no autenticados
+function setupPublicButtons() {
+  const freeBtn = document.getElementById('freeBtn');
+  const starterBtn = document.getElementById('starterBtn');
+  
+  if (freeBtn) {
+    freeBtn.onclick = (e) => {
+      e.preventDefault();
+      window.location.href = '/secciones/register.html';
+    };
+  }
+  
+  if (starterBtn) {
+    starterBtn.onclick = (e) => {
+      e.preventDefault();
+      window.location.href = '/secciones/register.html';
+    };
+  }
+}
 // Funciones auxiliares para fechas
 function toDate(dateLike) {
   if (!dateLike) return null;
@@ -315,7 +341,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       logoutBtn.textContent = 'Iniciar sesión';
       logoutBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        iniciarOAuth();
+        window.location.href = '/secciones/login.html';
       });
     }
 
@@ -326,21 +352,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    // Configurar botones para usuarios sin sesión - Iniciar OAuth
+    // Configurar botones para usuarios sin sesión - Redirigir a registro
     const freeBtn = document.getElementById('freeBtn');
     const starterBtn = document.getElementById('starterBtn');
 
     if (freeBtn) {
       freeBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        iniciarOAuth();
+        window.location.href = '/secciones/register.html';
       });
     }
 
     if (starterBtn) {
       starterBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        iniciarOAuth();
+        window.location.href = '/secciones/register.html';
       });
     }
     

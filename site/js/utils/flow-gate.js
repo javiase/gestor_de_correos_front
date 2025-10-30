@@ -257,10 +257,11 @@ export async function enforceSessionGate({
     '/', '/index.html',
     '/secciones/perfil.html', '/secciones/plans.html',
     '/secciones/info.html',
+    '/secciones/login.html', '/secciones/register.html',
     // rutas públicas/externas (ajusta a tu app):
     '/auth/callback', '/oauth/callback'
   ],
-  redirectTo = '/index.html',
+  redirectTo = '/secciones/login.html',
   waitMs = 3000,
   message = 'Inicia sesión para continuar.'
 } = {}) {
@@ -301,7 +302,7 @@ export async function enforceSessionGate({
  */
 export async function enforceFlowGate({
   /* RUTAS PERMITIDAS SIEMPRE (públicas o landing) */
-  allowAlways      = ['/', '/index.html', '/auth/callback', '/oauth/callback'],
+  allowAlways      = ['/', '/index.html', '/auth/callback', '/oauth/callback', '/secciones/login.html', '/secciones/register.html'],
 
   /* RUTAS donde se permite estar mientras el PERFIL esté incompleto */
   allowProfile     = ['/secciones/perfil.html', '/secciones/plans.html'],
@@ -314,7 +315,7 @@ export async function enforceFlowGate({
 
   /* Redirecciones por defecto del flujo */
   redirects        = {
-    noSession:     '/index.html',
+    noSession:     '/secciones/login.html',
     needProfile:   '/secciones/perfil.html',
     needOnboarding:'/secciones/info.html',
   },

@@ -11,10 +11,12 @@ export async function enforceSessionGate({
   allow = [
     '/', '/index.html',
     '/secciones/perfil.html', '/secciones/plans.html',
+    '/secciones/login.html', '/secciones/register.html',
+    '/secciones/verify-email.html',
     // añade aquí rutas públicas (p.ej. callback OAuth si la tienes):
     '/auth/callback', '/oauth/callback'
   ],
-  redirectTo = '/index.html',
+  redirectTo = '/secciones/login.html',
   waitMs = 3000
 } = {}) {
   const here = norm(location.pathname);

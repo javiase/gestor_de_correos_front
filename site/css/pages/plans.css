@@ -1,5 +1,27 @@
 /* Plans Page Styles */
 
+/* Custom scrollbar para página de planes */
+body::-webkit-scrollbar,
+.pricing-section::-webkit-scrollbar {
+  width: 10px;
+}
+
+body::-webkit-scrollbar-track,
+.pricing-section::-webkit-scrollbar-track {
+  background: #18181b;
+}
+
+body::-webkit-scrollbar-thumb,
+.pricing-section::-webkit-scrollbar-thumb {
+  background: #6b64e6;
+  border-radius: 10px;
+}
+
+body::-webkit-scrollbar-thumb:hover,
+.pricing-section::-webkit-scrollbar-thumb:hover {
+  background: #5750d9;
+}
+
 /* Pricing Section Container */
 .pricing-section {
   padding: 8rem 2rem 4rem; /* Espacio superior para navbar */
