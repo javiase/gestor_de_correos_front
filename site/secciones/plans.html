@@ -3,260 +3,217 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <title>Respondize – Elige tu plan</title>
+  <title>Planes - Respondize</title>
   <link rel="stylesheet" href="/css/styles.css?v=%ASSET_VERSION%">
+  <link rel="stylesheet" href="/css/pages/plans.css?v=%ASSET_VERSION%">
   <link rel="preload" href="/fonts/inter/Inter-Variable.ttf" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/fonts.css?v=%ASSET_VERSION%">
   <link rel="stylesheet" href="/vendor/fontawesome-6.4.0/css/all.min.css?v=%ASSET_VERSION%">
 </head>
 <body>
-  <!-- Navbar idéntica a la landing -->
-  <header class="navbar">
+  <!-- Navbar -->
+  <nav class="navbar">
     <div class="navbar-content">
-      <div class="navbar-left">
-        <span class="logo-text">Respondize</span>
+      <a href="/" class="logo-text" aria-label="Ir al inicio">Respondize</a>
+      <div class="navbar-center">
+        <a href="/#features">Características</a>
+        <a href="/#how-it-works">Cómo funciona</a>
+        <a href="/#faq">FAQ</a>
       </div>
       <div class="navbar-right">
-        <a href="#" id="logoutBtn" class="login-btn">Cerrar sesión</a>
+        <a href="#" id="logoutBtn" class="cta-btn">Iniciar sesión</a>
       </div>
-      <button class="mobile-menu-btn">
-        <span></span><span></span><span></span>
-      </button>
     </div>
-  </header>
+  </nav>
 
-  <main style="padding-top: 8rem;">
-    <section id="pricing" class="pricing-section">
-      <h2>Elige tu plan</h2>
+  
+
+  <!-- Pricing Section -->
+  <section id="pricing" class="pricing-section">
+    <div class="container">
+      <h2 class="section-title">Elige tu plan</h2>
+      <p class="section-subtitle">Selecciona el plan que mejor se adapte a tus necesidades</p>
+      
+      <!-- Loading spinner -->
+    <div id="plans-loading" class="loading-container hidden">
+      <div class="spinner"></div>
+      <p>Cargando planes...</p>
+    </div>
+
+      <!-- Ayuda sobre cambios de conversaciones -->
       <div class="plan-change-help hidden">
         <button id="planHelpBtn" class="info-chip" type="button" aria-haspopup="dialog" aria-expanded="false">
           <i class="fa fa-info-circle" aria-hidden="true"></i>
-          Cómo funcionan los cambios de plan
+          Cómo funcionan los cambios de conversaciones
         </button>
 
         <div id="planHelpPopover" class="plan-popover" role="dialog" aria-modal="false" aria-labelledby="planHelpTitle" hidden>
-          <h4 id="planHelpTitle">Cambios de plan: resumen</h4>
+          <h4 id="planHelpTitle">Cambios de conversaciones: resumen</h4>
           <ul>
-            <li><strong>Correos extra</strong> se mantienen en cualquier cambio <em>entre planes de pago</em>. Si pasas a <strong>Free</strong>, los extra se <strong>eliminan</strong>.</li>
-            <li><strong>Subir de plan</strong>: efecto <strong>inmediato</strong>.</li>
-            <li><strong>Bajar de plan</strong>: el cambio se aplica <strong>al final del ciclo</strong> <span data-billing-date></span>. Verás el plan programado y podrás <strong>cancelarlo</strong> en cualquier momento.</li>
-            <li>Cuando el cambio se haga efectivo, los <strong>correos no usados</strong> del ciclo actual se <strong>sumarán</strong> a tus <strong>extra</strong>.</li>
+            <li><strong>Aumentar conversaciones</strong>: el cambio se aplica <strong>al final del ciclo</strong> <span data-billing-date></span>.</li>
+            <li><strong>Reducir conversaciones</strong>: el cambio también se aplica <strong>al final del ciclo</strong> <span data-billing-date></span>.</li>
+            <li>Verás el cambio programado y podrás <strong>cancelarlo</strong> en cualquier momento antes de que se aplique.</li>
+            <li>Puedes comprar <strong>packs adicionales</strong> si necesitas más conversaciones de forma inmediata en el ciclo actual.</li>
           </ul>
         </div>
       </div>
-      <div id="plans-loading">Cargando planes…</div>
 
-      <div id="pricing-grid" class="pricing-grid hidden">
-
-        <div id="packCard" class="pricing-card hidden">
-            <div class="pricing-header">
-              <h3>Pack 100 correos</h3>
-              <span class="price">Por definir</span>
+      <div id="pricing-grid" class="pricing-grid">
+        <!-- Plan Free -->
+        <div id="freeCard" class="pricing-card preload-hidden" data-plan="free">
+          <div class="card-header">
+            <h3 class="plan-name">Free</h3>
+            <div class="price-wrapper">
+              <span class="price">0€</span>
+              <span class="period">/mes</span>
             </div>
-            <ul class="pricing-features">
-              <li><i class="fas fa-check"></i> +100 correos adicionales</li>
-              <li><i class="fas fa-check"></i> Cobro inmediato</li>
-            </ul>
-            <div class="buttons-container">
-              <button class="cta-btn" id="buyPackBtn">Comprar pack</button>
+          </div>
+          
+          <ul class="features-list">
+            <li class="has-tooltip">
+                <i class="fas fa-check"></i> 🆓 30 conversaciones mensuales
+                <span class="tooltip">Ideal para probar Respondize y gestionar un volumen bajo de correos.</span>
+            </li>
+            <li class="has-tooltip">
+                <i class="fas fa-check"></i> 🤖 Borradores inteligentes con IA
+                <span class="tooltip">Nuestro motor de IA genera respuestas automáticas personalizadas para tus clientes. Revisa, ajusta y envía en segundos.</span>
+            </li>
+            <li class="has-tooltip">
+                <i class="fas fa-check"></i> 📥 Buzón unificado de atención
+                <span class="tooltip">Reúne todos tus correos en un solo lugar y obtén una clasificación por tipo de ticket al instante.</span>
+            </li>
+            <li class="has-tooltip">
+                <i class="fas fa-check"></i> 👥 Acceso para un miembro del equipo
+                <span class="tooltip">Incluye una plaza de usuario. Los planes superiores amplían el número de miembros.</span>
+            </li>
+        </ul>
+          
+          <button id="freeBtn" class="cta-button primary">Comenzar gratis</button>
+        </div>
+
+        <!-- Plan Starter (de pago) -->
+        <div id="starterCard" class="pricing-card starter featured preload-hidden" data-plan="starter">
+          <div class="badge">Recomendado</div>
+          <div class="card-header">
+            <h3 class="plan-name">Starter</h3>
+            <div class="price-wrapper">
+              <span class="price-base">9€</span>
+              <span class="period">/mes</span>
             </div>
+            <p class="price-detail">+ 0.40€ por conversación</p>
+          </div>
+          
+          <div class="conversations-selector">
+            <label for="conversationsSelect">Conversaciones mensuales:</label>
+            <div class="conversations-dropdown-wrapper">
+              <div class="fade-top"></div>
+              <div id="conversationsScroller" class="conversations-scroller">
+                <div class="conversation-option" data-value="50">50 conversaciones</div>
+                <div class="conversation-option" data-value="100">100 conversaciones</div>
+                <div class="conversation-option" data-value="150">150 conversaciones</div>
+                <div class="conversation-option" data-value="200">200 conversaciones</div>
+                <div class="conversation-option" data-value="250">250 conversaciones</div>
+                <div class="conversation-option" data-value="300">300 conversaciones</div>
+                <div class="conversation-option" data-value="350">350 conversaciones</div>
+                <div class="conversation-option" data-value="400">400 conversaciones</div>
+                <div class="conversation-option" data-value="450">450 conversaciones</div>
+                <div class="conversation-option" data-value="500">500 conversaciones</div>
+                <div class="conversation-option" data-value="550">550 conversaciones</div>
+                <div class="conversation-option" data-value="600">600 conversaciones</div>
+                <div class="conversation-option" data-value="650">650 conversaciones</div>
+                <div class="conversation-option" data-value="700">700 conversaciones</div>
+                <div class="conversation-option" data-value="750">750 conversaciones</div>
+                <div class="conversation-option" data-value="800">800 conversaciones</div>
+                <div class="conversation-option" data-value="850">850 conversaciones</div>
+                <div class="conversation-option" data-value="900">900 conversaciones</div>
+                <div class="conversation-option" data-value="950">950 conversaciones</div>
+                <div class="conversation-option" data-value="1000">1000 conversaciones</div>
+              </div>
+              <div class="fade-bottom"></div>
+            </div>
+          </div>
+
+          <div class="total-price">
+            <span class="total-price-label">Total mensual:</span>
+            <span id="totalPrice" class="total-amount">29€</span>
+          </div>
+          
+          <ul class="features-list">
+            <li class="has-tooltip">
+                <i class="fas fa-check"></i> 🤖 Borradores inteligentes con IA
+                <span class="tooltip">Nuestro motor de IA genera respuestas automáticas personalizadas para tus clientes. Revisa, ajusta y envía en segundos.</span>
+            </li>
+            <li class="has-tooltip">
+                <i class="fas fa-check"></i> 🛍️ Conecta tu tienda Shopify
+                <span class="tooltip">Sincroniza pedidos con el bot y gestiona devoluciones o descuentos sin salir de Respondize.</span>
+            </li>
+            <li class="has-tooltip">
+                <i class="fas fa-check"></i> 📥 Buzón unificado de atención
+                <span class="tooltip">Reúne todos tus correos en un solo lugar y obtén una clasificación por tipo de ticket al instante.</span>
+            </li>
+            <li class="has-tooltip">
+                <i class="fas fa-check"></i> 👥 Acceso para un miembro del equipo
+                <span class="tooltip">Incluye una plaza de usuario. Los planes superiores amplían el número de miembros.</span>
+            </li>
+        </ul>
+          
+          <button id="starterBtn" class="cta-button primary">Contratar plan</button>
         </div>
 
-        <!-- Free Plan -->
-        <div class="pricing-card free">
-          <div class="pricing-header">
-            <h3>Free Plan</h3>
-            <span class="price">0 €<span class="period">/mes</span></span>
+        <!-- Pack adicional -->
+        <div id="packCard" class="pricing-card pack hidden preload-hidden" data-plan="pack">
+          <div class="card-header">
+            <div class="plan-name-with-info">
+              <h3 class="plan-name">Pack Extra</h3>
+              <button class="info-icon" type="button" aria-label="Información sobre Pack Extra">
+                <i class="fas fa-info-circle" style="margin-bottom: 1rem; z-index: 1000;"></i>
+                <span class="info-tooltip">Las conversaciones compradas como extra no caducan. Si no se consumen un mes, pasan al mes siguiente. Únicamente son consumidas cuando se llega al límite mensual de conversaciones</span>
+              </button>
+            </div>
+            <div class="price-wrapper">
+              <span class="price" id="packPrice">15€</span>
+              <span class="period">/pack</span>
+            </div>
+            <p class="price-detail" id="packPricePerConv">0.45€ por conversación</p>
           </div>
-          <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> Hasta 30 correos/mes</li>
-            <li><i class="fas fa-check"></i> 1 buzón disponible</li>
-            <li><i class="fas fa-check"></i> Respuestas alineadas con las políticas y FAQs de tu negocio</li>
-          </ul>
-          <div class="buttons-container">
-            <a href="#" class="cta-btn" id="freeBtn"></a>
+          
+          <div class="conversations-selector pack-selector">
+            <label for="packConversationsSelect">Conversaciones extra:</label>
+            <div class="conversations-dropdown-wrapper">
+              <div class="fade-top"></div>
+              <div id="packConversationsScroller" class="conversations-scroller">
+                <div class="conversation-option" data-value="50">50 conversaciones</div>
+                <div class="conversation-option" data-value="100">100 conversaciones</div>
+                <div class="conversation-option" data-value="150">150 conversaciones</div>
+                <div class="conversation-option" data-value="200">200 conversaciones</div>
+                <div class="conversation-option" data-value="250">250 conversaciones</div>
+                <div class="conversation-option" data-value="300">300 conversaciones</div>
+                <div class="conversation-option" data-value="350">350 conversaciones</div>
+                <div class="conversation-option" data-value="400">400 conversaciones</div>
+                <div class="conversation-option" data-value="450">450 conversaciones</div>
+                <div class="conversation-option" data-value="500">500 conversaciones</div>
+              </div>
+              <div class="fade-bottom"></div>
+            </div>
           </div>
-        </div>
-
-        <!-- Starter Plan -->
-        <div class="pricing-card starter">
-          <div class="popular-badge">Más popular</div>
-          <div class="pricing-header">
-            <h3>Starter Plan</h3>
-            <span class="price">Por definir<span class="period">/mes</span></span>
-          </div>
-          <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> Hasta 300 correos/mes</li>
-            <li><i class="fas fa-check"></i> 1 buzón disponible</li>
-            <li><i class="fas fa-check"></i> Respuestas alineadas con las políticas y FAQs de tu negocio</li>
-
-            <!-- Línea divisoria -->
-            <li class="feature-divider" style="margin: 1.5rem 0;"></li>
-
-            <li class="feature-soon">
-              <i class="fa-regular fa-clock" style="color: #fbbf24;"></i> Integracion con Shopify
-              <span class="feature-badge">Pronto</span>
+          
+          <ul class="features-list">
+            <li class="has-tooltip">
+              <i class="fas fa-check"></i> 💳 Compra única
+              <span class="tooltip">Utiliza las conversaciones al instante</span>
             </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Métricas básicas
-              <span class="feature-badge" >Planeado</span>
-            </li>
-          </ul>
-          <div class="buttons-container">
-            <a href="#" class="cta-btn" id="starterBtn"></a>
-          </div>
-        </div>
-
-        <!-- Advanced Plan -->
-        <div class="pricing-card advanced">
-          <div class="pricing-header">
-            <h3>Advanced Plan</h3>
-            <span class="price">Por definir<span class="period">/mes</span></span>
-          </div>
-          <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> Hasta 600 correos/mes</li>
-            <li><i class="fas fa-check"></i> 1 buzón disponible</li>
-            <li><i class="fas fa-check"></i> Respuestas alineadas con las políticas y FAQs de tu negocio</li>
-
-            <!-- Línea divisoria -->
-            <li class="feature-divider" style="margin: 1.5rem 0;"></li>
-
-            <li class="feature-soon">
-              <i class="fa-regular fa-clock" style="color: #fbbf24;"></i> Integracion con Shopify
-              <span class="feature-badge">Pronto</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Acceso total a métricas y panel de estadísticas
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Hasta 2 reglas para personalizar el bot
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Hasta 2 buzones configurables
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Chatbot personalizado para consultas de métricas
-              <span class="feature-badge" >Planeado</span>
-            </li>
-          </ul>
-          <div class="buttons-container">
-            <a href="#" class="cta-btn" id="advancedBtn"></a>
-          </div>
-        </div>
-
-        <!-- Professional Plan -->
-        <div class="pricing-card professional">
-          <div class="pricing-header">
-            <h3>Professional Plan</h3>
-            <span class="price">Por definir<span class="period">/mes</span></span>
-          </div>
-          <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> Hasta 1.200 correos/mes</li>
-            <li><i class="fas fa-check"></i> 1 buzón disponible</li>
-            <li><i class="fas fa-check"></i> Respuestas alineadas con las políticas y FAQs de tu negocio</li>
-
-             <!-- Línea divisoria -->
-            <li class="feature-divider" style="margin: 1.5rem 0;"></li>
-
-            <li class="feature-soon">
-              <i class="fa-regular fa-clock" style="color: #fbbf24;"></i> Integracion con Shopify
-              <span class="feature-badge">Pronto</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Acceso total a métricas y panel de estadísticas
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Chatbot personalizado para consultas de métricas
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Hasta 6 reglas para personalizar el bot
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Hasta 4 buzones configurables
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Instagram Business
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> WhatsApp Business
-              <span class="feature-badge" >Planeado</span>
-            </li>
-            <li class="feature-planned">
-              <i class="fas fa-calendar-plus" style="color: #cbd5e1;"></i> Creación de tus propias clases para clasificación
-              <span class="feature-badge" >Planeado</span>
+            <li class="has-tooltip">
+              <i class="fas fa-check"></i> ⏳ Sin caducidad
+              <span class="tooltip">Si no se consumen, se transfieren al mes siguiente</span>
             </li>
           </ul>
-          <div class="buttons-container">
-            <a href="#" class="cta-btn" id="professionalBtn"></a>
-          </div>
-        </div>
-
-        <!-- Custom Plan -->
-        <div class="pricing-card custom">
-          <div class="pricing-header">
-            <h3>Custom Plan</h3>
-            <span class="price">Personalizado</span>
-          </div>
-          <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> Incluye todas las funciones del plan Professional</li>
-            <li><i class="fas fa-check"></i> Soporte y ajustes a medida</li>
-            <li><i class="fas fa-check"></i> Integraciones y desarrollo a medida</li>
-          </ul>
-          <div class="buttons-container">
-            <a href="#" class="cta-btn">Contacta con nosotros</a>
-          </div>
-        </div>
-      </div>
-      <p class="plan-notice" style="max-width:1100px;margin:3rem auto 0;">
-        * Las funciones marcadas como <strong>"Pronto"</strong> están en desarrollo y se desplegarán gradualmente. Y las funciones marcadas como <strong>"Planeado"</strong> están en nuestra hoja de ruta para los próximos meses.
-      </p>
-    </section>
-  </main>
-
-  <!-- Footer idéntico al de landing -->
-  <footer>
-    <div class="footer-content">
-      <div class="footer-brand">
-        <span class="logo-text">Respondize</span>
-        <p>Transformando la atención al cliente con IA</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-column">
-          <h4>Producto</h4>
-          <a href="#features">Características</a>
-          <a href="#pricing">Planes</a>
-          <a href="#faq">FAQ</a>
-        </div>
-        <div class="footer-column">
-          <h4>Legal</h4>
-          <a href="#privacy">Privacidad</a>
-          <a href="#terms">Términos</a>
-        </div>
-        <div class="footer-column">
-          <h4>Social</h4>
-          <div class="social-links">
-            <a href="#"><i class="fab fa-twitter"></i></a>
-            <a href="#"><i class="fab fa-linkedin"></i></a>
-            <a href="#"><i class="fab fa-github"></i></a>
-          </div>
+          
+          <button id="buyPackBtn" class="cta-button secondary">Comprar pack</button>
         </div>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>&copy; 2024 Respondize. Todos los derechos reservados.</p>
-    </div>
-  </footer>
+  </section>
 
-  <!-- Scripts al final para asegurar el DOM cargado -->
   <script type="module" src="/js/config.js?v=%ASSET_VERSION%"></script>
   <script type="module" src="/js/pages/plans.js?v=%ASSET_VERSION%"></script>
 </body>

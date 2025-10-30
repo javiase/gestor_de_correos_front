@@ -86,6 +86,7 @@ function clearClientStateOnLogout() {
     const ownerId = getCurrentOwnerIdFromStore();
     removeOnboardingProgress(ownerId);
     localStorage.removeItem('store'); // cache de tienda
+    localStorage.removeItem('login_state'); // limpia estado de OAuth pendiente
     // Señales para que UI (sidebar, etc.) se bloquee al instante
     try {
       window.dispatchEvent(new CustomEvent('profile-complete-changed',   { detail:{ complete:false }}));

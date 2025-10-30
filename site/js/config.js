@@ -2,6 +2,9 @@
 import { API_BASE, getToken, setToken, logout, fetchWithAuth  } from '/js/utils/api.js';
 export const LIMITS = { policies: 5000, faq_q: 200, faq_a: 1200, email_body: 5000, profile_field: 1000 };
 
+// Detectar si estamos en página de planes (acceso público permitido)
+const IS_PUBLIC_PAGE = window.location.pathname.includes('/plans.html');
+
 function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
 
 async function pollOnce(state) {
@@ -28,13 +31,35 @@ async function pollOnce(state) {
 }
 
 async function waitForTokenIfNeeded() {
+  // CRÍTICO: Si estamos en página pública SIN callback de OAuth, NO hacer polling
+  // PERO si venimos de OAuth callback (tiene login_state en localStorage), SÍ hacer polling
   const pendingState = localStorage.getItem("login_state");
+  
+  if (IS_PUBLIC_PAGE && !pendingState) {
+    console.log('ℹ️ Página pública sin OAuth callback (sin login_state), omitiendo polling');
+    return;
+  }
+
   if (pendingState && !getToken()) {
+    console.log('🔄 Polling de autenticación iniciado con state:', pendingState.substring(0, 10) + '...');
     for (let i = 0; i < 20; i++) {           // ~10s total
-      try { if (await pollOnce(pendingState)) return; } catch {}
+      try { 
+        if (await pollOnce(pendingState)) {
+          console.log('✅ Polling exitoso, token obtenido');
+          return;
+        }
+      } catch (err) {
+        console.warn('⚠️ Error en polling intento', i+1, ':', err);
+      }
       await delay(500);
-      if (getToken()) return;
+      if (getToken()) {
+        console.log('✅ Token detectado durante espera');
+        return;
+      }
     }
+    console.log('⏱️ Timeout de polling alcanzado después de 10s');
+    // Solo limpiamos si realmente expiró
+    localStorage.removeItem("login_state");
   }
 }
 window.tokenReadyPromise = (async () => {
@@ -68,29 +93,53 @@ window.configReady = (async function initConfig() {
   }
 
   // 3) Inicializa perfil
+  // CRÍTICO: En páginas públicas SIN login_state (sin OAuth pendiente), no inicializar perfil
+  // PERO si hay login_state o ya hay token, SÍ inicializar perfil
+  const hasLoginState = !!localStorage.getItem("login_state");
+  const hasToken = !!getToken();
+  
+  if (IS_PUBLIC_PAGE && !hasLoginState && !hasToken) {
+    console.log('ℹ️ Página pública sin OAuth ni token - Omitiendo inicialización de perfil');
+    window.appUserPromise = Promise.resolve(null);
+    return; // Salir de initConfig temprano
+  }
+
   const stored = localStorage.getItem("store");
   if (stored && !fetchNeeded) {
+    console.log('📦 Usando store cacheado');
     window.appUser = JSON.parse(stored);
     window.appUserPromise = Promise.resolve(window.appUser);
   } else {
+    console.log('🔄 Iniciando carga de perfil...');
     window.appUserPromise = (async () => {
       const token = getToken();
-      if (!token) return logout();
+      
+      if (!token) {
+        console.log('🚪 Sin token, ejecutando logout...');
+        return logout();
+      }
 
+      console.log('✅ Token presente, cargando perfil...');
       const res = await fetchWithAuth(`/stores/me`);
-      if (!res.ok) throw new Error("No autorizado");
+      if (!res.ok) {
+        console.error('❌ Error en /stores/me:', res.status);
+        throw new Error("No autorizado");
+      }
 
       const data = await res.json();
+      console.log('✅ Perfil cargado:', data?.email || data?.id);
       window.appUser = data;
       localStorage.setItem("store", JSON.stringify(data));
       return data;
     })()
     .then((data) => {
+      console.log('✅ appUserPromise resuelto');
       try { window.dispatchEvent(new CustomEvent("app-user-ready", { detail: data })); } catch(_) {}
       return data;
     })
     .catch(err => {
       console.error("❌ fallo en stores/me:", err);
+      console.log('🚪 Ejecutando logout por error');
       logout();
     });
   }

@@ -1,7 +1,8 @@
 :root {
-  --primary: #4F46E5;
+  --primary: #6b64e6;
   --primary-dark: #4338CA;
   --secondary: #10B981;
+  --tertiary: #ffe025;
   --text-primary: #1F2937;
   --text-secondary: #6B7280;
   --background: #FFFFFF;
@@ -122,8 +123,20 @@ body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; color: #e5e7eb
    transition: background .15s ease, border-color .15s ease, transform .05s ease;}
 .info-chip:hover{ background:#0b1220; border-color:#4b5563; }
 .info-chip:active{ transform: translateY(1px); }
-.plan-popover{ position: absolute;  right: 50%;top: calc(100% + 1vh); transform: translateX(50%); width: min(640px, 92vw); background: #0b0f1a; color: #e5e7eb;
-  border: 1px solid #1f2937; border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.45); padding: 16px 18px; z-index: 1000;}
+.plan-popover{ 
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 1vh);
+  transform: translateX(-50%);
+  width: min(640px, 92vw);
+  background: #0b0f1a;
+  color: #e5e7eb;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+  padding: 16px 18px;
+  z-index: 1000;
+}
 .plan-popover[hidden]{ display:none; }
 .plan-popover h4{ margin: 0 0 .5rem; font-size: 1rem; color: #f9fafb; }
 .plan-popover ul{ margin:0; padding-left: 1.1rem; }
@@ -151,7 +164,23 @@ body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; color: #e5e7eb
 .pricing-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;}
 .pricing-card { background: #23232a; padding: 2rem; border-radius: 18px; box-shadow: 0 2px 16px #0002; position: relative; border: 1.5px solid #2d2d36; color: #e5e7eb;}
 .pricing-card.popular { border: 2px solid var(--primary);}
-.cancel-change-btn { background: #f87171; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;}
+.cancel-change-btn { 
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
+  color: white; 
+  border: none; 
+  padding: 0.65rem 1rem; 
+  border-radius: 0.5rem; 
+  cursor: pointer; 
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 0.25rem 0.75rem rgba(239, 68, 68, 0.3);
+  transition: all 0.3s ease;
+}
+.cancel-change-btn:hover:not(:disabled) {
+  transform: translateY(-0.125rem);
+  box-shadow: 0 0.5rem 1rem rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
 .cancel-change-btn:disabled { opacity: 0.6; cursor: not-allowed;}
 .buttons-container { display: flex; flex-direction: column; align-items: center; gap: 1vh;}
 .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 0.25rem 1rem; border-radius: 1rem;

@@ -73,6 +73,11 @@ async function waitForAuthToken(timeoutMs = 3000) {
  */
 export function isProfileComplete(s) {
   if (!s) return false;
+  
+  // 🆕 Si el backend ya marcó el perfil como completo, confiar en eso
+  if (s.profile_completed === true) return true;
+  
+  // Fallback: validación manual (para cuando se acaba de completar y aún no se guardó)
   const req = [ s.storeName, s.firstName, s.lastName, s.personalEmail ];
   if (s.hasPhysicalLocation) req.push(s.storeAddress, s.storeCity, s.storeState, s.storeCountry);
   return req.every(v => (typeof v === 'string' ? v.trim().length > 0 : !!v));
@@ -143,7 +148,12 @@ export function markOnboardingStep(name, done = true) {
 }
 
 /** Comprueba si TODOS los pasos requeridos están hechos. */
-export function isOnboardingComplete(required = DEFAULT_STEPS) {
+export function isOnboardingComplete({ required = DEFAULT_STEPS, store = null } = {}) {
+  // 🆕 Si el backend ya marcó el onboarding como completo, confiar en eso
+  const s = store || getStoreSync();
+  if (s && s.onboarding_completed === true) return true;
+  
+  // Fallback: validación manual con localStorage
   const st = readOB();
   return (required || []).every(k => !!st[k]);
 }
@@ -154,6 +164,16 @@ export function isOnboardingComplete(required = DEFAULT_STEPS) {
  * Llama a esta función al entrar en info.html (y/o tras login).
  */
 export async function seedOnboardingFromServer({ required = DEFAULT_STEPS } = {}) {
+  // 🆕 OPTIMIZACIÓN: Si el store ya tiene onboarding_completed, no hacer llamadas
+  const s = getStoreSync();
+  if (s && s.onboarding_completed === true) {
+    console.log('[seedOnboarding] Store ya tiene onboarding_completed=true, skip API calls');
+    // Marcar todos los pasos como completos en localStorage para coherencia
+    required.forEach(canonical => markOnboardingStep(canonical, true));
+    return;
+  }
+
+  console.log('[seedOnboarding] Consultando políticas desde el backend...');
   for (const canonical of required) {
     try {
       // prueba con aliases hasta que una devuelva contenido
@@ -178,7 +198,55 @@ export async function seedOnboardingFromServer({ required = DEFAULT_STEPS } = {}
 }
 
 /* ──────────────────────────────────────────────────────────────
- * PARTE SESIÓN (session gate “básico”, opcional / compat)
+ * MARCAR COMPLETADO EN BACKEND (para evitar validaciones futuras)
+ * ────────────────────────────────────────────────────────────── */
+
+/**
+ * Marca un área como completada en el backend (perfil u onboarding).
+ * @param {string} areaCompleted - 'profile' o 'onboarding'
+ * 
+ * Ejemplos:
+ *   await markCompletionInBackend('profile');
+ *   await markCompletionInBackend('onboarding');
+ */
+export async function markCompletionInBackend(areaCompleted) {
+  console.log(`🔥 [markCompletion] LLAMADA INICIADA para: ${areaCompleted}`);
+  
+  if (!areaCompleted || !['profile', 'onboarding'].includes(areaCompleted)) {
+    console.error('[markCompletion] Parámetro inválido. Debe ser "profile" o "onboarding"');
+    return;
+  }
+
+  try {
+    console.log(`📡 [markCompletion] Haciendo POST a /stores/mark-completion con body:`, { completed: areaCompleted });
+    
+    const response = await fetchWithAuth('/stores/mark-completion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: areaCompleted })
+    });
+    
+    console.log(`✅ [markCompletion] Response status:`, response.status);
+    
+    // Actualizar el cache local
+    const store = getStoreSync();
+    if (store) {
+      if (areaCompleted === 'profile') {
+        store.profile_completed = true;
+        console.log('[markCompletion] Perfil marcado como completado en backend');
+      } else if (areaCompleted === 'onboarding') {
+        store.onboarding_completed = true;
+        console.log('[markCompletion] Onboarding marcado como completado en backend');
+      }
+      localStorage.setItem('store', JSON.stringify(store));
+    }
+  } catch (e) {
+    console.error(`❌ [markCompletion] Error al marcar ${areaCompleted} completado:`, e);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+ * PARTE SESIÓN (session gate "básico", opcional / compat)
  * ────────────────────────────────────────────────────────────── */
 /**
  * Atajo de solo sesión (similar a tu antiguo /js/utils/session-gate.js).

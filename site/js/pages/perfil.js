@@ -1,7 +1,7 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, logout, getToken } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js'; 
-import { isProfileComplete, enforceFlowGate } from '/js/utils/flow-gate.js';
+import { isProfileComplete, enforceFlowGate, markCompletionInBackend } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
 
@@ -770,18 +770,22 @@ class UserProfile {
         const planKey = this.currentData?.plan || "free";
         document.getElementById('displayUserPlan').textContent = PLAN_LABEL[planKey] ?? "Plan desconocido";
 
-        // — Usos y créditos extra —
-        const usedEl   = document.getElementById('usedEmails');
-        const extraEl  = document.getElementById('extraCredits');
-        const totalEl  = document.getElementById('totalLimit');
+        // — Usos y créditos extra (CONVERSACIONES) —
+        const reservedEl  = document.getElementById('reservedConversations');
+        const confirmedEl = document.getElementById('confirmedConversations');
+        const extraEl     = document.getElementById('extraCredits');
+        const totalEl     = document.getElementById('totalLimit');
 
-        const used  = this.currentData.usage       || 0;
-        const extra = this.currentData.extra_usage || 0;
-        const limit = (this.currentData.limit     || 0);
+        // ⚠️ CAMBIO: Mostramos conversaciones separadas
+        const reserved  = this.currentData.reserved_conversations  || 0;
+        const confirmed = this.currentData.confirmed_conversations || 0;
+        const extra     = this.currentData.extra_usage || 0;
+        const limit     = (this.currentData.limit     || 0);
 
-        usedEl.textContent  = used;
-        extraEl.textContent = extra;
-        totalEl.textContent = limit;
+        if (reservedEl)  reservedEl.textContent  = reserved;
+        if (confirmedEl) confirmedEl.textContent = confirmed;
+        if (extraEl)     extraEl.textContent     = extra;
+        if (totalEl)     totalEl.textContent     = limit;
 
         // — Badge de días de prueba —
         const badgeEl  = document.getElementById('trialBadge');
@@ -1140,10 +1144,10 @@ class UserProfile {
             timezone: document.getElementById('timezone').value,
             language: document.getElementById('language').value,
             
-            // Notifications
-            emailNotifications: document.getElementById('emailNotifications').checked,
-            smsNotifications: document.getElementById('smsNotifications').checked,
-            marketingNotifications: document.getElementById('marketingNotifications').checked,
+            // Notifications (con validación para evitar null)
+            emailNotifications: document.getElementById('emailNotifications')?.checked || false,
+            smsNotifications: document.getElementById('smsNotifications')?.checked || false,
+            marketingNotifications: document.getElementById('marketingNotifications')?.checked || false,
             
             // Store Hours
             storeHours: {}
@@ -1312,6 +1316,10 @@ class UserProfile {
 
     
     async saveChanges() {
+        // Get button reference first
+        const saveBtn = document.getElementById('saveBtn');
+        const originalText = saveBtn.innerHTML;
+        
         if (!this.validateForm()) {
             notify.error('Please fix the errors before saving');
             return;
@@ -1324,17 +1332,11 @@ class UserProfile {
 
         // Validación de horarios antes de guardar
         if (!this._validateOpeningHours()) {
-            saveBtn.innerHTML = originalText; 
-            saveBtn.disabled = false;
             return;
         }
-
-        
-        const saveBtn = document.getElementById('saveBtn');
-        const originalText = saveBtn.innerHTML;
         
         // Show loading state
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         saveBtn.disabled = true;
         
         try {
@@ -1377,7 +1379,13 @@ class UserProfile {
                 method: 'PUT',
                 body: JSON.stringify(formData)
             });
-            if (!res.ok) throw new Error('Error actualizando la tienda');
+            
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                const errorMsg = errorData.detail || errorData.message || `Error ${res.status}`;
+                console.error('Error guardando perfil:', res.status, errorMsg);
+                throw new Error(errorMsg);
+            }
 
             const updated = await res.json();
 
@@ -1401,16 +1409,31 @@ class UserProfile {
             saveBtn.style.background = '#8b5cf6';
             document.getElementById('cancelBtn').style.display = 'none';
             notify.success('Perfil actualizado!');
-            // Si ya está completo, avisa al resto (sidebar)
-            if (isProfileComplete(updated)) {
+            
+            // Si ya está completo, avisa al resto (sidebar) y marca en backend
+            console.log('🔍 [perfil] Verificando si perfil está completo...', { updated });
+            const profileComplete = isProfileComplete(updated);
+            console.log('🔍 [perfil] isProfileComplete resultado:', profileComplete);
+            
+            if (profileComplete) {
+                console.log('✅ [perfil] Perfil completo! Marcando en backend...');
+                
                 window.dispatchEvent(new CustomEvent('profile-complete-changed', {
                     detail: { complete: true }
                 }));
+                
+                // 🆕 Marcar el perfil como completado en el backend para evitar validaciones futuras
+                await markCompletionInBackend('profile').catch(e => {
+                    console.warn('[perfil] No se pudo marcar profile_completed en backend:', e);
+                });
+            } else {
+                console.log('⚠️ [perfil] Perfil aún no está completo, no se marca en backend');
             }
             
         } catch (error) {
             console.error('Save error:', error);
-            notify.error('Error al guardar los cambios. Por favor, inténtalo de nuevo.');
+            const errorMsg = error.message || 'Error desconocido';
+            notify.error(`Error al guardar: ${errorMsg}`);
         } finally {
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;

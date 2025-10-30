@@ -1043,7 +1043,7 @@ class EmailView {
 
     // vuelca en los IDs de tu HTML
     document.getElementById('emailFrom').textContent =
-      'De: ' + (email.return_mail.replace(/^<(.+)>$/, '$1') || 'Desconocido');
+      'De: ' + ((email.return_mail || '').replace(/^<(.+)>$/, '$1') || 'Desconocido');
     document.getElementById('emailDate').textContent =
       this.formatEmailDate(email.date);
     document.getElementById('emailSubject').textContent =
@@ -1134,6 +1134,12 @@ class EmailView {
     // habilita/deshabilita botones
     this.prevBtn.disabled = this.index === 0;
     this.nextBtn.disabled = this.index === this.ids.length - 1;
+
+    // 🆕 Resetea el checkbox de "cerrar conversación" al navegar entre correos
+    const closeConversationCheck = document.getElementById('closeConversationCheck');
+    if (closeConversationCheck) {
+      closeConversationCheck.checked = false;
+    }
 
     // ——— Scroll automático al “mensaje recibido” ———
     const chat = document.getElementById('chatContainer');
@@ -1279,6 +1285,10 @@ class EmailView {
     const message = DOMPurify.sanitize(document.getElementById('responseContent').innerHTML.trim());
     console.log("message:", message);
 
+    // 🆕 Obtener el valor del checkbox de cerrar conversación
+    const closeConversationCheck = document.getElementById('closeConversationCheck');
+    const shouldCloseConversation = closeConversationCheck?.checked || false;
+
     try {
       if ((message || '').length > LIMITS.email_body) {
         notify.error(`El cuerpo del correo supera ${LIMITS.email_body} caracteres.`);
@@ -1302,6 +1312,7 @@ class EmailView {
       fd.append('recipient', recipient);        // por si tu back lo usa
       fd.append('subject', subject);
       fd.append('message', message);
+      fd.append('close_conversation', shouldCloseConversation ? 'true' : 'false'); // 🆕
       this.pendingFiles.forEach(f => fd.append('files', f, f.name));
 
 
@@ -1350,7 +1361,13 @@ class EmailView {
   async deleteEmail() {
     try {
       const emailId = this.ids[this.index];
-      const res = await fetchWithAuth(`/emails/delete?email_id=${emailId}`, {
+      
+      // 🆕 Obtener el valor del checkbox de cerrar conversación
+      const closeConversationCheck = document.getElementById('closeConversationCheck');
+      const shouldCloseConversation = closeConversationCheck?.checked || false;
+      
+      const url = `/emails/delete?email_id=${emailId}`;
+      const res = await fetchWithAuth(url, {
         method: 'DELETE'
       });
       if (!res.ok) {

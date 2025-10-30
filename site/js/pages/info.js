@@ -2,7 +2,7 @@
 
 import { fetchWithAuth } from '/js/utils/api.js';
 import { initSidebar } from '/js/components/sidebar.js';
-import { seedOnboardingFromServer, markOnboardingStep, isOnboardingComplete, enforceFlowGate, resolveStepKey } from '/js/utils/flow-gate.js';
+import { seedOnboardingFromServer, markOnboardingStep, isOnboardingComplete, enforceFlowGate, resolveStepKey, markCompletionInBackend } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 import { renderHtmlEmail } from '/js/utils/render-email.js';
 import { LIMITS } from '/js/config.js';
@@ -92,6 +92,13 @@ function announceOnboardingProgress() {
   window.dispatchEvent(new CustomEvent('onboarding-complete-changed', {
     detail: { complete }
   }));
+  
+  // 🆕 Si se completó el onboarding, marcarlo en backend para evitar validaciones futuras
+  if (complete) {
+    markCompletionInBackend('onboarding').catch(e => {
+      console.warn('[info] No se pudo marcar onboarding_completed en backend:', e);
+    });
+  }
 }
 
 // Solo reflejo local/UI (sin red)
@@ -580,6 +587,9 @@ function initPolicySubmit(card, form, policyTitle) {
         POLICY_CACHE.set(k, { state: envelope, ts: Date.now() });
         const stepKey = resolveStepKey(policyTitle);
         if (stepKey) markOnboardingStep(stepKey, true);
+
+        // 🆕 Verificar si se completó todo el onboarding y marcar en backend
+        announceOnboardingProgress();
 
         wasSuccess = true;
 
@@ -1342,6 +1352,8 @@ async function loadPastEmailsSidebar() {
 
       try {
         const r = await markIdeaProcessed(emailId, idea, 'eliminado');
+        // ⚠️ CAMBIO: el backend ya NO elimina docs (deleted siempre false)
+        // Solo miramos remaining para saber si apagar el flag
         if ((r?.remaining ?? 0) === 0) reflectPendingIdeasUI(false);
         removeIdeaFromSidebar(emailId, idea);
         notify.success('Idea eliminada de pendientes');
@@ -1383,11 +1395,12 @@ async function loadPastEmailsSidebar() {
 }
 
 function makeInfoMessageButton(item) {
+  // ⚠️ CAMBIO: campos condicionales pueden estar ausentes
   const primary =
     (item._idea || '').trim() ||
     (item.texto_combinado || '').trim() ||
     (item.subject || '').trim() ||
-    (item.sender ? `De ${item.sender}` : 'Mensaje');
+    (item.sender ? `De ${item.sender}` : 'Mensaje sin remitente');
 
   const wrap = document.createElement('div');
   wrap.className = 'info-item';
@@ -1401,13 +1414,13 @@ function makeInfoMessageButton(item) {
   btn.dataset.ideaIndex = ideaIndex;
   if (item._idea != null) btn.dataset.idea = item._idea;
 
-  // 👉 guarda el resto para el modal
+  // 👉 guarda el resto para el modal (con fallbacks por campos condicionales)
   btn._payload = {
     id: item.id,
-    subject: item.subject || '',
-    sender: item.sender || '',
+    subject: item.subject || '(sin asunto)',          // ⚠️ campo condicional
+    sender: item.sender || '(sin remitente)',         // ⚠️ campo condicional
     date: item.date || '',
-    body_html: item.body_html || '',
+    body_html: item.body_html || '',                   // ⚠️ campo condicional
   };
 
   btn.innerHTML = `
@@ -1564,12 +1577,13 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
   // LEFT: email entrante
   const left = document.createElement('div');
   left.className = 'idea-left';
+  // ⚠️ CAMBIO: sender y subject pueden estar ausentes (campos condicionales)
   left.innerHTML = `
     <div class="panel">
       <div class="panel-header">
         <div class="panel-header-content" style="justify-content: space-between;">
           <p>
-            <span>${sender ? escapeHTML(sender) : ''}</span>
+            <span>${sender ? escapeHTML(sender) : '(sin remitente)'}</span>
             <strong>${subject ? escapeHTML(subject) : '(sin asunto)'}</strong>
           </p>
           <span>${date ? formatDateHint(date) : ''}</span>
@@ -1730,6 +1744,8 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
     try{
       await appendFAQEntry(newQuestion, answer);
       const r = await markIdeaProcessed(emailId_, origIdea, 'usado');
+      // ⚠️ CAMBIO: el backend ya NO elimina docs (deleted siempre false)
+      // Solo miramos remaining para saber si apagar el flag
       if ((r?.remaining ?? 0) === 0) reflectPendingIdeasUI(false);
       removeIdeaFromSidebar(emailId_, origIdea);
       notify.success('Pregunta guardada en FAQ');
@@ -1743,6 +1759,8 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
   delBt.addEventListener('click', async () => {
     try{
       const r = await markIdeaProcessed(emailId_, origIdea, 'eliminado');
+      // ⚠️ CAMBIO: el backend ya NO elimina docs (deleted siempre false)
+      // Solo miramos remaining para saber si apagar el flag
       if ((r?.remaining ?? 0) === 0) reflectPendingIdeasUI(false);
       removeIdeaFromSidebar(emailId_, origIdea);
       notify.success('Idea eliminada de pendientes');

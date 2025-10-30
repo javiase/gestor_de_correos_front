@@ -86,7 +86,8 @@ const BADGE_LABEL = {
   tienda: 'Tienda',
   shopify: 'Shopify',
   comerciales: 'Comerciales',
-  otros: 'Otros'
+  otros: 'Otros',
+  OTROS: 'Otros'
 };
 
 function renderBadges(email) {
@@ -366,8 +367,16 @@ class EmailInbox {
     div.className = `email-item ${email.read ? 'read' : 'unread'}`;
     div.tabIndex  = 0;
     console.log('|'+email.subject+'|')
+    
+    // 🆕 Extraer el nombre del display_sender (antes del <...>)
+    let senderName = email.display_sender || email.sender || 'Desconocido';
+    const match = senderName.match(/^(.+?)\s*<.+>$/);
+    if (match) {
+      senderName = match[1].trim(); // Toma solo la parte antes del <...>
+    }
+    
     div.innerHTML = `
-      <div class="email-sender">${email.return_mail.replace(/^<(.+)>$/,'$1')}</div>
+      <div class="email-sender">${senderName}</div>
       <div class="email-content">
       <div class="email-subject">
         ${

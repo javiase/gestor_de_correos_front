@@ -42,10 +42,17 @@
                 <div class="header-actions-left">
                     <div class="stats-container">
                         <div class="stat-card stat-used">
-                            <div class="stat-icon"><i class="fas fa-envelope-open-text"></i></div>
+                            <div class="stat-icon"><i class="fas fa-clock"></i></div>
                             <div class="stat-info">
-                            <div class="stat-value" id="usedEmails">0</div>
-                            <div class="stat-label">Usados</div>
+                            <div class="stat-value" id="reservedConversations">0</div>
+                            <div class="stat-label">En curso</div>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-confirmed">
+                            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-info">
+                            <div class="stat-value" id="confirmedConversations">0</div>
+                            <div class="stat-label">Confirmadas</div>
                             </div>
                         </div>
                         <div class="stat-card stat-extra">
@@ -444,7 +451,7 @@
             
 
             <!-- Success/Error Messages -->
-            <div class="message-container" id="messageContainer"></div>
+            <div class="message-container notify-sticky" id="messageContainer"></div>
         </div>
     </div>
     
