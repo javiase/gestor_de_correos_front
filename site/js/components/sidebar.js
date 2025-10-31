@@ -199,6 +199,7 @@ class EmailSidebar {
       deleted: "/secciones/deleted.html",
       perfil: "/secciones/perfil.html",
       info: "/secciones/info.html",
+      integrations: "/secciones/integrations.html",
     };
     const url = map[section];
     if (url) window.location.href = url;

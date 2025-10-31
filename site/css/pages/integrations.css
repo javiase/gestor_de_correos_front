@@ -1,0 +1,433 @@
+/* Integrations Page Styles */
+
+.main-content {
+  background: #18181b;
+  min-height: 100vh;
+}
+
+.integrations-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.integrations-header {
+  margin-bottom: 3rem;
+}
+
+.integrations-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+.integrations-header .subtitle {
+  font-size: 1.125rem;
+  color: #9ca3af;
+}
+
+/* Integration Categories */
+.integration-category {
+  margin-bottom: 4rem;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.category-header i {
+  font-size: 1.5rem;
+  color: #6b64e6;
+}
+
+.category-header h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin: 0;
+}
+
+.category-description {
+  font-size: 1rem;
+  color: #9ca3af;
+  margin-bottom: 1.5rem;
+}
+
+/* Integration Cards Grid */
+.integration-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Individual Integration Card */
+.integration-card {
+  position: relative;
+  background: rgba(30, 30, 35, 0.8);
+  border: 1px solid rgba(107, 100, 230, 0.2);
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.integration-card:hover {
+  background: rgba(30, 30, 35, 0.95);
+  border-color: rgba(107, 100, 230, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.integration-card.disabled {
+  opacity: 0.7;
+}
+
+.integration-card.disabled:hover {
+  transform: none;
+  box-shadow: none;
+  background: rgba(30, 30, 35, 0.8);
+}
+
+/* Integration Icon */
+.integration-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: white;
+  padding: 0.75rem;
+}
+
+.integration-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gmail-icon {
+  background: white;
+}
+
+.outlook-icon {
+  background: #0078D4;
+}
+
+.shopify-icon {
+  background: white;
+}
+
+/* Integration Info */
+.integration-info h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin: 0 0 0.5rem 0;
+}
+
+.integration-info p {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Integration Buttons */
+.integration-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.integration-btn.primary {
+  background: white;
+  color: #1f2937;
+}
+
+.integration-btn.primary:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.integration-btn.outlook-btn {
+  background: #0078D4;
+  color: white;
+  cursor: not-allowed;
+}
+
+.integration-btn.shopify-btn {
+  background: white;
+  color: #96bf48;
+  cursor: not-allowed;
+}
+
+.integration-btn:disabled {
+  cursor: pointer;
+}
+
+.integration-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Coming Soon Badge */
+.coming-soon-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(107, 100, 230, 0.2);
+  color: #6b64e6;
+  padding: 0.375rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Connected Badge (para tarjetas conectadas) */
+.connected-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  padding: 0.375rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.connected-badge i {
+  font-size: 0.875rem;
+}
+
+/* Tarjeta conectada */
+.integration-card.connected {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.integration-card.connected:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+}
+
+/* Botón de desconectar */
+.integration-btn.disconnect-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.integration-btn.disconnect-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+}
+
+.integration-btn.disconnect-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.integration-btn.disconnect-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .integrations-container {
+    padding: 1.5rem;
+  }
+
+  .integrations-header h1 {
+    font-size: 2rem;
+  }
+
+  .integration-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .category-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Modal de confirmación */
+.confirm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.confirm-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.confirm-modal-content {
+  position: relative;
+  background: #1e1e23;
+  border: 1px solid rgba(107, 100, 230, 0.3);
+  border-radius: 1rem;
+  max-width: 500px;
+  width: 90%;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.confirm-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.confirm-modal-header i {
+  font-size: 1.5rem;
+  color: #f59e0b;
+}
+
+.confirm-modal-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin: 0;
+}
+
+.confirm-modal-body {
+  margin-bottom: 2rem;
+}
+
+.confirm-modal-body p {
+  font-size: 1rem;
+  color: #d1d5db;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+}
+
+.confirm-modal-warning {
+  color: #9ca3af !important;
+  font-size: 0.875rem !important;
+}
+
+.confirm-modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.confirm-modal-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confirm-modal-btn.cancel {
+  background: rgba(107, 100, 230, 0.1);
+  color: #6b64e6;
+  border: 1px solid rgba(107, 100, 230, 0.3);
+}
+
+.confirm-modal-btn.cancel:hover {
+  background: rgba(107, 100, 230, 0.2);
+  border-color: rgba(107, 100, 230, 0.5);
+  transform: translateY(-1px);
+}
+
+.confirm-modal-btn.confirm {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.confirm-modal-btn.confirm:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
+}
+
+.confirm-modal-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .confirm-modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+
+  .confirm-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .confirm-modal-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

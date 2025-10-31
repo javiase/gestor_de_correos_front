@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Integraciones - Respondize</title>
+  <link rel="stylesheet" href="/css/base.css?v=%ASSET_VERSION%">
+  <link rel="stylesheet" href="/css/layout.css?v=%ASSET_VERSION%">
+  <link rel="stylesheet" href="/css/components.css?v=%ASSET_VERSION%">
+  <link rel="stylesheet" href="/css/components/sidebar.css?v=%ASSET_VERSION%">
+  <link rel="stylesheet" href="/css/pages/integrations.css?v=%ASSET_VERSION%">
+  <link rel="stylesheet" href="/vendor/fontawesome-6.4.0/css/all.min.css?v=%ASSET_VERSION%">
+</head>
+<body>
+  <!-- Sidebar incluido dinámicamente -->
+  <div id="sidebarContainer"></div>
+  
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="integrations-container">
+        <div class="integrations-header">
+          <h1>Integraciones</h1>
+          <p class="subtitle">Conecta Respondize con tus herramientas favoritas</p>
+        </div>
+
+        <!-- Mail Integrations -->
+        <section class="integration-category">
+          <div class="category-header">
+            <i class="fas fa-envelope"></i>
+            <h2>Correo Electrónico</h2>
+          </div>
+          <p class="category-description">Conecta tu cuenta de correo para gestionar tus emails</p>
+          
+          <div class="integration-cards">
+            <!-- Gmail Integration -->
+            <div class="integration-card available gmail-card">
+              <div class="integration-icon gmail-icon">
+                <img src="/assets/icons/Gmail.png" alt="Gmail" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <i class="fas fa-envelope" style="display: none; font-size: 2rem; color: #EA4335;"></i>
+              </div>
+              <div class="integration-info">
+                <h3>Gmail</h3>
+                <p>Conecta tu cuenta de Gmail para gestionar tus correos</p>
+              </div>
+              <button class="integration-btn primary" id="gmailConnectBtn">
+                <i class="fas fa-plug"></i>
+                Conectar Gmail
+              </button>
+            </div>
+
+            <!-- Outlook Integration (Coming Soon) -->
+            <div class="integration-card disabled">
+              <div class="integration-icon outlook-icon">
+                <img src="/assets/icons/Outlook.png" alt="Outlook" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <i class="fas fa-envelope" style="display: none; font-size: 2rem; color: #0078D4;"></i>
+              </div>
+              <div class="integration-info">
+                <h3>Outlook</h3>
+                <p>Conecta tu cuenta de Outlook para gestionar tus correos</p>
+              </div>
+              <button class="integration-btn outlook-btn" disabled>
+                <i class="fas fa-clock"></i>
+                Próximamente
+              </button>
+              <div class="coming-soon-badge">Próximamente</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- E-commerce Platforms -->
+        <section class="integration-category">
+          <div class="category-header">
+            <i class="fas fa-shopping-cart"></i>
+            <h2>Plataformas E-Commerce</h2>
+          </div>
+          <p class="category-description">Integra tu tienda online para sincronizar pedidos y clientes</p>
+          
+          <div class="integration-cards">
+            <!-- Shopify Integration (Coming Soon) -->
+            <div class="integration-card disabled">
+              <div class="integration-icon shopify-icon">
+                <img src="/assets/icons/shopify.webp" alt="Shopify" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <i class="fas fa-shopping-bag" style="display: none; font-size: 2rem; color: #96bf48;"></i>
+              </div>
+              <div class="integration-info">
+                <h3>Shopify</h3>
+                <p>Conecta tu tienda Shopify para gestionar pedidos y clientes</p>
+              </div>
+              <button class="integration-btn shopify-btn" disabled>
+                <i class="fas fa-clock"></i>
+                Próximamente
+              </button>
+              <div class="coming-soon-badge">Próximamente</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Placeholder sections (hidden for now) -->
+        <section class="integration-category" style="display: none;">
+          <div class="category-header">
+            <i class="fas fa-share-alt"></i>
+            <h2>Redes Sociales</h2>
+          </div>
+          <p class="category-description">Conecta tus redes sociales para gestionar mensajes y comentarios</p>
+          <div class="integration-cards">
+            <!-- Social media integrations will go here -->
+          </div>
+        </section>
+
+        <section class="integration-category" style="display: none;">
+          <div class="category-header">
+            <i class="fas fa-puzzle-piece"></i>
+            <h2>Otros</h2>
+          </div>
+          <p class="category-description">Más integraciones para potenciar tu flujo de trabajo</p>
+          <div class="integration-cards">
+            <!-- Other integrations will go here -->
+          </div>
+        </section>
+      </div>
+    </div>
+  
+  <!-- Modal de confirmación para desconectar Gmail -->
+  <div id="disconnectModal" class="confirm-modal" style="display: none;">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+      <div class="confirm-modal-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Desconectar Gmail</h3>
+      </div>
+      <div class="confirm-modal-body">
+        <p>¿Estás seguro de que deseas desconectar Gmail?</p>
+        <p class="confirm-modal-warning">Dejarás de recibir correos nuevos en Respondize.</p>
+      </div>
+      <div class="confirm-modal-footer">
+        <button class="confirm-modal-btn cancel" id="cancelDisconnectBtn">
+          Cancelar
+        </button>
+        <button class="confirm-modal-btn confirm" id="confirmDisconnectBtn">
+          <i class="fas fa-unlink"></i>
+          Desconectar
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="/js/config.js?v=%ASSET_VERSION%"></script>
+  <script type="module" src="/js/components/sidebar.js?v=%ASSET_VERSION%"></script>
+  <script type="module" src="/js/pages/integrations.js?v=%ASSET_VERSION%"></script>
+</body>
+</html>
