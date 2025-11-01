@@ -262,3 +262,11 @@ window.addEventListener('pending-ideas:count', (e) => {
   const count = e?.detail?.count ?? 0;
   document.body.classList.toggle('has-pending-ideas', count > 0);
 });
+
+// Escuchar cambios en el avatar desde el perfil
+window.addEventListener('profile-avatar-updated', (e) => {
+  const avatarImg = document.querySelector('.profile-avatar img');
+  if (avatarImg && e.detail?.picture_url) {
+    avatarImg.src = e.detail.picture_url;
+  }
+});

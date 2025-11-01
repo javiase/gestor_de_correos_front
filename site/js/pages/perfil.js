@@ -151,6 +151,9 @@ class UserProfile {
 
         this.bindEvents();
         this.initSignatureEditor();
+        
+        // Cargar la firma DESPUÉS de inicializar el editor
+        this.setSignatureHTML(this.currentData?.signature_html || '');
 
         document.addEventListener('input', (e) => {
             const el = e.target;
@@ -316,8 +319,7 @@ class UserProfile {
                 this.currentData.businessCategoryOther || '';
             }
         }
-        // Firma (HTML seguro)
-        this.setSignatureHTML(this.currentData.signature_html || '');
+        // Firma (HTML seguro) - Se carga después en init() tras inicializar el editor
         //this.updateProfileProgress();
         this.toggleLocationFields();
         this.applyMaxLengthConstraints();
@@ -482,6 +484,9 @@ class UserProfile {
         const editor = document.getElementById('emailSignatureEditor');
         if (!editor) return;
 
+        // Variable para guardar la selección antes de abrir el popover
+        this.savedSelection = null;
+
         // Input/tecleo marca cambios y aplica límite de bytes
         const maxBytes = parseInt(editor.dataset.maxBytes || '5120', 10);
         const enc = new TextEncoder();
@@ -532,12 +537,13 @@ class UserProfile {
                     document.execCommand('removeFormat', false, null);
                     editor.querySelectorAll('a').forEach(a => a.replaceWith(...a.childNodes));
                 } else {
+                    // Ejecutar el comando sin perder la selección
                     document.execCommand(cmd, false, null);
                 }
 
-                const safe = sanitizeSignatureHTML(editor.innerHTML);
-                editor.innerHTML = safe;
-                this._placeCursorAtEnd(editor);
+                // NO reemplazar todo el innerHTML, solo sanitizar en place
+                this._sanitizeEditorInPlace(editor);
+                this.markAsChanged();
             });
         }
 
@@ -545,12 +551,24 @@ class UserProfile {
         if (pop && popInput && popInsert && popCancel) {
             popInsert.addEventListener('click', () => {
                 const url = (popInput.value || '').trim();
-                if (!url) { this._closeLinkPopover(pop); return; }
+                if (!url) { 
+                    this._closeLinkPopover(pop); 
+                    return; 
+                }
+                
+                // Restaurar la selección guardada antes de aplicar el link
+                if (this.savedSelection) {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(this.savedSelection);
+                }
+                
                 this._applyLink(url);
                 const safe = sanitizeSignatureHTML(editor.innerHTML);
                 editor.innerHTML = safe;
                 this._placeCursorAtEnd(editor);
                 this._closeLinkPopover(pop);
+                this.markAsChanged();
             });
             popCancel.addEventListener('click', () => this._closeLinkPopover(pop));
 
@@ -567,9 +585,9 @@ class UserProfile {
                 e.preventDefault();
                 const map = { b:'bold', i:'italic', u:'underline' };
                 document.execCommand(map[e.key.toLowerCase()], false, null);
-                const safe = sanitizeSignatureHTML(editor.innerHTML);
-                editor.innerHTML = safe;
-                this._placeCursorAtEnd(editor);
+                // NO reemplazar todo el innerHTML, solo sanitizar en place
+                this._sanitizeEditorInPlace(editor);
+                this.markAsChanged();
             }
         });
     }
@@ -583,6 +601,55 @@ class UserProfile {
         sel.addRange(range);
     }
 
+    _sanitizeEditorInPlace(editor) {
+        // Sanitiza sin perder la selección ni la estructura de líneas
+        const sel = window.getSelection();
+        let savedRange = null;
+        let anchorOffset = 0;
+        let focusOffset = 0;
+        
+        // Guardar la posición del cursor
+        if (sel.rangeCount > 0) {
+            savedRange = sel.getRangeAt(0).cloneRange();
+            anchorOffset = sel.anchorOffset;
+            focusOffset = sel.focusOffset;
+        }
+        
+        // Sanitizar solo los atributos peligrosos sin cambiar la estructura
+        editor.querySelectorAll('*').forEach(el => {
+            // Mantener solo atributos seguros
+            const allowedAttrs = {
+                'a': ['href', 'target', 'rel'],
+                'img': ['src', 'alt'],
+            };
+            
+            const allowed = allowedAttrs[el.tagName.toLowerCase()] || [];
+            const attrs = Array.from(el.attributes);
+            attrs.forEach(attr => {
+                if (!allowed.includes(attr.name)) {
+                    el.removeAttribute(attr.name);
+                }
+            });
+        });
+        
+        // Asegurar que los enlaces tengan target y rel seguros
+        editor.querySelectorAll('a').forEach(a => {
+            a.setAttribute('target', '_blank');
+            a.setAttribute('rel', 'noopener noreferrer');
+        });
+        
+        // Restaurar la selección si es posible
+        if (savedRange) {
+            try {
+                sel.removeAllRanges();
+                sel.addRange(savedRange);
+            } catch (e) {
+                // Si falla, al menos mantener el foco en el editor
+                editor.focus();
+            }
+        }
+    }
+
     getSignatureHTML() {
         const editor = document.getElementById('emailSignatureEditor');
         if (!editor) return '';
@@ -592,26 +659,56 @@ class UserProfile {
     setSignatureHTML(html) {
         const editor = document.getElementById('emailSignatureEditor');
         if (!editor) return;
-        editor.innerHTML = sanitizeSignatureHTML(html || '');
+        
+        // Normalizar el HTML para que los saltos de línea se vean consistentes
+        const normalized = this._normalizeSignatureHTML(html || '');
+        editor.innerHTML = sanitizeSignatureHTML(normalized);
+    }
+    
+    _normalizeSignatureHTML(html) {
+        if (!html) return '';
+        
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        
+        // Convertir <div><br></div> en <br><br> para mantener espacios visuales
+        tmp.querySelectorAll('div').forEach(div => {
+            // Si el div solo contiene un <br> o está vacío, representa una línea vacía
+            const hasOnlyBr = div.childNodes.length === 1 && 
+                              div.firstChild.nodeName === 'BR';
+            const isEmpty = div.childNodes.length === 0 || 
+                           (div.childNodes.length === 1 && !div.textContent.trim());
+            
+            if (hasOnlyBr || isEmpty) {
+                // Reemplazar con <br><br> para crear el salto visual
+                const br1 = document.createElement('br');
+                const br2 = document.createElement('br');
+                div.replaceWith(br1, br2);
+            } else {
+                // Div con contenido: añadir <br> después
+                const br = document.createElement('br');
+                div.replaceWith(...div.childNodes, br);
+            }
+        });
+        
+        return tmp.innerHTML;
     }
 
     _openLinkPopover(btn, pop, input) {
         if (!pop || !btn) return;
-        const container = btn.closest('.rte-container');
-        const rectBtn = btn.getBoundingClientRect();
-        const rectContainer = container.getBoundingClientRect();
-
-        const top = (rectBtn.bottom - rectContainer.top) + (8/16); /* 0.5rem */
-        const left = (rectBtn.left - rectContainer.left);
-
-        pop.style.top = `${top}rem`;
-        pop.style.left = `0`;
+        
+        // Guardar la selección actual antes de abrir el popover
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+            this.savedSelection = sel.getRangeAt(0).cloneRange();
+        }
+        
+        // Mostrar el popover (ya está posicionado con CSS)
         pop.classList.remove('hidden');
         pop.setAttribute('aria-hidden','false');
 
         if (input) {
             // Pre-rellenar con href si selección está dentro de un <a>
-            const sel = window.getSelection();
             if (sel && sel.rangeCount) {
                 const anchor = sel.anchorNode?.parentElement?.closest('a');
                 input.value = anchor?.getAttribute('href') || '';
@@ -632,11 +729,35 @@ class UserProfile {
         try {
             const okProto = /^https?:/i.test(new URL(url, window.location.origin).protocol)
                             || /^mailto:|^tel:/i.test(url);
-            if (!okProto) return;
-        } catch {
-            if (!/^mailto:|^tel:/i.test(url)) return;
+            if (!okProto) {
+                console.warn('Protocolo no permitido:', url);
+                return;
+            }
+        } catch (e) {
+            if (!/^mailto:|^tel:/i.test(url)) {
+                console.warn('URL inválida:', url);
+                return;
+            }
         }
+        
+        // Si no hay selección, insertar el texto del enlace
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        
+        const range = sel.getRangeAt(0);
+        
+        // Si no hay texto seleccionado, insertar la URL como texto
+        if (range.collapsed) {
+            const linkText = document.createTextNode(url);
+            range.insertNode(linkText);
+            range.selectNodeContents(linkText);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+        
+        // Crear el enlace
         document.execCommand('createLink', false, url);
+        
         // Normaliza atributos seguros en los <a> recién creados
         const editor = document.getElementById('emailSignatureEditor');
         editor?.querySelectorAll('a').forEach(a => {
@@ -700,26 +821,76 @@ class UserProfile {
         field.classList.remove('error');
     }
     
-    handleAvatarUpload(event) {
+    async handleAvatarUpload(event) {
         const file = event.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                notify.error('File size must be less than 5MB');
-                return;
-            }
-            
-            if (!file.type.startsWith('image/')) {
-                notify.error('Please select a valid image file');
-                return;
-            }
-            
+        if (!file) return;
+        
+        // Validaciones
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            notify.error('La imagen debe ser menor a 5MB');
+            return;
+        }
+        
+        if (!file.type.startsWith('image/')) {
+            notify.error('Por favor selecciona una imagen válida');
+            return;
+        }
+        
+        try {
+            // Mostrar preview inmediato
             const reader = new FileReader();
             reader.onload = (e) => {
                 document.getElementById('userAvatar').src = e.target.result;
-                this.markAsChanged();
-                notify.success('Avatar actualizado');
             };
             reader.readAsDataURL(file);
+            
+            // Subir al backend
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            notify.info('Subiendo imagen...');
+            
+            const response = await fetchWithAuth('/stores/upload_picture', {
+                method: 'POST',
+                body: formData
+                // NO pongas Content-Type, el browser lo añade automáticamente con el boundary
+            });
+            
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: 'Error al subir imagen' }));
+                throw new Error(error.message || 'Error al subir imagen');
+            }
+            
+            const data = await response.json();
+            
+            // Actualizar la URL de la imagen en el estado actual
+            if (data.picture_url) {
+                this.currentData.picture_url = data.picture_url;
+                this.originalData.picture_url = data.picture_url;
+                
+                // Actualizar la imagen en el perfil
+                document.getElementById('userAvatar').src = data.picture_url;
+                
+                // Actualizar en localStorage para que se refleje en sidebar
+                const cached = JSON.parse(localStorage.getItem('store') || '{}');
+                cached.picture_url = data.picture_url;
+                localStorage.setItem('store', JSON.stringify(cached));
+                
+                // Disparar evento para actualizar sidebar
+                window.dispatchEvent(new CustomEvent('profile-avatar-updated', {
+                    detail: { picture_url: data.picture_url }
+                }));
+                
+                notify.success('Imagen actualizada correctamente');
+            }
+            
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            notify.error(error.message || 'Error al subir la imagen');
+            // Restaurar imagen anterior en caso de error
+            if (this.currentData.picture_url) {
+                document.getElementById('userAvatar').src = this.currentData.picture_url;
+            }
         }
     }
     
@@ -1229,7 +1400,7 @@ class UserProfile {
         const anyOpen = days.some(d => storeHours?.[d]?.open);
 
         if (!anyOpen) {
-            lines.push("Horario: sin horario configurado");
+            lines.push("Horario: sin horario");
             return lines.join(". ");
         }
 
@@ -1252,7 +1423,7 @@ class UserProfile {
         }
 
         if (lines.length === 0) {
-            return "Horario: sin horario configurado";
+            return "Horario: sin horario";
         }
         return `Horario:\n- ${lines.join("\n- ")}`;
     }

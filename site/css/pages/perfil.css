@@ -182,17 +182,22 @@ input:checked + .toggle-slider:before { transform: translateX(24px);}
 
 /* === Popover de enlace === */
 .rte-link-popover{
-  position:absolute; z-index:10;
-  inset:auto 0 auto auto; /* por defecto alineado a la derecha bajo la toolbar, luego JS recoloca */
-  transform:translateY(0.5rem);
-  width:min(22rem, 90%);
-  background:#2a2a2a; color:#fff;
-  border:0.0625rem solid rgba(255,255,255,0.12);
-  border-radius:0.6rem;
-  padding:0.8rem 0.9rem;
-  box-shadow:0 0.6rem 2rem rgba(0,0,0,0.35);
+  position:absolute; 
+  z-index:10;
+  top: 2rem; /* Justo debajo del toolbar */
+  left: 7.5rem;
+  margin-top: 0.5rem;
+  width: min(22rem, 90%);
+  background: #2a2a2a; 
+  color: #fff;
+  border: 0.0625rem solid rgba(255,255,255,0.12);
+  border-radius: 0.6rem;
+  padding: 0.8rem 0.9rem;
+  box-shadow: 0 0.6rem 2rem rgba(0,0,0,0.35);
 }
-.rte-link-popover.hidden{ display:none; }
+.rte-link-popover.hidden{ 
+  display: none; 
+}
 
 .rte-link-row{ margin-bottom:0.6rem; }
 .rte-link-actions{ display:flex; gap:0.5rem; justify-content:flex-end; }

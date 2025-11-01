@@ -123,15 +123,25 @@ loginForm.addEventListener('submit', async (e) => {
     const data = await response.json();
 
     if (!response.ok) {
-      // Manejar errores del servidor
-      if (response.status === 401) {
-        showFieldError(passwordInput, passwordError, 'Correo o contraseña incorrectos');
-      } else if (response.status === 404) {
-        showFieldError(emailInput, emailError, 'No existe una cuenta con este correo');
+      // Manejar errores específicos del servidor
+      if (response.status === 404) {
+        // Email no registrado
+        showFieldError(emailInput, emailError, data.detail || 'No existe ninguna cuenta con ese correo electrónico');
+      } else if (response.status === 401) {
+        // Contraseña incorrecta
+        showFieldError(passwordInput, passwordError, data.detail || 'Contraseña incorrecta');
       } else if (response.status === 400) {
-        // Posible cuenta de Google OAuth
-        showFieldError(passwordInput, passwordError, data.detail || 'Error al iniciar sesión');
+        // Cuenta usa Google OAuth o error de validación
+        const errorMsg = data.detail || 'Error al iniciar sesión';
+        
+        // Si el mensaje menciona Google OAuth, mostrarlo en el campo de contraseña
+        if (errorMsg.includes('Google OAuth') || errorMsg.includes('Google')) {
+          showFieldError(passwordInput, passwordError, errorMsg);
+        } else {
+          showFieldError(passwordInput, passwordError, errorMsg);
+        }
       } else {
+        // Otros errores
         showFieldError(passwordInput, passwordError, data.detail || 'Error al iniciar sesión. Por favor, inténtalo de nuevo.');
       }
       setLoadingState(false);
