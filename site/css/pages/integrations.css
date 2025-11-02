@@ -416,6 +416,35 @@
   transform: translateY(0);
 }
 
+/* Estilos para el input del modal de Shopify */
+.input-group {
+  margin-top: 1rem;
+}
+
+.input-group .form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  background: #1f2937;
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input-group .form-input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.input-group small {
+  color: #9ca3af;
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
 @media (max-width: 768px) {
   .confirm-modal-content {
     width: 95%;

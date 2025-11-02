@@ -76,8 +76,8 @@
           <p class="category-description">Integra tu tienda online para sincronizar pedidos y clientes</p>
           
           <div class="integration-cards">
-            <!-- Shopify Integration (Coming Soon) -->
-            <div class="integration-card disabled">
+            <!-- Shopify Integration -->
+            <div class="integration-card available shopify-card">
               <div class="integration-icon shopify-icon">
                 <img src="/assets/icons/shopify.webp" alt="Shopify" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                 <i class="fas fa-shopping-bag" style="display: none; font-size: 2rem; color: #96bf48;"></i>
@@ -86,11 +86,10 @@
                 <h3>Shopify</h3>
                 <p>Conecta tu tienda Shopify para gestionar pedidos y clientes</p>
               </div>
-              <button class="integration-btn shopify-btn" disabled>
-                <i class="fas fa-clock"></i>
-                Próximamente
+              <button class="integration-btn primary" id="shopifyConnectBtn">
+                <i class="fas fa-plug"></i>
+                Conectar Shopify
               </button>
-              <div class="coming-soon-badge">Próximamente</div>
             </div>
           </div>
         </section>
@@ -137,6 +136,64 @@
           Cancelar
         </button>
         <button class="confirm-modal-btn confirm" id="confirmDisconnectBtn">
+          <i class="fas fa-unlink"></i>
+          Desconectar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para ingresar el dominio de la tienda Shopify -->
+  <div id="shopifyDomainModal" class="confirm-modal" style="display: none;">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+      <div class="confirm-modal-header">
+        <i class="fas fa-shopping-bag"></i>
+        <h3>Conectar tienda Shopify</h3>
+      </div>
+      <div class="confirm-modal-body">
+        <p>Ingresa el dominio de tu tienda Shopify:</p>
+        <div class="input-group" style="margin-top: 1rem;">
+          <input 
+            type="text" 
+            id="shopifyDomainInput" 
+            class="form-input" 
+            placeholder="mitienda.myshopify.com"
+            style="width: 100%; padding: 0.75rem; border: 1px solid #374151; border-radius: 8px; background: #1f2937; color: #fff;">
+          <small style="color: #9ca3af; display: block; margin-top: 0.5rem;">
+            Ejemplo: mitienda.myshopify.com
+          </small>
+        </div>
+      </div>
+      <div class="confirm-modal-footer">
+        <button class="confirm-modal-btn cancel" id="cancelShopifyBtn">
+          Cancelar
+        </button>
+        <button class="confirm-modal-btn confirm" id="confirmShopifyBtn">
+          <i class="fas fa-arrow-right"></i>
+          Continuar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación para desconectar Shopify -->
+  <div id="disconnectShopifyModal" class="confirm-modal" style="display: none;">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+      <div class="confirm-modal-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Desconectar Shopify</h3>
+      </div>
+      <div class="confirm-modal-body">
+        <p>¿Estás seguro de que deseas desconectar tu tienda Shopify?</p>
+        <p class="confirm-modal-warning">Se perderá el acceso a pedidos y datos de clientes.</p>
+      </div>
+      <div class="confirm-modal-footer">
+        <button class="confirm-modal-btn cancel" id="cancelDisconnectShopifyBtn">
+          Cancelar
+        </button>
+        <button class="confirm-modal-btn confirm" id="confirmDisconnectShopifyBtn">
           <i class="fas fa-unlink"></i>
           Desconectar
         </button>

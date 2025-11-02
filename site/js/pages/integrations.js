@@ -4,8 +4,9 @@ import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 import { initSidebar } from '/js/components/sidebar.js';
 
-// Estado de conexión de Gmail
+// Estado de conexión de Gmail y Shopify
 let gmailConnected = false;
+let shopifyConnected = false;
 
 // Verificar estado de conexión de Gmail
 async function checkGmailConnection() {
@@ -195,6 +196,238 @@ async function executeDisconnect() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SHOPIFY INTEGRATION
+// ═══════════════════════════════════════════════════════════════════
+
+// Verificar estado de conexión de Shopify
+async function checkShopifyConnection() {
+  try {
+    const response = await fetchWithAuth(`/shopify/status`, {
+      method: 'GET'
+    });
+    
+    if (response.status === 404) {
+      console.log('Endpoint de Shopify status no implementado aún');
+      return false;
+    }
+    
+    if (!response.ok) {
+      console.error('Error al verificar estado de Shopify:', response.status);
+      return false;
+    }
+    
+    const data = await response.json();
+    return data.connected || false;
+    
+  } catch (error) {
+    console.error('Error al verificar conexión de Shopify:', error);
+    return false;
+  }
+}
+
+// Actualizar UI de la tarjeta de Shopify según estado de conexión
+function updateShopifyCardUI(connected) {
+  shopifyConnected = connected;
+  
+  const card = document.querySelector('.integration-card.shopify-card');
+  const btn = document.getElementById('shopifyConnectBtn');
+  
+  if (!card || !btn) return;
+  
+  if (connected) {
+    // Estado: Conectado
+    card.classList.remove('available');
+    card.classList.add('connected');
+    
+    // Agregar badge de "Conectado"
+    let connectedBadge = card.querySelector('.connected-badge');
+    if (!connectedBadge) {
+      connectedBadge = document.createElement('div');
+      connectedBadge.className = 'connected-badge';
+      connectedBadge.innerHTML = '<i class="fas fa-check-circle"></i> Conectado';
+      card.appendChild(connectedBadge);
+    }
+    
+    // Cambiar botón a "Desconectar"
+    btn.className = 'integration-btn disconnect-btn';
+    btn.innerHTML = '<i class="fas fa-unlink"></i> Desconectar';
+    btn.onclick = disconnectShopify;
+    
+  } else {
+    // Estado: Desconectado
+    card.classList.remove('connected');
+    card.classList.add('available');
+    
+    // Remover badge de "Conectado"
+    const connectedBadge = card.querySelector('.connected-badge');
+    if (connectedBadge) {
+      connectedBadge.remove();
+    }
+    
+    // Cambiar botón a "Conectar"
+    btn.className = 'integration-btn primary';
+    btn.innerHTML = '<i class="fas fa-plug"></i> Conectar Shopify';
+    btn.onclick = initiateShopifyOAuth;
+  }
+}
+
+// Mostrar modal para pedir el dominio de la tienda Shopify
+function initiateShopifyOAuth() {
+  const modal = document.getElementById('shopifyDomainModal');
+  const input = document.getElementById('shopifyDomainInput');
+  
+  modal.style.display = 'flex';
+  input.value = '';
+  input.focus();
+  
+  // Event listeners
+  const cancelBtn = document.getElementById('cancelShopifyBtn');
+  const confirmBtn = document.getElementById('confirmShopifyBtn');
+  const overlay = modal.querySelector('.confirm-modal-overlay');
+  
+  const closeModal = () => {
+    modal.style.display = 'none';
+    cancelBtn.removeEventListener('click', closeModal);
+    confirmBtn.removeEventListener('click', confirmShopify);
+    overlay.removeEventListener('click', closeModal);
+    input.removeEventListener('keypress', handleEnter);
+  };
+  
+  const confirmShopify = async () => {
+    const shopDomain = input.value.trim();
+    
+    if (!shopDomain) {
+      notify.error('Por favor ingresa el dominio de tu tienda Shopify');
+      input.focus();
+      return;
+    }
+    
+    closeModal();
+    await connectShopify(shopDomain);
+  };
+  
+  const handleEnter = (e) => {
+    if (e.key === 'Enter') {
+      confirmShopify();
+    }
+  };
+  
+  cancelBtn.addEventListener('click', closeModal);
+  confirmBtn.addEventListener('click', confirmShopify);
+  overlay.addEventListener('click', closeModal);
+  input.addEventListener('keypress', handleEnter);
+}
+
+// Conectar con Shopify
+async function connectShopify(shopDomain) {
+  const shopifyBtn = document.getElementById('shopifyConnectBtn');
+  
+  try {
+    shopifyBtn.disabled = true;
+    shopifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
+    
+    // Solicitar URL de OAuth al backend
+    const response = await fetchWithAuth(`/shopify/connect?shop=${encodeURIComponent(shopDomain)}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Error al conectar' }));
+      throw new Error(error.detail || 'Error al iniciar OAuth');
+    }
+    
+    // El backend debería redirigir automáticamente, pero por si acaso:
+    const data = await response.json().catch(() => null);
+    console.log('auth_url:', data?.auth_url);
+
+    if (data && data.auth_url) {
+      window.location.href = data.auth_url;
+    }
+    // Si no hay JSON, el backend ya redirigió con RedirectResponse
+    
+  } catch (error) {
+    console.error('Error al conectar Shopify:', error);
+    notify.error(error.message || 'Error al conectar con Shopify. Verifica el dominio e inténtalo de nuevo.');
+    
+    // Restaurar botón
+    shopifyBtn.disabled = false;
+    updateShopifyCardUI(false);
+  }
+}
+
+// Desconectar Shopify
+async function disconnectShopify() {
+  showDisconnectShopifyModal();
+}
+
+// Mostrar modal de confirmación para desconectar Shopify
+function showDisconnectShopifyModal() {
+  const modal = document.getElementById('disconnectShopifyModal');
+  modal.style.display = 'flex';
+  
+  // Event listeners
+  const cancelBtn = document.getElementById('cancelDisconnectShopifyBtn');
+  const confirmBtn = document.getElementById('confirmDisconnectShopifyBtn');
+  const overlay = modal.querySelector('.confirm-modal-overlay');
+  
+  const closeModal = () => {
+    modal.style.display = 'none';
+    cancelBtn.removeEventListener('click', closeModal);
+    confirmBtn.removeEventListener('click', confirmDisconnect);
+    overlay.removeEventListener('click', closeModal);
+  };
+  
+  const confirmDisconnect = async () => {
+    closeModal();
+    await executeShopifyDisconnect();
+  };
+  
+  cancelBtn.addEventListener('click', closeModal);
+  confirmBtn.addEventListener('click', confirmDisconnect);
+  overlay.addEventListener('click', closeModal);
+}
+
+// Ejecutar desconexión de Shopify
+async function executeShopifyDisconnect() {
+  const shopifyBtn = document.getElementById('shopifyConnectBtn');
+  
+  try {
+    shopifyBtn.disabled = true;
+    shopifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Desconectando...';
+    
+    const response = await fetchWithAuth(`/shopify/disconnect`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.status === 404) {
+      notify.warning('Funcionalidad de desconexión aún no disponible en el servidor');
+      updateShopifyCardUI(true);
+      shopifyBtn.disabled = false;
+      return;
+    }
+    
+    if (!response.ok) {
+      throw new Error('Error al desconectar Shopify');
+    }
+    
+    notify.success('Shopify desconectado correctamente');
+    updateShopifyCardUI(false);
+    
+  } catch (error) {
+    console.error('Error al desconectar Shopify:', error);
+    notify.error('Error al desconectar Shopify. Por favor, inténtalo de nuevo.');
+    
+    // Restaurar estado anterior
+    updateShopifyCardUI(true);
+  } finally {
+    shopifyBtn.disabled = false;
+  }
+}
+
 // Inicialización
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Esperar configuración
@@ -217,22 +450,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 3. Cargar sidebar usando la función estándar
   await initSidebar('#sidebarContainer');
   
-  // 4. Verificar estado de conexión de Gmail PRIMERO
-  const connected = await checkGmailConnection();
-  updateGmailCardUI(connected);
+  // 4. Verificar estado de conexión de Gmail y Shopify PRIMERO
+  const gmailStatus = await checkGmailConnection();
+  updateGmailCardUI(gmailStatus);
   
-  // 5. DESPUÉS verificar si venimos del callback de Gmail y mostrar mensajes
+  const shopifyStatus = await checkShopifyConnection();
+  updateShopifyCardUI(shopifyStatus);
+  
+  // 5. DESPUÉS verificar si venimos del callback y mostrar mensajes
   const urlParams = new URLSearchParams(window.location.search);
   const gmailConnected = urlParams.get('gmail_connected');
+  const msg = urlParams.get('msg');
   const error = urlParams.get('error');
   
   if (gmailConnected === 'success') {
     notify.success('¡Gmail conectado correctamente! Ya puedes recibir correos.');
     // Limpiar URL
     window.history.replaceState({}, document.title, '/secciones/integrations.html');
+  } else if (msg === 'shopify_connected') {
+    notify.success('¡Shopify conectado correctamente! Ya puedes sincronizar pedidos y clientes.');
+    // Limpiar URL
+    window.history.replaceState({}, document.title, '/secciones/integrations.html');
   } else if (error) {
-    // Mensaje genérico y amigable para cualquier error
-    notify.error('Ha ocurrido un error al integrar tu cuenta de Gmail. Por favor, inténtalo de nuevo.');
+    // Mensajes específicos según el error
+    const errorMessages = {
+      'access_denied': 'Has cancelado la conexión con la tienda.',
+      'invalid_session': 'La sesión ha expirado. Por favor, inténtalo de nuevo.',
+      'session_expired': 'La sesión ha expirado. Por favor, inténtalo de nuevo.',
+      'connection_failed': 'Ha ocurrido un error al conectar. Por favor, inténtalo de nuevo.',
+      'no_code': 'No se recibió código de autorización. Por favor, inténtalo de nuevo.'
+    };
+    
+    const errorMsg = errorMessages[error] || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.';
+    notify.error(errorMsg);
     // Limpiar URL
     window.history.replaceState({}, document.title, '/secciones/integrations.html');
   }
