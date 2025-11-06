@@ -2,22 +2,22 @@
 
 /* Medidas del sidebar (ajusta a tu diseño) */
 :root{
-  --sb-expanded: 28vh;
-  --sb-collapsed: 9vh; /* si prefieres 7.2vh, cámbialo aquí */
+  --sb-expanded: 17.5rem;  /* ~280px */
+  --sb-collapsed: 5.7rem; 
 }
 
 /* El body solo usa grid cuando hay sidebar en la página */
 body.has-sidebar{
   display: grid;
-  grid-template-columns: var(--sb-expanded) 1fr;
+  grid-template-columns: var(--sb-collapsed) 1fr;  /* Inicia colapsada */
   min-height: 100dvh;
   transition: grid-template-columns .25s ease;
   overflow: hidden; /* mantener scroll dentro del main */
 }
 
-/* Estado colapsado (lo marcamos desde sidebar.toggle()) */
-body.has-sidebar.sidebar-collapsed{
-  grid-template-columns: var(--sb-collapsed) 1fr;
+/* Estado expandido (al hacer hover sobre sidebar) */
+body.has-sidebar:has(.sidebar:hover){
+  grid-template-columns: var(--sb-expanded) 1fr;
 }
 
 /* El contenedor del sidebar ocupa su columna del grid */
@@ -29,18 +29,17 @@ body.has-sidebar.sidebar-collapsed{
 /* El contenido principal rellena y se contrae (clave: min-width:0) */
 .main-content{
   min-width: 0;
-  display: block;          /* ← fuera flex: sticky va fino */
-  overflow-y: auto;        /* scroller real de la página */
+  display: block;
+  overflow-y: auto;
   overflow-x: hidden;
   background: var(--color-bg);
   margin-left: 0;
   transition: none;
   scrollbar-color: #8f8f8f transparent;
-
 }
 
 /* Móvil: el grid no aporta; el sidebar se gestiona como off-canvas */
-@media (max-width: 768px){
+@media (max-width: 48rem){  /* ~768px */
   body.has-sidebar{
     display: block;
   }

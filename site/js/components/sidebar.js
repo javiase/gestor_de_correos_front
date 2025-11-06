@@ -31,7 +31,7 @@ class EmailSidebar {
     this.createBtn     = document.querySelector(".create-email");
     this.userProfile   = document.getElementById("userProfile");
     this.isMobile      = window.innerWidth <= 768;
-    this.isCollapsed   = false;
+    this.isCollapsed   = false;  // Ya no se usa el toggle manual
 
     this.profileComplete   = false;
     this.onboardingComplete= false;

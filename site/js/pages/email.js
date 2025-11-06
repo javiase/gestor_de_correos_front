@@ -449,27 +449,33 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
   }
 
 
-  const safeHtml = DOMPurify.sanitize(innerHtml, {
-    ALLOW_UNKNOWN_PROTOCOLS: true,
-    ADD_TAGS: ['style','svg','path'],
-    ADD_ATTR: ['style','target','align','border','cellpadding','cellspacing','background'],
-    FORBID_TAGS: ['script','iframe','object','embed','form'],
-  });
+  // ——— 4) Optimización: Si el HTML es muy grande (>50KB), usar loading diferido ———
+  const htmlSize = innerHtml.length;
+  const isLargeEmail = htmlSize > 50000;
 
-  // ——— 4) Crea iframe aislado ———
-  const iframe = document.createElement('iframe');
-  iframe.className = 'gmail-frame';
-  // allow-same-origin necesario para poder ajustar altura/leer document,
-  // pero sin allow-scripts mantenemos seguridad
-  iframe.setAttribute(
-    'sandbox',
-    'allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation'
-  );
-  iframe.style.width = '100%';
-  iframe.style.border = '0';
+  if (isLargeEmail) {
+    // Mostrar indicador de carga
+    container.innerHTML = `
+      <div style="padding: 2rem; text-align: center; color: #9ca3af;">
+        <div style="margin-bottom: 1rem;">
+          <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
+        </div>
+        <div>Cargando email grande (${Math.round(htmlSize / 1024)}KB)...</div>
+      </div>
+    `;
+  }
 
-  // CSS base + overrides de tema
-  const baseCSS = `
+  // Sanitizar en el siguiente frame para no bloquear UI
+  requestAnimationFrame(() => {
+    const safeHtml = DOMPurify.sanitize(innerHtml, {
+      ALLOW_UNKNOWN_PROTOCOLS: true,
+      ADD_TAGS: ['style','svg','path'],
+      ADD_ATTR: ['style','target','align','border','cellpadding','cellspacing','background'],
+      FORBID_TAGS: ['script','iframe','object','embed','form'],
+    });
+
+    // CSS base + overrides de tema
+    const baseCSS = `
     :root { color-scheme: ${useWhite ? 'light' : 'dark'}; }
     html,body {
       margin:0 !important; padding:0 !important;
@@ -542,9 +548,52 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
     </html>
   `;
 
-  // --- PROBE offscreen: medimos altura real sin pintar nada visible ---
+  // --- OPTIMIZACIÓN: Para emails grandes (>50KB), skip probe y renderizar directamente ---
+  if (isLargeEmail) {
+    console.log(`[renderHtmlEmail] Email grande detectado (${htmlSize} bytes), usando Blob URL`);
+    
+    const iframe = document.createElement('iframe');
+    iframe.className = 'gmail-frame';
+    // Removido sandbox para evitar errores de scripts bloqueados
+    iframe.style.display = 'block';
+    iframe.style.width = '100%';
+    iframe.style.border = '0';
+    iframe.style.height = '800px'; // altura inicial generosa
+    iframe.style.transition = 'height .12s ease';
+    
+    // Para emails muy grandes, usar Blob URL en lugar de srcdoc
+    const blob = new Blob([srcdoc], { type: 'text/html' });
+    const blobUrl = URL.createObjectURL(blob);
+    iframe.src = blobUrl;
+
+    container.innerHTML = '';
+    container.appendChild(iframe);
+
+    // Ajustar altura una vez cargado
+    iframe.addEventListener('load', () => {
+      console.log('[renderHtmlEmail] Iframe grande cargado');
+      // Limpiar el blob URL después de un tiempo
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      
+      if (!iframe.contentWindow) return;
+      const idoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!idoc || !idoc.body) return;
+      
+      setTimeout(() => {
+        const h = (idoc.body?.scrollHeight || 800) + 16;
+        iframe.style.height = h + 'px';
+        container.dataset.lastH = String(h);
+        container.style.minHeight = '0';
+        console.log(`[renderHtmlEmail] Altura ajustada a ${h}px`);
+      }, 150);
+    });
+    
+    return; // Skip probe para emails grandes
+  }
+
+  // --- PROBE offscreen: medimos altura real sin pintar nada visible (solo emails pequeños) ---
   const probe = document.createElement('iframe');
-  probe.setAttribute('sandbox', 'allow-same-origin'); // para leer scrollHeight
+  // Removido sandbox para evitar errores de scripts bloqueados
   probe.style.position = 'absolute';
   probe.style.visibility = 'hidden';
   probe.style.pointerEvents = 'none';
@@ -561,10 +610,7 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
     // --- IFRAME REAL: se inserta ya con la altura final ---
     const iframe = document.createElement('iframe');
     iframe.className = 'gmail-frame';
-    iframe.setAttribute(
-      'sandbox',
-      'allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation'
-    );
+    // Removido sandbox para evitar errores de scripts bloqueados
     iframe.style.display = 'block';
     iframe.style.width = '100%';
     iframe.style.border = '0';
@@ -580,20 +626,24 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
 
     // Ajustes suaves si cambian cosas dentro (imágenes, fuentes, etc.)
     const fix = () => {
+      if (!iframe.contentWindow) return;
       const idoc = iframe.contentDocument || iframe.contentWindow.document;
-      if (!idoc) return;
+      if (!idoc || !idoc.body) return;
       const h = (idoc.body?.scrollHeight || measured) + 16;
       iframe.style.height = h + 'px';
       container.dataset.lastH = String(h);
     };
 
     iframe.addEventListener('load', () => {
+      if (!iframe.contentWindow) return;
       const idoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!idoc) return;
       Array.from(idoc.images || []).forEach(img => img.addEventListener('load', fix));
-      if ('ResizeObserver' in window) new ResizeObserver(fix).observe(idoc.body);
+      if ('ResizeObserver' in window && idoc.body) new ResizeObserver(fix).observe(idoc.body);
       setTimeout(fix, 300);
     });
-  });
+  }); // Cierre del probe.addEventListener('load')
+  }); // Cierre del requestAnimationFrame
 }
 
 
@@ -604,6 +654,7 @@ class EmailView {
     this.container = document.getElementById('chatContainer');
     this.prevBtn = null;
     this.nextBtn = null;
+    this.isLoading = false; // Estado de carga
 
     const params = new URLSearchParams(location.search);
     this.targetId = params.get('id') || null;
@@ -625,6 +676,86 @@ class EmailView {
     this.sortBy    = sessionStorage.getItem('inbox_sort_by') || 'id';
 
     this.init();
+  }
+
+  // Muestra spinner y oculta todo el contenido
+  showLoading() {
+    this.isLoading = true;
+    
+    // Ocultar todas las tarjetas y contenido
+    const gridContainer = document.querySelector('.grid-container');
+    const historyContainer = document.getElementById('historyContainer');
+    
+    if (gridContainer) {
+      gridContainer.style.visibility = 'hidden';
+      gridContainer.style.opacity = '0';
+    }
+    
+    if (historyContainer) {
+      historyContainer.style.visibility = 'hidden';
+      historyContainer.style.opacity = '0';
+    }
+    
+    const rightSidebar = document.querySelector('.right-sidebar');
+    if (rightSidebar) {
+      rightSidebar.classList.add('collapsed');
+      rightSidebar.style.visibility = 'hidden';
+    }
+
+    // Mostrar spinner en el contenedor principal
+    const chat = document.getElementById('chatContainer');
+    const existingSpinner = chat.querySelector('.email-loading-spinner');
+    if (!existingSpinner) {
+      const spinner = document.createElement('div');
+      spinner.className = 'email-loading-spinner';
+      spinner.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1rem;">
+          <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: #6b7280;"></i>
+          <div style="color: #9ca3af; font-size: 1rem;">Cargando correo...</div>
+        </div>
+      `;
+      chat.appendChild(spinner);
+    }
+  }
+
+  // Oculta spinner y muestra todo el contenido
+  hideLoading() {
+    this.isLoading = false;
+    
+    // Quitar spinner
+    const chat = document.getElementById('chatContainer');
+    const spinner = chat.querySelector('.email-loading-spinner');
+    if (spinner) {
+      spinner.remove();
+    }
+
+    // Mostrar todas las tarjetas con transición suave
+    const gridContainer = document.querySelector('.grid-container');
+    const historyContainer = document.getElementById('historyContainer');
+    
+    if (gridContainer) {
+      gridContainer.style.visibility = 'visible';
+      gridContainer.style.opacity = '1';
+    }
+    
+    if (historyContainer) {
+      historyContainer.style.visibility = 'visible';
+      historyContainer.style.opacity = '1';
+    }
+
+    // Mostrar sidebar y botón toggle con transición suave
+    const rightSidebar = document.querySelector('.right-sidebar');
+    const toggleBtn = document.getElementById('toggleRightSidebar');
+    
+    if (rightSidebar) {
+      rightSidebar.style.visibility = 'visible';
+      rightSidebar.style.opacity = '1';
+    }
+    
+    if (toggleBtn) {
+      toggleBtn.style.visibility = 'visible';
+      toggleBtn.style.opacity = '1';
+    }
   }
 
   async init() {
@@ -976,10 +1107,126 @@ class EmailView {
   }
 
   renderCurrent() {
+    // Mostrar loading al inicio
+    this.showLoading();
+    
     const id = this.ids[this.index];
     this.markAsRead(id);
     const email = this.cache.find(e => e.id === id);
-    if (!email) return console.error('Email no cargado aún');
+    if (!email) {
+      this.hideLoading();
+      return console.error('Email no cargado aún');
+    }
+
+    console.log(`[renderCurrent] Renderizando email:`, {
+      id: email.id,
+      hasHtml: !!email.body_html,
+      htmlSize: email.body_html?.length || 0,
+      subject: email.subject
+    });
+
+    // Flag para evitar llamar hideLoading múltiples veces
+    let loadingHidden = false;
+    const finishLoading = () => {
+      if (loadingHidden) return;
+      loadingHidden = true;
+      console.log('[renderCurrent] Ocultando loading y mostrando contenido');
+      this.hideLoading();
+      this.updateRightSidebar(email);
+    };
+
+    // Usar requestAnimationFrame para renderizar en el siguiente frame
+    requestAnimationFrame(() => {
+      // Renderizar todo el contenido
+      this.renderEmailContent(email);
+      
+      // **IMPORTANTE: Esperar a que el iframe del correo entrante esté cargado**
+      const checkIframeLoaded = () => {
+        const receivedContent = document.getElementById('receivedContent');
+        const iframe = receivedContent?.querySelector('iframe.gmail-frame');
+        
+        console.log('[checkIframeLoaded] Estado:', {
+          hasReceivedContent: !!receivedContent,
+          hasIframe: !!iframe,
+          iframeLoaded: iframe?.contentDocument?.readyState
+        });
+        
+        if (!iframe) {
+          // No hay iframe (es texto plano), ocultar loading directamente
+          console.log('[checkIframeLoaded] Sin iframe, mostrando contenido inmediatamente');
+          setTimeout(finishLoading, 100);
+          return;
+        }
+
+        // Timeout de seguridad: si tarda más de 8 segundos, mostrar igual
+        const safetyTimeout = setTimeout(() => {
+          console.warn('[checkIframeLoaded] Timeout alcanzado (8s), mostrando contenido');
+          finishLoading();
+        }, 8000);
+
+        let checkAttempts = 0;
+        const maxAttempts = 80; // 80 * 100ms = 8 segundos
+
+        // Verificar si el iframe ya está cargado
+        const checkLoad = () => {
+          if (loadingHidden) {
+            console.log('[checkLoad] Loading ya oculto, terminando');
+            return;
+          }
+          
+          checkAttempts++;
+          
+          const iframeWin = iframe.contentWindow;
+          const iframeDoc = iframeWin?.document;
+          
+          console.log(`[checkLoad] Intento ${checkAttempts}/${maxAttempts}:`, {
+            hasWindow: !!iframeWin,
+            hasDocument: !!iframeDoc,
+            readyState: iframeDoc?.readyState,
+            bodyExists: !!iframeDoc?.body,
+            bodyChildren: iframeDoc?.body?.children.length || 0
+          });
+          
+          if (iframeDoc && iframeDoc.readyState === 'complete' && iframeDoc.body) {
+            // Iframe completamente cargado
+            console.log('[checkLoad] Iframe completamente cargado');
+            clearTimeout(safetyTimeout);
+            setTimeout(finishLoading, 100);
+          } else if (checkAttempts >= maxAttempts) {
+            // Demasiados intentos
+            console.warn('[checkLoad] Máximo de intentos alcanzado, mostrando contenido');
+            clearTimeout(safetyTimeout);
+            finishLoading();
+          } else {
+            // Todavía cargando, verificar de nuevo
+            setTimeout(checkLoad, 100);
+          }
+        };
+
+        // Agregar listener de load como respaldo
+        iframe.addEventListener('load', () => {
+          console.log('[iframe.load] Evento load disparado');
+          clearTimeout(safetyTimeout);
+          setTimeout(finishLoading, 100);
+        }, { once: true });
+
+        // También escuchar errores
+        iframe.addEventListener('error', (e) => {
+          console.error('[iframe.error] Error cargando iframe:', e);
+          clearTimeout(safetyTimeout);
+          finishLoading();
+        }, { once: true });
+
+        // Iniciar verificación
+        setTimeout(checkLoad, 100);
+      };
+
+      // Dar tiempo suficiente para que el iframe se inserte en el DOM
+      setTimeout(checkIframeLoaded, 300);
+    });
+  }
+
+  renderEmailContent(email) {
 
     // ——— Historial de conversación ———
     const hist = document.getElementById('historyContainer');
@@ -1160,7 +1407,680 @@ class EmailView {
 
       }
     }
+
+    // 🆕 RENDERIZAR BARRA LATERAL CON INFORMACIÓN DE SHOPIFY
+    this.renderShopifySidebar(email);
   }
+
+  /**
+   * Actualiza la visibilidad del sidebar derecho basándose en si hay pedido
+   */
+  updateRightSidebar(email) {
+    const rightSidebar = document.querySelector('.right-sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const toggleBtn = document.getElementById('toggleRightSidebar');
+    if (!rightSidebar || !mainContent) return;
+
+    if (email.shopify_order) {
+      // Hay pedido: expandir sidebar
+      rightSidebar.classList.remove('collapsed');
+      mainContent.classList.add('sidebar-expanded');
+      if (toggleBtn) toggleBtn.classList.add('expanded');
+    } else {
+      // No hay pedido: mantener colapsado
+      rightSidebar.classList.add('collapsed');
+      mainContent.classList.remove('sidebar-expanded');
+      if (toggleBtn) toggleBtn.classList.remove('expanded');
+    }
+  }
+
+  /**
+   * 🆕 Renderiza la barra lateral con diseño limpio y contextual
+   */
+  renderShopifySidebar(email) {
+    // 1️⃣ ========== SETUP SIDEBAR TOGGLE ==========
+    const rightSidebar = document.querySelector('.right-sidebar');
+    
+    // Si no hay pedido, colapsar la sidebar
+    if (!email.shopify_order) {
+      rightSidebar?.classList.add('collapsed');
+    } else {
+      rightSidebar?.classList.remove('collapsed');
+    }
+    
+    // Setup del botón toggle
+    this.setupSidebarToggle();
+    
+    // 2️⃣ ========== ENCABEZADO CONTEXTUAL (Badges) ==========
+    const headerEl = document.getElementById('contextualHeader');
+    const badges = [];
+    
+    // Badge de estado de conversación
+    if (email.conversation_metadata?.status) {
+      const status = email.conversation_metadata.status;
+      badges.push(`<span class="badge conversation"><i class="fas fa-comments"></i> ${status}</span>`);
+    }
+    
+    // Badge de match Shopify
+    if (email.shopify_match) {
+      const match = email.shopify_match;
+      const confidence = match.confidence || 0;
+      const confidenceClass = confidence >= 0.8 ? 'high-confidence' : '';
+      const matchText = match.matchedBy === 'email' ? 'Email' : 
+                        match.matchedBy === 'phone' ? 'Teléfono' : 'Match';
+      badges.push(`<span class="badge match ${confidenceClass}">
+        <i class="fas fa-link"></i> ${matchText} (${Math.round(confidence * 100)}%)
+      </span>`);
+    }
+    
+    // Badges de clases de correo (máximo 2) con colores del inbox
+    if (email.clases_de_email && email.clases_de_email.length > 0) {
+      const classes = email.clases_de_email.slice(0, 2);
+      classes.forEach(cls => {
+        const badgeClass = this.getEmailClassBadgeClass(cls);
+        badges.push(`<span class="badge class ${badgeClass}"><i class="fas fa-tag"></i> ${cls}</span>`);
+      });
+      if (email.clases_de_email.length > 2) {
+        badges.push(`<span class="badge class badge-otros">+${email.clases_de_email.length - 2}</span>`);
+      }
+    }
+    
+    headerEl.innerHTML = badges.length > 0 ? badges.join('') : '';
+
+    // 3️⃣ ========== CARD DE PEDIDO ==========
+    const orderCard = document.getElementById('orderCard');
+    
+    if (email.shopify_order) {
+      const order = email.shopify_order;
+      orderCard.innerHTML = this.renderOrderCard(order, email);
+    } else {
+      // Sin pedido vinculado
+      orderCard.innerHTML = `
+        <div class="no-order-banner">
+          <i class="fas fa-box-open"></i> Sin pedido vinculado
+        </div>
+        ${email.shopify_customer ? this.renderOrderSelector(email) : ''}
+      `;
+    }
+
+    // 3️⃣ ========== CARD DE CLIENTE ==========
+    const customerCard = document.getElementById('customerCard');
+    
+    if (email.shopify_customer) {
+      const customer = email.shopify_customer;
+      customerCard.innerHTML = this.renderCustomerCard(customer);
+    } else {
+      customerCard.innerHTML = '<p style="color: #71717a; font-size: 13px; text-align: center; padding: 20px 0;">No hay información del cliente disponible</p>';
+    }
+
+    // 4️⃣ ========== PANELES SECUNDARIOS (Acordeones) ==========
+    const secondaryPanels = document.getElementById('secondaryPanels');
+    const panels = [];
+    
+    // Panel: Detalles del pedido
+    if (email.shopify_order) {
+      panels.push(this.renderOrderDetailsPanel(email.shopify_order));
+    }
+    
+    // Panel: Detalles del cliente
+    if (email.shopify_customer) {
+      panels.push(this.renderCustomerDetailsPanel(email.shopify_customer));
+    }
+    
+    // Panel: Detalles de la conversación
+    if (email.conversation_metadata) {
+      panels.push(this.renderConversationDetailsPanel(email.conversation_metadata, email.shopify_match));
+    }
+    
+    secondaryPanels.innerHTML = panels.join('');
+    
+    // Setup de acordeones
+    this.setupAccordions();
+    
+    // 5️⃣ ========== ACTUALIZAR BOTONES DE ACCIÓN ==========
+    this.updateActionButtons(email);
+  }
+
+  /**
+   * Renderiza la card principal del pedido
+   */
+  renderOrderCard(order, email) {
+    const firstItem = order.line_items?.[0];
+    const hasMoreItems = (order.line_items?.length || 0) > 1;
+    const tracking = order.tracking?.[0];
+    
+    return `
+      <div class="card-title">
+        <i class="fas fa-shopping-bag"></i>
+        Pedido
+      </div>
+      
+      <div class="order-number-display">
+        <div class="order-number-large" onclick="navigator.clipboard.writeText('${order.name || order.order_number}')" title="Click para copiar">
+          #${order.name || order.order_number || 'N/A'}
+        </div>
+        ${order.shopify_id ? `
+        <a href="https://admin.shopify.com/store/tu-tienda/orders/${order.shopify_id}" 
+           target="_blank" 
+           class="order-link">
+          <i class="fas fa-external-link-alt"></i>
+          Ver en Shopify
+        </a>` : ''}
+      </div>
+      
+      <div class="status-pills">
+        <span class="status-pill ${this.getOrderStatusClass(order.financial_status)}">
+          <i class="fas fa-circle"></i>
+          ${this.getOrderStatusText(order.financial_status)}
+        </span>
+        <span class="status-pill ${this.getFulfillmentStatusClass(order.fulfillment_status)}">
+          <i class="fas fa-shipping-fast"></i>
+          ${this.getFulfillmentStatusText(order.fulfillment_status)}
+        </span>
+      </div>
+      
+      <div class="order-total">${this.formatPrice(order.total_price, order.currency)}</div>
+      
+      <div class="order-summary">
+        <div class="summary-thumbnail">
+          ${firstItem?.image ? 
+            `<img src="${firstItem.image}" alt="${firstItem.title || 'Producto'}" loading="lazy">` :
+            '<i class="fas fa-box"></i>'
+          }
+          ${hasMoreItems ? `<span class="thumbnail-badge">+${order.line_items.length - 1}</span>` : ''}
+        </div>
+        
+        <div class="summary-details">
+          <div class="summary-row">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="value">${this.formatShopifyDate(order.created_at)}</span>
+          </div>
+          
+          ${order.shipping_address?.city && order.shipping_address?.country ? `
+          <div class="summary-row">
+            <i class="fas fa-map-marker-alt"></i>
+            <span class="value">${order.shipping_address.city}, ${order.shipping_address.country}</span>
+          </div>` : ''}
+          
+          <div class="summary-row">
+            <i class="fas fa-truck"></i>
+            ${tracking ? 
+              `<a href="${tracking.url || '#'}" target="_blank" class="tracking-link">${tracking.number || tracking.code}</a>` :
+              '<span class="value" style="color: #71717a;">Sin tracking</span>'
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Renderiza el selector de pedidos cuando no hay uno vinculado
+   */
+  renderOrderSelector(email) {
+    // TODO: Implementar lógica para obtener pedidos recientes del cliente
+    // Por ahora retorna un placeholder
+    return `
+      <div class="order-selector">
+        <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 8px;">Pedidos recientes de este cliente:</p>
+        <div style="color: #71717a; font-size: 12px; font-style: italic; padding: 12px; text-align: center;">
+          Funcionalidad en desarrollo
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Renderiza la card principal del cliente
+   */
+  renderCustomerCard(customer) {
+    const location = customer.default_address ? 
+      `${customer.default_address.city || ''}${customer.default_address.country ? ', ' + customer.default_address.country : ''}` : '';
+    
+    return `
+      <div class="card-title">
+        <i class="fas fa-user"></i>
+        Cliente
+      </div>
+      
+      <div class="customer-name-display">${customer.name || customer.email || 'Cliente sin nombre'}</div>
+      
+      ${location ? `
+      <div class="customer-location">
+        <i class="fas fa-map-marker-alt"></i>
+        ${location}
+      </div>` : ''}
+      
+      <div class="customer-metrics">
+        <div class="metric-item">
+          <div class="metric-label">Pedidos</div>
+          <div class="metric-value">${customer.orders_count || 0}</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Total gastado</div>
+          <div class="metric-value highlight">${this.formatPrice(customer.total_spent, 'EUR')}</div>
+        </div>
+      </div>
+      
+      <div class="customer-contact">
+        ${customer.email ? `
+        <div class="contact-item">
+          <i class="fas fa-envelope"></i>
+          <span class="contact-value" onclick="navigator.clipboard.writeText('${customer.email}')" title="Click para copiar">
+            ${customer.email}
+          </span>
+        </div>` : ''}
+        
+        ${customer.phone ? `
+        <div class="contact-item">
+          <i class="fas fa-phone"></i>
+          <span class="contact-value" onclick="navigator.clipboard.writeText('${customer.phone}')" title="Click para copiar">
+            ${customer.phone}
+          </span>
+        </div>` : ''}
+      </div>
+      
+      ${customer.tags && customer.tags.length > 0 ? `
+      <div class="customer-tags">
+        ${customer.tags.slice(0, 4).map(tag => `<span class="customer-tag">${tag}</span>`).join('')}
+        ${customer.tags.length > 4 ? `<span class="customer-tag more">+${customer.tags.length - 4}</span>` : ''}
+      </div>` : ''}
+    `;
+  }
+
+  /**
+   * Renderiza el panel de detalles del pedido (acordeón)
+   */
+  renderOrderDetailsPanel(order) {
+    const items = order.line_items || [];
+    
+    return `
+      <div class="accordion" data-panel="order-details">
+        <div class="accordion-header">
+          <div class="accordion-title">
+            <i class="fas fa-list"></i>
+            Detalles del pedido
+          </div>
+          <i class="fas fa-chevron-down accordion-icon"></i>
+        </div>
+        <div class="accordion-content">
+          ${items.length > 0 ? `
+          <div class="products-table">
+            ${items.map(item => `
+            <div class="product-row">
+              <div class="product-thumb">
+                ${item.image ? 
+                  `<img src="${item.image}" alt="${item.title || 'Producto'}" loading="lazy">` :
+                  '<i class="fas fa-box"></i>'
+                }
+              </div>
+              <div class="product-info">
+                <div class="product-name">${item.title || 'Producto'}</div>
+                ${item.variant ? `<div class="product-variant">${item.variant}</div>` : ''}
+                ${item.sku ? `<div class="product-sku">SKU: ${item.sku}</div>` : ''}
+              </div>
+              <div class="product-qty-price">
+                <div class="product-qty">× ${item.quantity || 1}</div>
+                <div class="product-price">${this.formatPrice(item.price, order.currency)}</div>
+              </div>
+            </div>
+            `).join('')}
+          </div>` : '<p style="color: #71717a; font-size: 12px;">Sin productos</p>'}
+          
+          ${order.shipping_address || order.billing_address ? `
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.04);">
+            <div class="address-grid">
+              ${order.shipping_address ? `
+              <div class="address-block">
+                <div class="address-label"><i class="fas fa-shipping-fast"></i> Dirección de envío</div>
+                <div class="address-text">
+                  ${order.shipping_address.address1 || ''}<br>
+                  ${order.shipping_address.address2 ? order.shipping_address.address2 + '<br>' : ''}
+                  ${order.shipping_address.city || ''}, ${order.shipping_address.zip || ''}<br>
+                  ${order.shipping_address.province || ''}, ${order.shipping_address.country || ''}
+                </div>
+              </div>` : ''}
+              
+              ${order.billing_address ? `
+              <div class="address-block">
+                <div class="address-label"><i class="fas fa-file-invoice"></i> Dirección de facturación</div>
+                <div class="address-text">
+                  ${order.billing_address.address1 || ''}<br>
+                  ${order.billing_address.address2 ? order.billing_address.address2 + '<br>' : ''}
+                  ${order.billing_address.city || ''}, ${order.billing_address.zip || ''}<br>
+                  ${order.billing_address.province || ''}, ${order.billing_address.country || ''}
+                </div>
+              </div>` : ''}
+            </div>
+          </div>` : ''}
+          
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.04);">
+            <div class="info-grid">
+              ${order.gateway ? `
+              <div class="info-item">
+                <span class="info-item-label">Método de pago</span>
+                <span class="info-item-value">${order.gateway}</span>
+              </div>` : ''}
+              
+              ${order.referring_site ? `
+              <div class="info-item">
+                <span class="info-item-label">Sitio referente</span>
+                <span class="info-item-value">${order.referring_site}</span>
+              </div>` : ''}
+              
+              ${order.landing_site ? `
+              <div class="info-item">
+                <span class="info-item-label">Página de llegada</span>
+                <span class="info-item-value">${order.landing_site}</span>
+              </div>` : ''}
+              
+              ${order.note ? `
+              <div class="info-item">
+                <span class="info-item-label">Nota del pedido</span>
+                <span class="info-item-value">${order.note}</span>
+              </div>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Renderiza el panel de detalles del cliente (acordeón)
+   */
+  renderCustomerDetailsPanel(customer) {
+    return `
+      <div class="accordion" data-panel="customer-details">
+        <div class="accordion-header">
+          <div class="accordion-title">
+            <i class="fas fa-user-circle"></i>
+            Detalles del cliente
+          </div>
+          <i class="fas fa-chevron-down accordion-icon"></i>
+        </div>
+        <div class="accordion-content">
+          <div class="info-grid">
+            ${customer.email ? `
+            <div class="info-item">
+              <span class="info-item-label">Email principal</span>
+              <span class="info-item-value">${customer.email}</span>
+            </div>` : ''}
+            
+            ${customer.last_order_at ? `
+            <div class="info-item">
+              <span class="info-item-label">Último pedido</span>
+              <span class="info-item-value">${this.formatShopifyDate(customer.last_order_at)}</span>
+            </div>` : ''}
+            
+            ${customer.default_address ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.04);">
+              <div class="address-block">
+                <div class="address-label"><i class="fas fa-home"></i> Dirección por defecto</div>
+                <div class="address-text">
+                  ${customer.default_address.address1 || ''}<br>
+                  ${customer.default_address.address2 ? customer.default_address.address2 + '<br>' : ''}
+                  ${customer.default_address.city || ''}, ${customer.default_address.zip || ''}<br>
+                  ${customer.default_address.province || ''}, ${customer.default_address.country || ''}
+                </div>
+              </div>
+            </div>` : ''}
+          </div>
+          
+          <div style="margin-top: 16px; padding: 12px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.3); border-radius: 6px; text-align: center;">
+            <p style="font-size: 12px; color: #fbbf24; margin: 0;">
+              <i class="fas fa-info-circle"></i> Pedidos recientes y conversaciones en desarrollo
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Renderiza el panel de detalles de la conversación (acordeón)
+   */
+  renderConversationDetailsPanel(conversation, match) {
+    return `
+      <div class="accordion" data-panel="conversation-details">
+        <div class="accordion-header">
+          <div class="accordion-title">
+            <i class="fas fa-comments"></i>
+            Detalles de la conversación
+          </div>
+          <i class="fas fa-chevron-down accordion-icon"></i>
+        </div>
+        <div class="accordion-content">
+          <div class="info-grid">
+            ${conversation.status ? `
+            <div class="info-item">
+              <span class="info-item-label">Estado</span>
+              <span class="info-item-value">${conversation.status}</span>
+            </div>` : ''}
+            
+            ${conversation.inbound_count !== undefined ? `
+            <div class="info-item">
+              <span class="info-item-label">Mensajes entrantes</span>
+              <span class="info-item-value">${conversation.inbound_count}</span>
+            </div>` : ''}
+            
+            ${conversation.outbound_count !== undefined ? `
+            <div class="info-item">
+              <span class="info-item-label">Mensajes salientes</span>
+              <span class="info-item-value">${conversation.outbound_count}</span>
+            </div>` : ''}
+            
+            ${conversation.last_activity_at ? `
+            <div class="info-item">
+              <span class="info-item-label">Última actividad</span>
+              <span class="info-item-value">${this.formatShopifyDate(conversation.last_activity_at)}</span>
+            </div>` : ''}
+            
+            ${match ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.04);">
+              <div class="info-item">
+                <span class="info-item-label">Match por</span>
+                <span class="info-item-value">${match.matchedBy || 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-item-label">Confianza del match</span>
+                <span class="info-item-value">${Math.round((match.confidence || 0) * 100)}%</span>
+              </div>
+            </div>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Configura los acordeones (toggle open/close)
+   */
+  setupAccordions() {
+    const accordions = document.querySelectorAll('.accordion');
+    
+    accordions.forEach(accordion => {
+      const header = accordion.querySelector('.accordion-header');
+      
+      // Clonar para eliminar listeners anteriores
+      const newHeader = header.cloneNode(true);
+      header.parentNode.replaceChild(newHeader, header);
+      
+      newHeader.addEventListener('click', () => {
+        const isOpen = accordion.classList.contains('open');
+        
+        // Cerrar todos los demás acordeones
+        accordions.forEach(acc => acc.classList.remove('open'));
+        
+        // Toggle este acordeón
+        if (!isOpen) {
+          accordion.classList.add('open');
+        }
+      });
+    });
+  }
+
+  /**
+   * Actualiza el estado de los botones de acción
+   */
+  updateActionButtons(email) {
+    const order = email.shopify_order;
+    
+    // Botón de reembolso
+    const btnReembolso = document.getElementById('actionReembolso');
+    if (order && order.financial_status === 'paid') {
+      btnReembolso.disabled = false;
+      btnReembolso.setAttribute('data-tooltip', 'Crear reembolso');
+    } else {
+      btnReembolso.disabled = true;
+      btnReembolso.setAttribute('data-tooltip', order ? 'El pedido no está pagado' : 'Sin pedido vinculado');
+    }
+    
+    // Botón de cancelar
+    const btnCancelar = document.getElementById('actionCancelar');
+    if (order && !order.cancelled_at && order.fulfillment_status !== 'fulfilled') {
+      btnCancelar.disabled = false;
+      btnCancelar.setAttribute('data-tooltip', 'Cancelar pedido');
+    } else {
+      btnCancelar.disabled = true;
+      btnCancelar.setAttribute('data-tooltip', order?.cancelled_at ? 'Pedido ya cancelado' : 
+                                                order?.fulfillment_status === 'fulfilled' ? 'Pedido ya enviado' : 
+                                                'Sin pedido vinculado');
+    }
+    
+    // Botón de tracking
+    const btnTracking = document.getElementById('actionTracking');
+    if (order && order.tracking && order.tracking.length > 0) {
+      btnTracking.disabled = false;
+      btnTracking.setAttribute('data-tooltip', 'Ver seguimiento');
+      btnTracking.onclick = () => {
+        const url = order.tracking[0].url;
+        if (url) window.open(url, '_blank');
+      };
+    } else {
+      btnTracking.disabled = true;
+      btnTracking.setAttribute('data-tooltip', 'Sin información de tracking');
+    }
+    
+    // Botón de descuento
+    const btnDescuento = document.getElementById('actionDescuento');
+    if (order) {
+      btnDescuento.disabled = false;
+      btnDescuento.setAttribute('data-tooltip', 'Crear código de descuento');
+    } else {
+      btnDescuento.disabled = true;
+      btnDescuento.setAttribute('data-tooltip', 'Sin pedido vinculado');
+    }
+  }
+
+  /**
+   * Obtiene la clase CSS para el estado de envío
+   */
+  getFulfillmentStatusClass(status) {
+    const statusMap = {
+      'fulfilled': 'fulfilled',
+      'partial': 'pending',
+      'unfulfilled': 'unfulfilled',
+      'null': 'unfulfilled',
+      '': 'unfulfilled'
+    };
+    return statusMap[status] || 'unfulfilled';
+  }
+
+
+  /**
+   * Formatea precios con símbolo de moneda
+   */
+  formatPrice(amount, currency = 'EUR') {
+    if (amount === undefined || amount === null) return 'N/A';
+    
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return 'N/A';
+    
+    const symbols = {
+      'EUR': '€',
+      'USD': '$',
+      'GBP': '£',
+      'JPY': '¥'
+    };
+    
+    const symbol = symbols[currency] || currency;
+    return `${numAmount.toFixed(2)} ${symbol}`;
+  }
+
+  /**
+   * Formatea fechas de Shopify de manera amigable
+   */
+  formatShopifyDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    if (diffDays === 0) {
+      return `Hoy, ${hours}:${minutes}`;
+    } else if (diffDays === 1) {
+      return `Ayer, ${hours}:${minutes}`;
+    } else if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    } else {
+      return `${day}/${month}/${year}`;
+    }
+  }
+
+  /**
+   * Obtiene la clase CSS para el estado financiero del pedido
+   */
+  getOrderStatusClass(status) {
+    const statusMap = {
+      'paid': 'paid',
+      'pending': 'pending',
+      'refunded': 'refunded',
+      'partially_refunded': 'refunded',
+      'voided': 'refunded'
+    };
+    return statusMap[status] || 'pending';
+  }
+
+  /**
+   * Obtiene el texto legible para el estado financiero
+   */
+  getOrderStatusText(status) {
+    const textMap = {
+      'paid': 'Pagado',
+      'pending': 'Pendiente',
+      'refunded': 'Reembolsado',
+      'partially_refunded': 'Reembolso Parcial',
+      'voided': 'Anulado',
+      'authorized': 'Autorizado'
+    };
+    return textMap[status] || status || 'Desconocido';
+  }
+
+  /**
+   * Obtiene el texto legible para el estado de envío
+   */
+  getFulfillmentStatusText(status) {
+    const textMap = {
+      'fulfilled': 'Enviado',
+      'partial': 'Envío Parcial',
+      'unfulfilled': 'Pendiente de Envío',
+      'null': 'Pendiente de Envío',
+      '': 'Pendiente de Envío'
+    };
+    return textMap[status] || status || 'Pendiente de Envío';
+  }
+
 
 
 
@@ -1401,6 +2321,55 @@ class EmailView {
     } catch (e) {
       console.error('Error al borrar el email:', e);
     }
+  }
+
+  /**
+   * 🆕 Mapea el nombre de la clase de email al nombre de la clase CSS para el badge
+   */
+  getEmailClassBadgeClass(className) {
+    const classMap = {
+      'postventa': 'badge-postventa',
+      'envios': 'badge-envios',
+      'envío': 'badge-envios',
+      'envíos': 'badge-envios',
+      'producto': 'badge-producto',
+      'productos': 'badge-producto',
+      'tienda': 'badge-tienda',
+      'shopify': 'badge-shopify',
+      'comerciales': 'badge-comerciales',
+      'comercial': 'badge-comerciales',
+      'otros': 'badge-otros',
+      'otro': 'badge-otros'
+    };
+    
+    const normalized = className.toLowerCase().trim();
+    return classMap[normalized] || 'badge-otros';
+  }
+
+  /**
+   * 🆕 Setup del botón toggle de la sidebar derecha
+   */
+  setupSidebarToggle() {
+    const rightSidebar = document.querySelector('.right-sidebar');
+    const toggleBtn = document.getElementById('toggleRightSidebar');
+    const mainContent = document.getElementById('mainContent');
+    
+    if (!toggleBtn || toggleBtn.dataset.listenerAdded) return;
+    
+    toggleBtn.addEventListener('click', () => {
+      rightSidebar.classList.toggle('collapsed');
+      
+      // Sincronizar la clase del main-content
+      if (rightSidebar.classList.contains('collapsed')) {
+        mainContent.classList.remove('sidebar-expanded');
+        toggleBtn.classList.remove('expanded');
+      } else {
+        mainContent.classList.add('sidebar-expanded');
+        toggleBtn.classList.add('expanded');
+      }
+    });
+    
+    toggleBtn.dataset.listenerAdded = 'true';
   }
   
 }
