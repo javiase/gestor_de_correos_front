@@ -2,7 +2,7 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js?v=1';
-import { enforceFlowGate } from '/js/utils/flow-gate.js';
+import { enforceFlowGate, getStoreCached } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
 enforceFlowGate();
@@ -655,6 +655,7 @@ class EmailView {
     this.prevBtn = null;
     this.nextBtn = null;
     this.isLoading = false; // Estado de carga
+    this.shopName = null; // 🆕 Nombre de la tienda Shopify
 
     const params = new URLSearchParams(location.search);
     this.targetId = params.get('id') || null;
@@ -761,6 +762,18 @@ class EmailView {
   async init() {
     this.anchorId = null;
     this.anchorDate = null;
+    
+    // 🆕 Cargar nombre de la tienda Shopify
+    try {
+      const store = await getStoreCached();
+      console.log("[init] Store data:", store);
+      this.shopName = store?.shopName || 'tu-tienda';
+      console.log('[init] Shopify shop name:', this.shopName);
+    } catch (e) {
+      console.warn('[init] No se pudo obtener el nombre de la tienda:', e);
+      this.shopName = 'tu-tienda';
+    }
+    
     // 1) Construye botones de navegación
     this.buildNavButtons();
 
@@ -1145,12 +1158,6 @@ class EmailView {
         const receivedContent = document.getElementById('receivedContent');
         const iframe = receivedContent?.querySelector('iframe.gmail-frame');
         
-        console.log('[checkIframeLoaded] Estado:', {
-          hasReceivedContent: !!receivedContent,
-          hasIframe: !!iframe,
-          iframeLoaded: iframe?.contentDocument?.readyState
-        });
-        
         if (!iframe) {
           // No hay iframe (es texto plano), ocultar loading directamente
           console.log('[checkIframeLoaded] Sin iframe, mostrando contenido inmediatamente');
@@ -1227,6 +1234,31 @@ class EmailView {
   }
 
   renderEmailContent(email) {
+    console.log('[renderEmailContent] Email completo:', {
+      id: email.id || email._id,
+      subject: email.subject,
+      hasShopifyOrder: !!email.shopify_order,
+      hasShopifyCustomer: !!email.shopify_customer,
+      hasConversationMetadata: !!email.conversation_metadata,
+      hasShopifyMatch: !!email.shopify_match,
+      clasesDeEmail: email.clases_de_email
+    });
+    
+    if (email.shopify_order) {
+      console.log('[renderEmailContent] shopify_order:', email.shopify_order);
+    }
+    
+    if (email.shopify_customer) {
+      console.log('[renderEmailContent] shopify_customer:', email.shopify_customer);
+    }
+    
+    if (email.conversation_metadata) {
+      console.log('[renderEmailContent] conversation_metadata:', email.conversation_metadata);
+    }
+    
+    if (email.shopify_match) {
+      console.log('[renderEmailContent] shopify_match:', email.shopify_match);
+    }
 
     // ——— Historial de conversación ———
     const hist = document.getElementById('historyContainer');
@@ -1464,18 +1496,30 @@ class EmailView {
     // Badge de match Shopify
     if (email.shopify_match) {
       const match = email.shopify_match;
-      const confidence = match.confidence || 0;
-      const confidenceClass = confidence >= 0.8 ? 'high-confidence' : '';
-      const matchText = match.matchedBy === 'email' ? 'Email' : 
-                        match.matchedBy === 'phone' ? 'Teléfono' : 'Match';
-      badges.push(`<span class="badge match ${confidenceClass}">
-        <i class="fas fa-link"></i> ${matchText} (${Math.round(confidence * 100)}%)
-      </span>`);
+      
+      // Mapear confidence string a valores numéricos y clases CSS
+      const confidenceMap = {
+        'high': { value: 95, class: 'high-confidence', text: 'Alta' },
+        'medium': { value: 70, class: 'medium-confidence', text: 'Media' },
+        'low': { value: 40, class: 'low-confidence', text: 'Baja' }
+      };
+      
+      const confidenceData = confidenceMap[match.confidence] || { value: 0, class: '', text: match.confidence };
+      const matchText = match.matchedBy === 'email' ? 'Pedido conectado por: Email' : 
+                        match.matchedBy === 'phone' ? 'Pedido conectado por: Teléfono' : 
+                        match.matchedBy === 'order' ? 'Pedido conectado por: Nº pedido' : 'Match';
+      
+      // Solo mostrar si hay confidence válido
+      if (confidenceData.value > 0) {
+        badges.push(`<span class="badge match ${confidenceData.class}">
+          <i class="fas fa-link"></i> ${matchText} (Confianza ${confidenceData.text})
+        </span>`);
+      }
     }
     
     // Badges de clases de correo (máximo 2) con colores del inbox
     if (email.clases_de_email && email.clases_de_email.length > 0) {
-      const classes = email.clases_de_email.slice(0, 2);
+      const classes = email.badges.slice(0, 2);
       classes.forEach(cls => {
         const badgeClass = this.getEmailClassBadgeClass(cls);
         badges.push(`<span class="badge class ${badgeClass}"><i class="fas fa-tag"></i> ${cls}</span>`);
@@ -1545,8 +1589,7 @@ class EmailView {
    * Renderiza la card principal del pedido
    */
   renderOrderCard(order, email) {
-    const firstItem = order.line_items?.[0];
-    const hasMoreItems = (order.line_items?.length || 0) > 1;
+    const items = order.line_items || [];
     const tracking = order.tracking?.[0];
     
     return `
@@ -1557,15 +1600,55 @@ class EmailView {
       
       <div class="order-number-display">
         <div class="order-number-large" onclick="navigator.clipboard.writeText('${order.name || order.order_number}')" title="Click para copiar">
-          #${order.name || order.order_number || 'N/A'}
+          ${order.name || order.order_number || 'N/A'}
         </div>
         ${order.shopify_id ? `
-        <a href="https://admin.shopify.com/store/tu-tienda/orders/${order.shopify_id}" 
+        <a href="https://admin.shopify.com/store/${this.shopName}/orders/${order.shopify_id}" 
            target="_blank" 
            class="order-link">
           <i class="fas fa-external-link-alt"></i>
           Ver en Shopify
         </a>` : ''}
+      </div>
+      
+      <div class="order-products-list">
+        ${items.map(item => `
+        <div class="product-summary-item">
+          <div class="product-summary-thumbnail">
+            ${item.image ? 
+              `<img src="${item.image}" alt="${item.title || 'Producto'}" loading="lazy">` :
+              '<i class="fas fa-box"></i>'
+            }
+          </div>
+          <div class="product-summary-content">
+            <div class="product-summary-title">${item.title || 'Producto'}</div>
+            <div class="product-summary-price">${this.formatPrice(item.price, order.currency)}</div>
+          </div>
+        </div>
+        `).join('')}
+        
+        <div class="order-total-summary">Total: ${this.formatPrice(order.total_price, order.currency)}</div>
+      </div>
+      
+      <div class="order-details-summary">
+        <div class="summary-row">
+          <i class="fas fa-calendar-alt"></i>
+          <span class="value">${this.formatShopifyDate(order.created_at)}</span>
+        </div>
+        
+        ${order.shipping_address?.city && order.shipping_address?.country ? `
+        <div class="summary-row">
+          <i class="fas fa-map-marker-alt"></i>
+          <span class="value">${order.shipping_address.city}, ${order.shipping_address.country}</span>
+        </div>` : ''}
+        
+        <div class="summary-row">
+          <i class="fas fa-truck"></i>
+          ${tracking ? 
+            `<a href="${tracking.url || '#'}" target="_blank" class="tracking-link">${tracking.number || tracking.code}</a>` :
+            '<span class="value" style="color: #71717a;">Sin tracking</span>'
+          }
+        </div>
       </div>
       
       <div class="status-pills">
@@ -1577,39 +1660,6 @@ class EmailView {
           <i class="fas fa-shipping-fast"></i>
           ${this.getFulfillmentStatusText(order.fulfillment_status)}
         </span>
-      </div>
-      
-      <div class="order-total">${this.formatPrice(order.total_price, order.currency)}</div>
-      
-      <div class="order-summary">
-        <div class="summary-thumbnail">
-          ${firstItem?.image ? 
-            `<img src="${firstItem.image}" alt="${firstItem.title || 'Producto'}" loading="lazy">` :
-            '<i class="fas fa-box"></i>'
-          }
-          ${hasMoreItems ? `<span class="thumbnail-badge">+${order.line_items.length - 1}</span>` : ''}
-        </div>
-        
-        <div class="summary-details">
-          <div class="summary-row">
-            <i class="fas fa-calendar-alt"></i>
-            <span class="value">${this.formatShopifyDate(order.created_at)}</span>
-          </div>
-          
-          ${order.shipping_address?.city && order.shipping_address?.country ? `
-          <div class="summary-row">
-            <i class="fas fa-map-marker-alt"></i>
-            <span class="value">${order.shipping_address.city}, ${order.shipping_address.country}</span>
-          </div>` : ''}
-          
-          <div class="summary-row">
-            <i class="fas fa-truck"></i>
-            ${tracking ? 
-              `<a href="${tracking.url || '#'}" target="_blank" class="tracking-link">${tracking.number || tracking.code}</a>` :
-              '<span class="value" style="color: #71717a;">Sin tracking</span>'
-            }
-          </div>
-        </div>
       </div>
     `;
   }
@@ -1762,17 +1812,7 @@ class EmailView {
                 <span class="info-item-value">${order.gateway}</span>
               </div>` : ''}
               
-              ${order.referring_site ? `
-              <div class="info-item">
-                <span class="info-item-label">Sitio referente</span>
-                <span class="info-item-value">${order.referring_site}</span>
-              </div>` : ''}
-              
-              ${order.landing_site ? `
-              <div class="info-item">
-                <span class="info-item-label">Página de llegada</span>
-                <span class="info-item-value">${order.landing_site}</span>
-              </div>` : ''}
+
               
               ${order.note ? `
               <div class="info-item">
@@ -1801,16 +1841,45 @@ class EmailView {
         </div>
         <div class="accordion-content">
           <div class="info-grid">
+            ${customer.shopify_id ? `
+            <div class="info-item">
+              <span class="info-item-label">ID de Shopify</span>
+              <span class="info-item-value">${customer.shopify_id}</span>
+            </div>` : ''}
+            
+            ${customer.name ? `
+            <div class="info-item">
+              <span class="info-item-label">Nombre completo</span>
+              <span class="info-item-value">${customer.name}</span>
+            </div>` : ''}
+            
             ${customer.email ? `
             <div class="info-item">
-              <span class="info-item-label">Email principal</span>
+              <span class="info-item-label">Email</span>
               <span class="info-item-value">${customer.email}</span>
             </div>` : ''}
+            
+            ${customer.phone ? `
+            <div class="info-item">
+              <span class="info-item-label">Teléfono</span>
+              <span class="info-item-value">${customer.phone}</span>
+            </div>` : ''}
+
             
             ${customer.last_order_at ? `
             <div class="info-item">
               <span class="info-item-label">Último pedido</span>
               <span class="info-item-value">${this.formatShopifyDate(customer.last_order_at)}</span>
+            </div>` : ''}
+            
+            ${customer.tags && customer.tags.length > 0 ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.04);">
+              <div class="info-item-label" style="margin-bottom: 8px;">
+                <i class="fas fa-tags"></i> Etiquetas
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                ${customer.tags.map(tag => `<span style="display: inline-block; padding: 4px 8px; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 4px; font-size: 11px; color: #a78bfa;">${tag}</span>`).join('')}
+              </div>
             </div>` : ''}
             
             ${customer.default_address ? `
@@ -1822,15 +1891,10 @@ class EmailView {
                   ${customer.default_address.address2 ? customer.default_address.address2 + '<br>' : ''}
                   ${customer.default_address.city || ''}, ${customer.default_address.zip || ''}<br>
                   ${customer.default_address.province || ''}, ${customer.default_address.country || ''}
+                  ${customer.default_address.phone ? `<br><i class="fas fa-phone" style="font-size: 10px;"></i> ${customer.default_address.phone}` : ''}
                 </div>
               </div>
             </div>` : ''}
-          </div>
-          
-          <div style="margin-top: 16px; padding: 12px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.3); border-radius: 6px; text-align: center;">
-            <p style="font-size: 12px; color: #fbbf24; margin: 0;">
-              <i class="fas fa-info-circle"></i> Pedidos recientes y conversaciones en desarrollo
-            </p>
           </div>
         </div>
       </div>
@@ -1884,8 +1948,13 @@ class EmailView {
               </div>
               <div class="info-item">
                 <span class="info-item-label">Confianza del match</span>
-                <span class="info-item-value">${Math.round((match.confidence || 0) * 100)}%</span>
+                <span class="info-item-value">${this.formatConfidenceText(match.confidence)}</span>
               </div>
+              ${match.ambiguous !== undefined ? `
+              <div class="info-item">
+                <span class="info-item-label">¿Ambiguo?</span>
+                <span class="info-item-value">${match.ambiguous ? 'Sí' : 'No'}</span>
+              </div>` : ''}
             </div>` : ''}
           </div>
         </div>
@@ -1940,7 +2009,7 @@ class EmailView {
     const btnCancelar = document.getElementById('actionCancelar');
     if (order && !order.cancelled_at && order.fulfillment_status !== 'fulfilled') {
       btnCancelar.disabled = false;
-      btnCancelar.setAttribute('data-tooltip', 'Cancelar pedido');
+      btnCancelar.setAttribute('data-tooltip', 'Cancelar/Modificar pedido');
     } else {
       btnCancelar.disabled = true;
       btnCancelar.setAttribute('data-tooltip', order?.cancelled_at ? 'Pedido ya cancelado' : 
@@ -2006,6 +2075,18 @@ class EmailView {
     
     const symbol = symbols[currency] || currency;
     return `${numAmount.toFixed(2)} ${symbol}`;
+  }
+
+  /**
+   * Formatea el valor de confidence (string) a texto legible
+   */
+  formatConfidenceText(confidence) {
+    const confidenceMap = {
+      'high': 'Alta (95%)',
+      'medium': 'Media (70%)',
+      'low': 'Baja (40%)'
+    };
+    return confidenceMap[confidence] || confidence || 'Desconocida';
   }
 
   /**
