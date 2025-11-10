@@ -154,6 +154,153 @@
             </div>
         </div>
   </div>
+
+  <!-- 🆕 MODAL DE REFUND -->
+  <div id="refundModal" class="refund-modal" style="display: none;">
+    <div class="refund-modal-overlay"></div>
+    <div class="refund-modal-content">
+      <div class="refund-modal-header">
+        <h2>Crear Reembolso</h2>
+        <button class="refund-modal-close" id="closeRefundModal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="refund-modal-body">
+        <div class="refund-layout">
+          <!-- COLUMNA IZQUIERDA -->
+          <div class="refund-main">
+            <!-- SECCIÓN: ITEMS DEL PEDIDO -->
+            <div class="refund-card">
+              <div class="refund-card-header">
+                <span class="refund-badge refund-badge-warning">
+                  <i class="fas fa-box-open"></i> Unfulfilled
+                </span>
+                <span class="refund-shop-location">Shop location</span>
+              </div>
+              <div class="refund-card-body">
+                <div id="refundItemsList" class="refund-items-list">
+                  <!-- Los items se renderizan aquí -->
+                </div>
+                <p class="refund-help-text">Refunded items will be removed from the order</p>
+              </div>
+            </div>
+
+            <!-- SECCIÓN: REFUND SHIPPING (condicional) -->
+            <div id="refundShippingSection" class="refund-card" style="display: none;">
+              <div class="refund-card-body">
+                <h3 class="refund-section-title">Refund shipping</h3>
+                <div class="refund-shipping-row">
+                  <label class="refund-checkbox-label">
+                    <input type="checkbox" id="refundShippingCheck" class="refund-checkbox">
+                    <span class="refund-checkbox-text">
+                      <span id="refundShippingName">shipping basic</span>
+                      <span class="refund-text-separator">·</span>
+                      <span id="refundShippingMaxAmount" class="refund-text-muted">$0.00</span>
+                    </span>
+                  </label>
+                  <div class="refund-input-wrapper">
+                    <span class="refund-input-prefix">$</span>
+                    <input 
+                      type="text" 
+                      id="refundShippingAmount" 
+                      class="refund-input" 
+                      placeholder="0.00"
+                      disabled
+                    >
+                  </div>
+                </div>
+                <div id="refundShippingError" class="refund-error-message" style="display: none;">
+                  El monto excede el máximo disponible
+                </div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN: REASON FOR REFUND -->
+            <div class="refund-card">
+              <div class="refund-card-body">
+                <h3 class="refund-section-title">Reason for refund</h3>
+                <input 
+                  type="text" 
+                  id="refundReason" 
+                  class="refund-input refund-input-full" 
+                  placeholder=""
+                >
+                <p class="refund-help-text">Only you and other staff can see this reason</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- COLUMNA DERECHA: SUMMARY -->
+          <div class="refund-sidebar">
+            <div class="refund-card refund-summary">
+              <div class="refund-card-body">
+                <h3 class="refund-summary-title">Summary</h3>
+                
+                <!-- Subtotal de items -->
+                <div class="refund-summary-row">
+                  <span id="refundSummaryItemsLabel">No items selected</span>
+                  <span id="refundSummaryItemsAmount" class="refund-summary-value">$0.00</span>
+                </div>
+
+                <!-- Shipping -->
+                <div id="refundSummaryShippingRow" class="refund-summary-row" style="display: none;">
+                  <span>Shipping</span>
+                  <span id="refundSummaryShippingAmount" class="refund-summary-value">$0.00</span>
+                </div>
+
+                <div class="refund-summary-divider"></div>
+
+                <!-- Total del refund -->
+                <div class="refund-summary-row refund-summary-total">
+                  <span>Refund total</span>
+                  <span id="refundSummaryTotal" class="refund-summary-value">$0.00</span>
+                </div>
+
+                <div class="refund-summary-divider"></div>
+
+                <!-- Refund method -->
+                <div class="refund-summary-section">
+                  <h4 class="refund-summary-subtitle">Refund method</h4>
+                  <select id="refundMethod" class="refund-select">
+                    <option value="ORIGINAL_PAYMENT_METHODS">Original payment</option>
+                    <option value="STORE_CREDIT">Store credit</option>
+                    <option value="ORIGINAL_AND_STORE_CREDIT">Original payment and store credit</option>
+                  </select>
+                </div>
+
+                <!-- Refund amount -->
+                <div class="refund-summary-section">
+                  <h4 class="refund-summary-subtitle">Refund amount</h4>
+                  <div class="refund-summary-manual">
+                    <span class="refund-text-small">Manual</span>
+                    <div class="refund-input-wrapper">
+                      <span class="refund-input-prefix">$</span>
+                      <input 
+                        type="text" 
+                        id="refundManualAmount" 
+                        class="refund-input" 
+                        placeholder="0.00"
+                      >
+                    </div>
+                    <span id="refundAvailableAmount" class="refund-text-small refund-text-muted">$0.00 available for refund</span>
+                  </div>
+                  <div id="refundManualError" class="refund-error-message" style="display: none;">
+                    El monto excede el disponible para reembolso
+                  </div>
+                </div>
+
+                <!-- Botón de refund -->
+                <button id="submitRefundBtn" class="refund-submit-btn" disabled>
+                  Refund $0.00
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/vendor/dompurify.min.js?v=%ASSET_VERSION%"></script>
   <script type="module" src="/js/config.js?v=%ASSET_VERSION%"></script>
   <script type="module" src="/js/utils/api.js?v=%ASSET_VERSION%"></script>

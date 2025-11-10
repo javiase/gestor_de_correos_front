@@ -1591,6 +1591,7 @@ class EmailView {
   renderOrderCard(order, email) {
     const items = order.line_items || [];
     const tracking = order.tracking?.[0];
+    this.currency = order.currency || 'EUR';
     
     return `
       <div class="card-title">
@@ -2000,8 +2001,10 @@ class EmailView {
     if (order && order.financial_status === 'paid') {
       btnReembolso.disabled = false;
       btnReembolso.setAttribute('data-tooltip', 'Crear reembolso');
+      btnReembolso.onclick = () => this.openRefundModal(email);
     } else {
       btnReembolso.disabled = true;
+      btnReembolso.onclick = null;
       btnReembolso.setAttribute('data-tooltip', order ? 'El pedido no está pagado' : 'Sin pedido vinculado');
     }
     
@@ -2451,6 +2454,653 @@ class EmailView {
     });
     
     toggleBtn.dataset.listenerAdded = 'true';
+  }
+
+  /**
+   * ============================================================
+   * REFUND MODAL FUNCTIONALITY
+   * ============================================================
+   */
+
+  /**
+   * Abre el modal de refund
+   */
+  async openRefundModal(email) {
+    if (!email || !email.shopify_order) {
+      console.log(email);
+      notify.error('No hay pedido vinculado');
+      return;
+    }
+
+    const order = email.shopify_order;
+    console.log('Opening refund modal for order:', order);
+    
+    // Verificar que el pedido esté pagado
+    if (order.financial_status !== 'paid') {
+      notify.error('El pedido no está pagado');
+      return;
+    }
+
+    // Inicializar estado del refund
+    this.refundState = {
+      order: order,
+      orderGid: order.order_gid,
+      items: (order.line_items || []).map(item => {
+        // Construir el lineItemGid si no viene
+        const lineItemGid = item.gid || item.lineItemGid || `gid://shopify/LineItem/${item.id}`;
+        const quantity = item.qty || item.quantity || 0;
+        const quantityRefunded = item.quantityRefunded || item.quantity_refunded || 0;
+        const price = parseFloat(item.price || 0);
+        
+        return {
+          lineItemGid: lineItemGid,
+          title: item.title || item.name || 'Producto',
+          price: price,
+          quantity: quantity,
+          quantityRefundable: quantity - quantityRefunded,
+          quantityToRefund: 0,
+          restock: false,
+          thumbnail: item.image || item.thumbnail || null,
+          maxRefundableAmount: (quantity - quantityRefunded) * price
+        };
+      }),
+      shippingEnabled: false,
+      shippingAmount: 0,
+      shippingMax: parseFloat(order.total_shipping || 0),
+      reason: '',
+      manualAmount: '',
+      suggestedRefund: null,
+      previewTimeout: null,
+      isSubmitting: false
+    };
+
+    // Renderizar el modal
+    this.renderRefundModal();
+    
+    // Mostrar el modal
+    const modal = document.getElementById('refundModal');
+    modal.style.display = 'flex';
+    
+    // Setup event listeners
+    this.setupRefundModalListeners();
+  }
+
+  /**
+   * Renderiza el contenido del modal de refund
+   */
+  renderRefundModal() {
+    const { order, items, shippingMax } = this.refundState;
+    
+    // Renderizar items
+    const itemsList = document.getElementById('refundItemsList');
+    itemsList.innerHTML = items.map((item, idx) => `
+      <div class="refund-item" data-item-idx="${idx}">
+        <div class="refund-item-main">
+          <img src="${item.thumbnail || '/assets/icons/package.svg'}" 
+               alt="${item.title}"
+               class="refund-item-thumbnail">
+          <div class="refund-item-info">
+            <div class="refund-item-title">${DOMPurify.sanitize(item.title)}</div>
+            <div class="refund-item-price">$${item.price.toFixed(2)}</div>
+          </div>
+          <div class="refund-item-actions">
+            <div class="refund-quantity-input">
+              <input type="number" 
+                     class="refund-quantity-field" 
+                     data-item-idx="${idx}"
+                     min="0" 
+                     max="${item.quantityRefundable}"
+                     value="0"
+                     placeholder="0">
+              <span class="refund-quantity-suffix">/ ${item.quantity}</span>
+            </div>
+            <div class="refund-item-total" data-item-idx="${idx}">$0.00</div>
+          </div>
+        </div>
+        <label class="refund-checkbox-wrapper refund-restock-wrapper" style="display: none;" data-item-idx="${idx}">
+          <input type="checkbox" class="refund-checkbox refund-restock-checkbox" data-item-idx="${idx}">
+          <span class="refund-checkbox-label">Restock</span>
+        </label>
+      </div>
+    `).join('');
+    
+    // Renderizar sección de shipping si aplica
+    const shippingSection = document.getElementById('refundShippingSection');
+    if (shippingMax > 0) {
+      shippingSection.style.display = 'block';
+      document.getElementById('refundShippingMaxAmount').textContent = `$${shippingMax.toFixed(2)}`;
+    } else {
+      shippingSection.style.display = 'none';
+    }
+    
+    // Resetear resumen
+    this.updateRefundSummary();
+  }
+
+  /**
+   * Setup de event listeners del modal
+   */
+  setupRefundModalListeners() {
+    // Botón cerrar
+    const closeBtn = document.getElementById('closeRefundModal');
+    closeBtn.onclick = () => this.closeRefundModal();
+    
+    // Click fuera del modal
+    const modal = document.getElementById('refundModal');
+    modal.onclick = (e) => {
+      if (e.target === modal) this.closeRefundModal();
+    };
+    
+    // Inputs de cantidad - usar 'input' en lugar de 'change' para actualización en tiempo real
+    document.querySelectorAll('.refund-quantity-field').forEach(input => {
+      input.addEventListener('input', () => {
+        const idx = parseInt(input.dataset.itemIdx);
+        let val = parseInt(input.value);
+        
+        // Si el valor está vacío o no es un número, no hacer nada (permitir edición)
+        if (input.value === '' || isNaN(val)) {
+          return;
+        }
+        
+        const max = parseInt(input.max);
+        val = Math.max(0, Math.min(max, val));
+        input.value = val;
+        this.handleQuantityChange(idx, val);
+      });
+      
+      // También manejar el evento 'blur' para validar cuando pierde el foco
+      input.addEventListener('blur', () => {
+        const idx = parseInt(input.dataset.itemIdx);
+        let val = parseInt(input.value);
+        
+        // Si el valor está vacío o no es válido, poner en 0
+        if (input.value === '' || isNaN(val)) {
+          input.value = 0;
+          this.handleQuantityChange(idx, 0);
+          return;
+        }
+        
+        const max = parseInt(input.max);
+        val = Math.max(0, Math.min(max, val));
+        input.value = val;
+        this.handleQuantityChange(idx, val);
+      });
+    });
+    
+    // Checkboxes de restock
+    document.querySelectorAll('.refund-restock-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const idx = parseInt(cb.dataset.itemIdx);
+        this.handleRestockChange(idx, cb.checked);
+      });
+    });
+    
+    // Shipping checkbox
+    const shippingCheckbox = document.getElementById('refundShippingCheck');
+    shippingCheckbox.addEventListener('change', () => {
+      this.handleShippingToggle(shippingCheckbox.checked);
+    });
+    
+    // Shipping amount
+    const shippingAmountInput = document.getElementById('refundShippingAmount');
+    shippingAmountInput.addEventListener('input', () => {
+      this.handleShippingAmountChange(shippingAmountInput.value);
+    });
+    
+    // Manual amount
+    const manualAmountInput = document.getElementById('refundManualAmount');
+    manualAmountInput.addEventListener('input', () => {
+      this.handleManualAmountChange(manualAmountInput.value);
+    });
+    
+    // Botón submit
+    const submitBtn = document.getElementById('submitRefundBtn');
+    submitBtn.onclick = () => this.handleRefundSubmit();
+  }
+
+  /**
+   * Maneja cambio de cantidad de un item
+   */
+  handleQuantityChange(itemIdx, quantity) {
+    const item = this.refundState.items[itemIdx];
+    item.quantityToRefund = quantity;
+    
+    // Mostrar/ocultar checkbox de restock
+    const restockWrapper = document.querySelector(`.refund-restock-wrapper[data-item-idx="${itemIdx}"]`);
+    if (quantity > 0) {
+      restockWrapper.style.display = 'flex';
+    } else {
+      restockWrapper.style.display = 'none';
+      item.restock = false;
+      const checkbox = restockWrapper.querySelector('.refund-restock-checkbox');
+      checkbox.checked = false;
+    }
+    
+    // Actualizar total del item
+    const itemTotal = quantity * item.price;
+    const totalEl = document.querySelector(`.refund-item-total[data-item-idx="${itemIdx}"]`);
+    totalEl.textContent = `$${itemTotal.toFixed(2)}`;
+    
+    // Llamar preview con debounce
+    this.schedulePreviewCall();
+  }
+
+  /**
+   * Maneja cambio de restock checkbox
+   */
+  async handleRestockChange(itemIdx, checked) {
+    if (checked) {
+      const defaultLocation = await this.getDefaultLocationGid();
+      if (!defaultLocation) {
+        notify.error('No hay ubicación por defecto para restock. Configúrala primero.');
+        // revertir visualmente
+        const cb = document.querySelector(`.refund-restock-checkbox[data-item-idx="${itemIdx}"]`);
+        if (cb) cb.checked = false;
+        this.refundState.items[itemIdx].restock = false;
+        return;
+      }
+      // opcional: guarda location en el item por si quieres enseñarlo
+      this.refundState.items[itemIdx].locationGid = defaultLocation;
+    } else {
+      this.refundState.items[itemIdx].locationGid = null;
+    }
+
+    this.refundState.items[itemIdx].restock = checked;
+    this.schedulePreviewCall();
+  }
+
+  /**
+   * Maneja toggle de shipping
+   */
+  handleShippingToggle(enabled) {
+    this.refundState.shippingEnabled = enabled;
+    const amountInput = document.getElementById('refundShippingAmount');
+    amountInput.disabled = !enabled;
+    
+    if (!enabled) {
+      this.refundState.shippingAmount = 0;
+      amountInput.value = '';
+    } else {
+      // Cuando se habilita, establecer automáticamente el valor máximo disponible
+      const maxShipping = this.refundState.shippingMax;
+      this.refundState.shippingAmount = maxShipping;
+      amountInput.value = maxShipping.toFixed(2);
+    }
+    
+    this.schedulePreviewCall();
+  }
+
+  /**
+   * Maneja cambio de shipping amount
+   */
+  handleShippingAmountChange(value) {
+    const amount = parseFloat(value) || 0;
+    const max = this.refundState.shippingMax;
+    
+    if (amount > max) {
+      notify.error(`No puedes reembolsar más de $${max.toFixed(2)} en shipping`);
+      document.getElementById('refundShippingAmount').value = max.toFixed(2);
+      this.refundState.shippingAmount = max;
+    } else {
+      this.refundState.shippingAmount = amount;
+    }
+    
+    this.schedulePreviewCall();
+  }
+
+  /**
+   * Maneja cambio de manual amount
+   */
+  handleManualAmountChange(value) {
+    this.refundState.manualAmount = value;
+    this.updateRefundSummary();
+  }
+
+  /**
+   * Programa una llamada al preview API con debounce
+   */
+  schedulePreviewCall() {
+    if (this.refundState.previewTimeout) {
+      clearTimeout(this.refundState.previewTimeout);
+    }
+    
+    this.refundState.previewTimeout = setTimeout(() => {
+      this.callPreviewAPI();
+    }, 500);
+  }
+
+  /**
+   * Llama al API de preview
+   */
+  async callPreviewAPI() {
+    try {
+      // Mostrar loaders en el summary
+      this.showSummaryLoading(true);
+      
+      // Obtener locationGid si es necesario
+      const defaultLocation = await this.getDefaultLocationGid();
+      
+      // Preparar items para el preview
+      const items = this.refundState.items
+        .filter(item => item.quantityToRefund > 0)
+        .map(item => ({
+          lineItemGid: item.lineItemGid,
+          quantity: item.quantityToRefund,
+          restock: item.restock,
+          locationGid: item.restock ? defaultLocation : null
+        }));
+      
+      // Si no hay items seleccionados, resetear el resumen
+      if (items.length === 0 && !this.refundState.shippingEnabled) {
+        this.refundState.suggestedRefund = null;
+        this.showSummaryLoading(false);
+        this.updateRefundSummary();
+        return;
+      }
+      
+      // Preparar payload
+      const payload = {
+        orderGid: this.refundState.orderGid,
+        items: items
+      };
+      
+      // Añadir shipping si está habilitado
+      if (this.refundState.shippingEnabled && this.refundState.shippingAmount > 0) {
+        payload.shippingAmount = this.refundState.shippingAmount;
+      }
+      
+      // Llamar al API
+      const res = await fetchWithAuth('/shopify/refunds/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || 'Error al calcular preview');
+      }
+      
+      const data = await res.json();
+      console.log('Preview API response:', data);
+      const sr = data.suggestedRefund;
+
+      this.refundState.suggestedRefund = sr;
+
+      // ← Nuevo: refrescar shippingMax desde el backend (GraphQL)
+      const maxFromBe = parseFloat(sr?.meta?.shippingMax || '0');
+      if (!Number.isNaN(maxFromBe)) {
+        const previousMax = this.refundState.shippingMax;
+        this.refundState.shippingMax = maxFromBe;
+
+        const shippingSection = document.getElementById('refundShippingSection');
+        const shippingInput   = document.getElementById('refundShippingAmount');
+        const shippingMaxEl   = document.getElementById('refundShippingMaxAmount');
+
+        if (maxFromBe > 0) {
+          shippingSection.style.display = 'block';
+          if (shippingMaxEl) shippingMaxEl.textContent = `$${maxFromBe.toFixed(2)}`;
+          if (shippingInput) {
+            shippingInput.max = maxFromBe.toFixed(2);
+            shippingInput.placeholder = `0.00 – ${maxFromBe.toFixed(2)}`;
+            
+            // Solo actualizar el valor si:
+            // 1. El shipping está habilitado Y
+            // 2. El valor actual es 0 o igual al máximo anterior (no ha sido personalizado)
+            const currentAmount = this.refundState.shippingAmount;
+            const wasDefault = currentAmount === 0 || currentAmount === previousMax;
+            
+            if (this.refundState.shippingEnabled && wasDefault) {
+              this.refundState.shippingAmount = maxFromBe;
+              shippingInput.value = maxFromBe.toFixed(2);
+            } else if (this.refundState.shippingAmount > maxFromBe) {
+              // Clamp si el usuario escribió por encima del nuevo máximo
+              this.refundState.shippingAmount = maxFromBe;
+              shippingInput.value = maxFromBe.toFixed(2);
+            }
+          }
+        } else {
+          // No hay shipping disponible para reembolsar
+          shippingSection.style.display = 'none';
+          this.refundState.shippingEnabled = false;
+          this.refundState.shippingAmount  = 0;
+          if (shippingInput) shippingInput.value = '';
+        }
+      }
+
+      // Ocultar loaders
+      this.showSummaryLoading(false);
+      this.updateRefundSummary();
+      
+    } catch (error) {
+      console.error('Error en preview:', error);
+      notify.error(error.message || 'Error al calcular el reembolso');
+      this.showSummaryLoading(false);
+    }
+  }
+
+  /**
+   * Obtiene el location GID por defecto
+   */
+  async getDefaultLocationGid() {
+    // TODO: Obtener esto del backend o de la configuración
+    // Por ahora retornamos null y el backend usará su default
+    return null;
+  }
+
+  /**
+   * Muestra/oculta loaders en el summary
+   */
+  showSummaryLoading(loading) {
+    const itemsAmount = document.getElementById('refundSummaryItemsAmount');
+    const shippingAmount = document.getElementById('refundSummaryShippingAmount');
+    const total = document.getElementById('refundSummaryTotal');
+    
+    if (loading) {
+      itemsAmount.classList.add('loading');
+      shippingAmount.classList.add('loading');
+      total.classList.add('loading');
+    } else {
+      itemsAmount.classList.remove('loading');
+      shippingAmount.classList.remove('loading');
+      total.classList.remove('loading');
+    }
+  }
+
+  /**
+   * Actualiza el resumen del refund
+   */
+  updateRefundSummary() {
+    const suggested = this.refundState.suggestedRefund;
+    
+    console.log('updateRefundSummary called with:', suggested);
+    
+    if (!suggested) {
+      // No hay preview, mostrar ceros
+      document.getElementById('refundSummaryItemsLabel').textContent = 'No items selected';
+      document.getElementById('refundSummaryItemsAmount').textContent = '$0.00';
+      document.getElementById('refundSummaryShippingRow').style.display = 'none';
+      document.getElementById('refundSummaryTotal').textContent = '$0.00';
+      document.getElementById('refundAvailableAmount').textContent = '$0.00 available for refund';
+      document.getElementById('submitRefundBtn').disabled = true;
+      document.getElementById('submitRefundBtn').innerHTML = '<i class="fas fa-undo"></i> Refund $0.00';
+      return;
+    }
+    
+    // Calcular totales
+    const subtotal = parseFloat(suggested.totals.subtotal || 0);
+    const tax = parseFloat(suggested.totals.tax || 0);
+    const shipping = parseFloat(suggested.totals.shipping || 0);
+    const duties = parseFloat(suggested.totals.duties || 0);
+    const total = subtotal + tax + shipping + duties;
+    const maxavailable = parseFloat(suggested.available.max || 0)
+    
+    console.log('Calculated totals:', { subtotal, tax, shipping, duties, total });
+    
+    // Contar items seleccionados
+    const selectedCount = this.refundState.items.filter(i => i.quantityToRefund > 0).length;
+    const itemsLabel = selectedCount === 1 ? '1 item' : `${selectedCount} items`;
+    
+    // Actualizar subtotal
+    document.getElementById('refundSummaryItemsLabel').textContent = itemsLabel;
+    document.getElementById('refundSummaryItemsAmount').textContent = `$${subtotal.toFixed(2)}`;
+    
+    // Mostrar/ocultar shipping
+    if (shipping > 0) {
+      document.getElementById('refundSummaryShippingRow').style.display = 'flex';
+      document.getElementById('refundSummaryShippingAmount').textContent = `$${shipping.toFixed(2)}`;
+    } else {
+      document.getElementById('refundSummaryShippingRow').style.display = 'none';
+    }
+    
+    // Actualizar total
+    document.getElementById('refundSummaryTotal').textContent = `$${total.toFixed(2)}`;
+    
+    // Verificar si hay manual amount
+    const manualAmount = parseFloat(this.refundState.manualAmount) || 0;
+    const finalAmount = manualAmount > 0 ? manualAmount : total;
+    
+    // Validar que el manual amount no exceda el total
+    const isValid = manualAmount === 0 || (manualAmount > 0 && manualAmount <= maxavailable);
+    
+    // Actualizar available amount
+    document.getElementById('refundAvailableAmount').textContent = `$${maxavailable.toFixed(2)} available for refund`;
+    
+    // Actualizar botón submit
+    const submitBtn = document.getElementById('submitRefundBtn');
+    submitBtn.disabled = !isValid || finalAmount === 0 || this.refundState.isSubmitting;
+    submitBtn.innerHTML = `<i class="fas fa-undo"></i> Refund $${finalAmount.toFixed(2)}`;
+    
+    // Mostrar error si manual amount es inválido
+    if (manualAmount > 0 && manualAmount > maxavailable) {
+      notify.error(`El monto manual no puede exceder $${maxavailable.toFixed(2)}`);
+    }
+  }
+
+  /**
+   * Maneja el submit del refund
+   */
+  async handleRefundSubmit() {
+    if (this.refundState.isSubmitting) return;
+    
+    try {
+      this.refundState.isSubmitting = true;
+      const submitBtn = document.getElementById('submitRefundBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+      
+      // Preparar items
+      const items = this.refundState.items
+        .filter(item => item.quantityToRefund > 0)
+        .map(item => ({
+          lineItemGid: item.lineItemGid,
+          quantity: item.quantityToRefund,
+          restock: item.restock,
+          locationGid: item.restock ? null : undefined // El backend usará su default si es null
+        }));
+      
+      // Preparar payload
+      const payload = {
+        request_id: this.generateUUID(),
+        orderGid: this.refundState.orderGid,
+        items: items,
+        note: document.getElementById('refundReason').value || 'Reembolso procesado desde gestor de correos'
+      };
+      
+      // Añadir shipping si está habilitado
+      if (this.refundState.shippingEnabled && this.refundState.shippingAmount > 0) {
+        payload.shippingAmount = this.refundState.shippingAmount;
+      }
+      
+      // Transacciones a enviar:
+      // - Si el usuario NO pone importe manual -> usamos las sugeridas del preview.
+      // - Si pone manual -> 1 transacción con ese importe sobre el primer parent_id sugerido.
+      const manualAmount = parseFloat(this.refundState.manualAmount || '0') || 0;
+      const sug = this.refundState.suggestedRefund;
+
+      if (sug && (!manualAmount || manualAmount === parseFloat(sug.totals.total || '0'))) {
+        // Mapeamos todas las sugeridas
+        payload.transactions = (sug.suggestedTransactions || []).map(t => ({
+          parent_id: (t.parent_id || (t.parentTransaction ? t.parentTransaction.id : null)),
+          amount: parseFloat(((t.amountSet && t.amountSet.presentmentMoney && t.amountSet.presentmentMoney.amount) || '0')),
+          kind: 'REFUND',
+          gateway: t.gateway || null
+        })).filter(tx => tx.parent_id && tx.amount > 0);
+      } else if (sug && manualAmount > 0) {
+        const first = (sug.suggestedTransactions && sug.suggestedTransactions[0]) || null;
+        if (!first) {
+          notify.error('No se pudo determinar la transacción base para reembolso manual');
+          this.refundState.isSubmitting = false;
+          this.updateRefundSummary();
+          return;
+        }
+        payload.transactions = [{
+          parent_id: (first.parent_id || (first.parentTransaction ? first.parentTransaction.id : null)),
+          amount: manualAmount,
+          kind: 'REFUND',
+          gateway: first.gateway || null
+        }];
+      }
+      
+      // Llamar al API de commit
+      const res = await fetchWithAuth('/shopify/refunds/commit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || 'Error al crear el reembolso');
+      }
+      
+      const data = await res.json();
+      
+      // Éxito
+      notify.success('Reembolso creado exitosamente');
+      this.closeRefundModal();
+      
+      // Recargar el email para ver el estado actualizado
+      await this.reloadAroundIndex();
+      this.renderCurrent();
+      
+    } catch (error) {
+      console.error('Error al crear refund:', error);
+      notify.error(error.message || 'Error al crear el reembolso');
+      
+      // Solo actualizar el estado si el modal no se cerró
+      if (this.refundState) {
+        this.refundState.isSubmitting = false;
+        this.updateRefundSummary(); // Re-habilitar el botón
+      }
+    }
+  }
+
+  /**
+   * Cierra el modal de refund
+   */
+  closeRefundModal() {
+    const modal = document.getElementById('refundModal');
+    modal.style.display = 'none';
+    
+    // Limpiar estado
+    this.refundState = null;
+    
+    // Limpiar timeout de preview si existe
+    if (this.refundState?.previewTimeout) {
+      clearTimeout(this.refundState.previewTimeout);
+    }
+  }
+
+  /**
+   * Genera un UUID v4
+   */
+  generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   }
   
 }
