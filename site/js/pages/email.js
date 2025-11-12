@@ -99,7 +99,6 @@ async function openAttachmentAuth(a, emailId){
       return;
     }
 
-
     const link = document.createElement('a');
     link.href = blobUrl;
     link.download = fileName;            // ← fuerza descarga
@@ -294,7 +293,6 @@ function showAttachmentPreview({ url, mime, filename, kind }){
   __preview.setContent({ url, kind, filename });
 }
 
-
 function svgForKind(kind){ return ATT_SVGS[kind] || ATT_SVGS.other; }
 
 function escRe(s) { return (s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -334,8 +332,6 @@ function stripInlineImages(html = '', attachments = []) {
   return out;
 }
 
-
-
 function enforceContentEditableMax(el, max) {
   let lastHtml = el.innerHTML;
   el.addEventListener('beforeinput', (e) => {
@@ -352,7 +348,6 @@ function enforceContentEditableMax(el, max) {
     lastHtml = el.innerHTML;
   });
 }
-
 
 function getAttachmentKind(a){
   const mime = (a.mimeType || '').toLowerCase();
@@ -410,7 +405,6 @@ function analyzeEmailHtml(rawHtml = "") {
   return { isStructured, preferWhite };
 }
 
-
 // Detecta plantilla clara y decide estilos del iframe según el tema del usuario
 function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []) {
   // ——— 1) Tema del usuario ———
@@ -447,7 +441,6 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
       .join('');
     innerHtml = `<div class="panel-content" id="receivedContent">${paragraphs}</div>`;
   }
-
 
   // ——— 4) Optimización: Si el HTML es muy grande (>50KB), usar loading diferido ———
   const htmlSize = innerHtml.length;
@@ -528,7 +521,6 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
     ` : ``}
   `;
 
-
    // --- Skeleton anti-salto: reserva el alto previo ---
   const lastH = parseInt(container.dataset.lastH || '0', 10);
   const currentH = container.offsetHeight || lastH || 160;
@@ -550,8 +542,6 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
 
   // --- OPTIMIZACIÓN: Para emails grandes (>50KB), skip probe y renderizar directamente ---
   if (isLargeEmail) {
-    console.log(`[renderHtmlEmail] Email grande detectado (${htmlSize} bytes), usando Blob URL`);
-    
     const iframe = document.createElement('iframe');
     iframe.className = 'gmail-frame';
     // Removido sandbox para evitar errores de scripts bloqueados
@@ -571,7 +561,6 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
 
     // Ajustar altura una vez cargado
     iframe.addEventListener('load', () => {
-      console.log('[renderHtmlEmail] Iframe grande cargado');
       // Limpiar el blob URL después de un tiempo
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       
@@ -584,7 +573,6 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
         iframe.style.height = h + 'px';
         container.dataset.lastH = String(h);
         container.style.minHeight = '0';
-        console.log(`[renderHtmlEmail] Altura ajustada a ${h}px`);
       }, 150);
     });
     
@@ -645,8 +633,6 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
   }); // Cierre del probe.addEventListener('load')
   }); // Cierre del requestAnimationFrame
 }
-
-
 
 class EmailView {
   constructor() {
@@ -766,9 +752,7 @@ class EmailView {
     // 🆕 Cargar nombre de la tienda Shopify
     try {
       const store = await getStoreCached();
-      console.log("[init] Store data:", store);
       this.shopName = store?.shopName || 'tu-tienda';
-      console.log('[init] Shopify shop name:', this.shopName);
     } catch (e) {
       console.warn('[init] No se pudo obtener el nombre de la tienda:', e);
       this.shopName = 'tu-tienda';
@@ -787,7 +771,6 @@ class EmailView {
       nextPage <= this.pages &&
       !this.loadedPages.has(nextPage)
     ) {
-      console.log(`init(): prefetch page ${nextPage}`);
       await this.loadBatch(nextPage, { replace: false });
       this.loadedPages.add(nextPage);
 
@@ -813,7 +796,6 @@ class EmailView {
       prevPage >= 1 &&
       !this.loadedPages.has(prevPage)
     ) {
-      console.log(`init(): prefetch prev page ${prevPage}`);
       // prepend para no desordenar índices
       await this.loadBatch(prevPage, { replace: false, prepend: true });
       this.loadedPages.add(prevPage);
@@ -913,8 +895,6 @@ class EmailView {
     sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
   }
 
-
-
   buildNavButtons() {
     // Ya no creamos nada, tomamos los que has puesto en el HTML
     this.prevBtn = document.getElementById('prevEmail');
@@ -1012,16 +992,10 @@ class EmailView {
     });
   }
 
-
   async loadBatch(page, { replace = false, prepend = false } = {}) {
-    console.log(`[loadBatch] page=${page} replace=${replace} prepend=${prepend}`);
-
     if (!replace && this.loadedPages.has(page)) {
-      console.log(`  ↳ página ${page} ya cargada → skip`);
       return;
     }
-
-    console.log(`  ↳ fetch /emails/get?page=${page}&sort=${this.sortOrder}&sort_by=${this.sortBy}…`);
     let anchorQS = '';
     if (this.sortBy === 'id' && this.anchorId) {
       anchorQS = (this.sortOrder === 'desc')
@@ -1036,16 +1010,18 @@ class EmailView {
     const res = await fetchWithAuth(
       `/emails/get?page=${page}&sort=${this.sortOrder}&sort_by=${this.sortBy}${anchorQS}`
     );
-    const { emails, pages } = await res.json();
+    const responseData = await res.json();
+    const { emails, pages } = responseData;
+
+    // Log details about each email's shopify_orders
+    emails.forEach((email, index) => {
+    });
     this.pages = pages;
 
     const normalized = emails.map(e => ({
       ...e,
       id: e.id ?? e._id
     }));
-
-    console.log(`  ↳ normalized IDs de la página ${page}:`, normalized.map(e => e.id));
-
     if (replace) {
       this.cache = normalized;
       this.ids = normalized.map(e => e.id);
@@ -1064,21 +1040,15 @@ class EmailView {
   async navigate(dir) {
     // 1) Calcula el nuevo índice y evita salirte de rango
     const newIndex = this.index + dir;
-    console.log(`[navigate] dir=${dir} ⇒ newIndex=${newIndex}`);
     if (newIndex < 0 || newIndex >= this.ids.length) return;
     this.index = newIndex;
-    console.log(`  ↳ index=${this.index}`);
-
     // 2) Calcula posición local y páginas
     const localPos = this.index % this.emailsPerPage;
     const currentPage = Math.floor(this.index / this.emailsPerPage) + 1;
     const prevPage = currentPage - 1;
     const nextPage = currentPage + 1;
-    console.log(`  ↳ localPos=${localPos}, currentPage=${currentPage}`);
-
     // 3) On‑demand: carga la página actual si no se había cargado
     if (!this.loadedPages.has(currentPage)) {
-      console.log(`  ↳ loading page ${currentPage} on demand`);
       await this.loadBatch(currentPage, { replace: false });
     }
 
@@ -1088,7 +1058,6 @@ class EmailView {
       nextPage <= this.pages &&
       !this.loadedPages.has(nextPage)
     ) {
-      console.log(`  ↳ prefetch next page ${nextPage}`);
       await this.loadBatch(nextPage, { replace: false });
     }
 
@@ -1098,17 +1067,10 @@ class EmailView {
       prevPage >= 1 &&
       !this.loadedPages.has(prevPage)
     ) {
-      console.log(`  ↳ prefetch prev page ${prevPage}`);
       await this.loadBatch(prevPage, { replace: false, prepend: true });
       // Ajusta el índice para mantener el mismo email “activo”
       this.index += this.emailsPerPage;
-      console.log(`  ↳ adjusted index after prepend=${this.index}`);
     }
-    console.log(
-      `  ↳ READY TO RENDER: index=${this.index}`,
-      `this.ids[${this.index - 2}…${this.index + 2}]=`,
-      this.ids.slice(this.index - 2, this.index + 3)
-    );
     // 6) Renderiza el correo calculado
     this.renderCurrent();
 
@@ -1130,20 +1092,11 @@ class EmailView {
       this.hideLoading();
       return console.error('Email no cargado aún');
     }
-
-    console.log(`[renderCurrent] Renderizando email:`, {
-      id: email.id,
-      hasHtml: !!email.body_html,
-      htmlSize: email.body_html?.length || 0,
-      subject: email.subject
-    });
-
     // Flag para evitar llamar hideLoading múltiples veces
     let loadingHidden = false;
     const finishLoading = () => {
       if (loadingHidden) return;
       loadingHidden = true;
-      console.log('[renderCurrent] Ocultando loading y mostrando contenido');
       this.hideLoading();
       this.updateRightSidebar(email);
     };
@@ -1160,7 +1113,6 @@ class EmailView {
         
         if (!iframe) {
           // No hay iframe (es texto plano), ocultar loading directamente
-          console.log('[checkIframeLoaded] Sin iframe, mostrando contenido inmediatamente');
           setTimeout(finishLoading, 100);
           return;
         }
@@ -1177,7 +1129,6 @@ class EmailView {
         // Verificar si el iframe ya está cargado
         const checkLoad = () => {
           if (loadingHidden) {
-            console.log('[checkLoad] Loading ya oculto, terminando');
             return;
           }
           
@@ -1185,18 +1136,8 @@ class EmailView {
           
           const iframeWin = iframe.contentWindow;
           const iframeDoc = iframeWin?.document;
-          
-          console.log(`[checkLoad] Intento ${checkAttempts}/${maxAttempts}:`, {
-            hasWindow: !!iframeWin,
-            hasDocument: !!iframeDoc,
-            readyState: iframeDoc?.readyState,
-            bodyExists: !!iframeDoc?.body,
-            bodyChildren: iframeDoc?.body?.children.length || 0
-          });
-          
           if (iframeDoc && iframeDoc.readyState === 'complete' && iframeDoc.body) {
             // Iframe completamente cargado
-            console.log('[checkLoad] Iframe completamente cargado');
             clearTimeout(safetyTimeout);
             setTimeout(finishLoading, 100);
           } else if (checkAttempts >= maxAttempts) {
@@ -1212,7 +1153,6 @@ class EmailView {
 
         // Agregar listener de load como respaldo
         iframe.addEventListener('load', () => {
-          console.log('[iframe.load] Evento load disparado');
           clearTimeout(safetyTimeout);
           setTimeout(finishLoading, 100);
         }, { once: true });
@@ -1234,32 +1174,6 @@ class EmailView {
   }
 
   renderEmailContent(email) {
-    console.log('[renderEmailContent] Email completo:', {
-      id: email.id || email._id,
-      subject: email.subject,
-      hasShopifyOrder: !!email.shopify_order,
-      hasShopifyCustomer: !!email.shopify_customer,
-      hasConversationMetadata: !!email.conversation_metadata,
-      hasShopifyMatch: !!email.shopify_match,
-      clasesDeEmail: email.clases_de_email
-    });
-    
-    if (email.shopify_order) {
-      console.log('[renderEmailContent] shopify_order:', email.shopify_order);
-    }
-    
-    if (email.shopify_customer) {
-      console.log('[renderEmailContent] shopify_customer:', email.shopify_customer);
-    }
-    
-    if (email.conversation_metadata) {
-      console.log('[renderEmailContent] conversation_metadata:', email.conversation_metadata);
-    }
-    
-    if (email.shopify_match) {
-      console.log('[renderEmailContent] shopify_match:', email.shopify_match);
-    }
-
     // ——— Historial de conversación ———
     const hist = document.getElementById('historyContainer');
     // si no hay conversación, la ocultamos
@@ -1318,8 +1232,6 @@ class EmailView {
       note.innerHTML = '<span style="font-size:1.2em;vertical-align:middle;">&#8593;</span> Historial anterior con cliente. <span style="font-size:1.2em;vertical-align:middle;">&#8593;</span>';
       hist.appendChild(note);
     }
-    console.log('attachments:', email.attachments);
-
     // vuelca en los IDs de tu HTML
     document.getElementById('emailFrom').textContent =
       'De: ' + ((email.return_mail || '').replace(/^<(.+)>$/, '$1') || 'Desconocido');
@@ -1335,7 +1247,6 @@ class EmailView {
       renderHtmlEmail(rc, email.body_html, '', email.attachments || []);
     } else {
       // Fallback a texto plano
-      console.log("texto plano:", email.body);
       const rec = (email.body || '')
         .split('\n').map(p => `<p>${p}</p>`).join('');
       rc.innerHTML = DOMPurify.sanitize(rec);
@@ -1453,8 +1364,10 @@ class EmailView {
     const toggleBtn = document.getElementById('toggleRightSidebar');
     if (!rightSidebar || !mainContent) return;
 
-    if (email.shopify_order) {
-      // Hay pedido: expandir sidebar
+    // Expandir sidebar si hay algún pedido (singular o múltiple)
+    const hasOrder = this.getSingleOrder(email) || this.hasMultipleOrders(email);
+    if (hasOrder) {
+      // Hay pedido(s): expandir sidebar
       rightSidebar.classList.remove('collapsed');
       mainContent.classList.add('sidebar-expanded');
       if (toggleBtn) toggleBtn.classList.add('expanded');
@@ -1473,8 +1386,9 @@ class EmailView {
     // 1️⃣ ========== SETUP SIDEBAR TOGGLE ==========
     const rightSidebar = document.querySelector('.right-sidebar');
     
-    // Si no hay pedido, colapsar la sidebar
-    if (!email.shopify_order) {
+    // Si no hay pedido (ni singular ni múltiple), colapsar la sidebar
+    const hasOrder = this.getSingleOrder(email) || this.hasMultipleOrders(email);
+    if (!hasOrder) {
       rightSidebar?.classList.add('collapsed');
     } else {
       rightSidebar?.classList.remove('collapsed');
@@ -1533,10 +1447,19 @@ class EmailView {
 
     // 3️⃣ ========== CARD DE PEDIDO ==========
     const orderCard = document.getElementById('orderCard');
-    
-    if (email.shopify_order) {
-      const order = email.shopify_order;
-      orderCard.innerHTML = this.renderOrderCard(order, email);
+    // Detectar si hay múltiples orders (shopify_orders es array)
+    if (this.hasMultipleOrders(email)) {
+      // Múltiples orders: mostrar selector
+      orderCard.innerHTML = this.renderMultipleOrdersSelector(email.shopify_orders, email);
+      
+      // IMPORTANTE: Setup del selector DESPUÉS de insertar el HTML en el DOM
+      // Usar setTimeout para asegurar que el DOM esté actualizado
+      setTimeout(() => {
+        this.setupOrderSelector(email);
+      }, 0);
+    } else if (this.getSingleOrder(email)) {
+      // Un solo order: renderizar normalmente
+      orderCard.innerHTML = this.renderOrderCard(this.getSingleOrder(email), email);
     } else {
       // Sin pedido vinculado
       orderCard.innerHTML = `
@@ -1561,9 +1484,9 @@ class EmailView {
     const secondaryPanels = document.getElementById('secondaryPanels');
     const panels = [];
     
-    // Panel: Detalles del pedido
-    if (email.shopify_order) {
-      panels.push(this.renderOrderDetailsPanel(email.shopify_order));
+    // Panel: Detalles del pedido (solo si hay un único order)
+    if (this.getSingleOrder(email) && !this.hasMultipleOrders(email)) {
+      panels.push(this.renderOrderDetailsPanel(this.getSingleOrder(email)));
     }
     
     // Panel: Detalles del cliente
@@ -1613,7 +1536,14 @@ class EmailView {
       </div>
       
       <div class="order-products-list">
-        ${items.map(item => `
+        ${items.map(item => {
+          const qty = item.quantity || item.qty || 1;
+          const refundedQty = item.refundedQty || item.refunded_qty || 0;
+          const refundableQty = item.refundableQty || item.refundable_qty || 0;
+          const isFullyRefunded = refundedQty > 0 && refundableQty === 0;
+          const isPartiallyRefunded = refundedQty > 0 && refundableQty > 0;
+          
+          return `
         <div class="product-summary-item">
           <div class="product-summary-thumbnail">
             ${item.image ? 
@@ -1623,10 +1553,21 @@ class EmailView {
           </div>
           <div class="product-summary-content">
             <div class="product-summary-title">${item.title || 'Producto'}</div>
-            <div class="product-summary-price">${this.formatPrice(item.price, order.currency)}</div>
+            <div class="product-summary-price-wrapper">
+              <div class="product-summary-price">${this.formatPrice(item.price, order.currency)}</div>
+              ${isFullyRefunded ? `
+              <div class="refund-status fully-refunded">
+                <i class="fas fa-undo"></i> Reembolsado
+              </div>` : ''}
+              ${isPartiallyRefunded ? `
+              <div class="refund-status partially-refunded">
+                <i class="fas fa-undo"></i> ${refundedQty} reemb. · ${refundableQty} disp.
+              </div>` : ''}
+            </div>
           </div>
         </div>
-        `).join('')}
+          `;
+        }).join('')}
         
         <div class="order-total-summary">Total: ${this.formatPrice(order.total_price, order.currency)}</div>
       </div>
@@ -1662,6 +1603,41 @@ class EmailView {
           ${this.getFulfillmentStatusText(order.fulfillment_status)}
         </span>
       </div>
+    `;
+  }
+
+  /**
+   * Renderiza el selector de múltiples pedidos cuando hay ambigüedad
+   */
+  renderMultipleOrdersSelector(orders, email) {
+    return `
+      <div class="card-title">
+        <i class="fas fa-shopping-bag"></i>
+        Múltiples pedidos encontrados
+      </div>
+      
+      <div class="multiple-orders-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Se encontraron ${orders.length} pedidos para este cliente. Selecciona el correcto:</span>
+      </div>
+      
+      <div class="order-selector-controls">
+        <select id="orderDropdown" class="order-dropdown">
+          <option value="">Selecciona un pedido...</option>
+          ${orders.map(order => `
+            <option value="${order._id}">
+              ${order.name || order.order_number} - ${this.formatShopifyDate(order.created_at)}
+            </option>
+          `).join('')}
+        </select>
+        
+        <button id="associateOrderBtn" class="btn-associate-order" disabled>
+          <i class="fas fa-link"></i>
+          Asociar pedido
+        </button>
+      </div>
+      
+      <div id="selectedOrderPreview"></div>
     `;
   }
 
@@ -1757,7 +1733,14 @@ class EmailView {
         <div class="accordion-content">
           ${items.length > 0 ? `
           <div class="products-table">
-            ${items.map(item => `
+            ${items.map(item => {
+              const qty = item.quantity || item.qty || 1;
+              const refundedQty = item.refundedQty || item.refunded_qty || 0;
+              const refundableQty = item.refundableQty || item.refundable_qty || 0;
+              const isFullyRefunded = refundedQty > 0 && refundableQty === 0;
+              const isPartiallyRefunded = refundedQty > 0 && refundableQty > 0;
+              
+              return `
             <div class="product-row">
               <div class="product-thumb">
                 ${item.image ? 
@@ -1771,11 +1754,22 @@ class EmailView {
                 ${item.sku ? `<div class="product-sku">SKU: ${item.sku}</div>` : ''}
               </div>
               <div class="product-qty-price">
-                <div class="product-qty">× ${item.quantity || 1}</div>
-                <div class="product-price">${this.formatPrice(item.price, order.currency)}</div>
+                <div class="product-qty">× ${qty}</div>
+                <div class="product-price-wrapper">
+                  <div class="product-price">${this.formatPrice(item.price, order.currency)}</div>
+                  ${isFullyRefunded ? `
+                  <div class="refund-status fully-refunded">
+                    <i class="fas fa-undo"></i> Reembolsado
+                  </div>` : ''}
+                  ${isPartiallyRefunded ? `
+                  <div class="refund-status partially-refunded">
+                    <i class="fas fa-undo"></i> ${refundedQty} reembolsado${refundedQty > 1 ? 's' : ''} · ${refundableQty} disponible${refundableQty > 1 ? 's' : ''}
+                  </div>` : ''}
+                </div>
               </div>
             </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>` : '<p style="color: #71717a; font-size: 12px;">Sin productos</p>'}
           
           ${order.shipping_address || order.billing_address ? `
@@ -1991,26 +1985,141 @@ class EmailView {
   }
 
   /**
+   * Configura el selector de pedidos cuando hay múltiples orders
+   */
+  setupOrderSelector(email) {
+    const dropdown = document.getElementById('orderDropdown');
+    const associateBtn = document.getElementById('associateOrderBtn');
+    const previewContainer = document.getElementById('selectedOrderPreview');
+    if (!dropdown || !associateBtn || !previewContainer) {
+      console.error('[setupOrderSelector] Faltan elementos del DOM');
+      return;
+    }
+    
+    const orders = email.shopify_orders;
+    let selectedOrder = null;
+    
+    // Limpiar listeners anteriores (clonar elementos)
+    const newDropdown = dropdown.cloneNode(true);
+    dropdown.parentNode.replaceChild(newDropdown, dropdown);
+    
+    const newAssociateBtn = associateBtn.cloneNode(true);
+    associateBtn.parentNode.replaceChild(newAssociateBtn, associateBtn);
+    
+    // Evento: cambio en el dropdown
+    newDropdown.addEventListener('change', (e) => {
+      const orderId = e.target.value;
+      
+      if (!orderId) {
+        // No hay selección: deshabilitar botón y limpiar preview
+        newAssociateBtn.disabled = true;
+        previewContainer.innerHTML = '';
+        selectedOrder = null;
+        return;
+      }
+      
+      // Encontrar el order seleccionado
+      selectedOrder = orders.find(o => o._id === orderId);
+      if (selectedOrder) {
+        // Habilitar botón y mostrar preview
+        newAssociateBtn.disabled = false;
+        previewContainer.innerHTML = this.renderOrderCard(selectedOrder, email);
+      }
+    });
+    
+    // Evento: click en botón de asociar
+    newAssociateBtn.addEventListener('click', async () => {
+      if (!selectedOrder) {
+        console.warn('[setupOrderSelector] No hay order seleccionado');
+        return;
+      }
+      
+      try {
+        newAssociateBtn.disabled = true;
+        newAssociateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Asociando...';
+        
+        // Llamar al endpoint para asociar el order
+        const conversationId = email.conversationId;
+        if (!conversationId) {
+          throw new Error('No se encontró conversationId');
+        }
+        const res = await fetchWithAuth('/emails/select_order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation_id: conversationId,
+            selected_order_id: selectedOrder._id
+          })
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.detail || `Error ${res.status}`);
+        }
+        
+        // Éxito: actualizar UI
+        notify.success('Pedido asociado correctamente');
+        
+        // Recargar el email actual para reflejar el cambio
+        await this.reloadAroundIndex();
+        this.renderCurrent();
+        
+      } catch (error) {
+        console.error('[setupOrderSelector] Error al asociar pedido:', error);
+        notify.error(`Error al asociar pedido: ${error.message}`);
+        
+        // Restaurar botón
+        newAssociateBtn.disabled = false;
+        newAssociateBtn.innerHTML = '<i class="fas fa-link"></i> Asociar pedido';
+      }
+    });
+  }
+
+  /**
    * Actualiza el estado de los botones de acción
    */
   updateActionButtons(email) {
-    const order = email.shopify_order;
+    // Obtener el order usando el método auxiliar
+    const order = this.getSingleOrder(email);
+    
+    // Si hay múltiples orders, deshabilitar todos los botones
+    const hasMultiple = this.hasMultipleOrders(email);
     
     // Botón de reembolso
     const btnReembolso = document.getElementById('actionReembolso');
-    if (order && order.financial_status === 'paid') {
-      btnReembolso.disabled = false;
-      btnReembolso.setAttribute('data-tooltip', 'Crear reembolso');
-      btnReembolso.onclick = () => this.openRefundModal(email);
+    if (hasMultiple) {
+      btnReembolso.disabled = true;
+      btnReembolso.onclick = null;
+      btnReembolso.setAttribute('data-tooltip', 'Selecciona un pedido primero');
+    } else if (order) {
+      // Verificar si hay items con refundableQty > 0 o si hay shipping disponible
+      const hasRefundableItems = (order.line_items || []).some(item => 
+        (item.refundableQty || item.refundable_qty || 0) > 0
+      );
+      const hasRefundableShipping = parseFloat(order.total_shipping || 0) > 0;
+      const canRefund = hasRefundableItems || hasRefundableShipping;
+      
+      if (canRefund) {
+        btnReembolso.disabled = false;
+        btnReembolso.setAttribute('data-tooltip', 'Crear reembolso');
+        btnReembolso.onclick = () => this.openRefundModal(email);
+      } else {
+        btnReembolso.disabled = true;
+        btnReembolso.onclick = null;
+        btnReembolso.setAttribute('data-tooltip', 'No hay items pendientes de reembolso');
+      }
     } else {
       btnReembolso.disabled = true;
       btnReembolso.onclick = null;
-      btnReembolso.setAttribute('data-tooltip', order ? 'El pedido no está pagado' : 'Sin pedido vinculado');
+      btnReembolso.setAttribute('data-tooltip', 'Sin pedido vinculado');
     }
     
     // Botón de cancelar
     const btnCancelar = document.getElementById('actionCancelar');
-    if (order && !order.cancelled_at && order.fulfillment_status !== 'fulfilled') {
+    if (hasMultiple) {
+      btnCancelar.disabled = true;
+      btnCancelar.setAttribute('data-tooltip', 'Selecciona un pedido primero');
+    } else if (order && !order.cancelled_at && order.fulfillment_status !== 'fulfilled') {
       btnCancelar.disabled = false;
       btnCancelar.setAttribute('data-tooltip', 'Cancelar/Modificar pedido');
     } else {
@@ -2022,7 +2131,10 @@ class EmailView {
     
     // Botón de tracking
     const btnTracking = document.getElementById('actionTracking');
-    if (order && order.tracking && order.tracking.length > 0) {
+    if (hasMultiple) {
+      btnTracking.disabled = true;
+      btnTracking.setAttribute('data-tooltip', 'Selecciona un pedido primero');
+    } else if (order && order.tracking && order.tracking.length > 0) {
       btnTracking.disabled = false;
       btnTracking.setAttribute('data-tooltip', 'Ver seguimiento');
       btnTracking.onclick = () => {
@@ -2036,13 +2148,40 @@ class EmailView {
     
     // Botón de descuento
     const btnDescuento = document.getElementById('actionDescuento');
-    if (order) {
+    if (hasMultiple) {
+      btnDescuento.disabled = true;
+      btnDescuento.setAttribute('data-tooltip', 'Selecciona un pedido primero');
+    } else if (order) {
       btnDescuento.disabled = false;
       btnDescuento.setAttribute('data-tooltip', 'Crear código de descuento');
     } else {
       btnDescuento.disabled = true;
       btnDescuento.setAttribute('data-tooltip', 'Sin pedido vinculado');
     }
+  }
+
+  /**
+   * Obtiene un único order del email (si existe)
+   */
+  getSingleOrder(email) {
+    // Si hay shopify_order (legacy), usarlo
+    if (email.shopify_order) {
+      return email.shopify_order;
+    }
+    
+    // Si hay shopify_orders array con 1 elemento, usarlo
+    if (email.shopify_orders && Array.isArray(email.shopify_orders) && email.shopify_orders.length === 1) {
+      return email.shopify_orders[0];
+    }
+    return null;
+  }
+
+  /**
+   * Detecta si hay múltiples orders en el email
+   */
+  hasMultipleOrders(email) {
+    const hasMultiple = email.shopify_orders && Array.isArray(email.shopify_orders) && email.shopify_orders.length > 1;
+    return hasMultiple;
   }
 
   /**
@@ -2058,7 +2197,6 @@ class EmailView {
     };
     return statusMap[status] || 'unfulfilled';
   }
-
 
   /**
    * Formatea precios con símbolo de moneda
@@ -2165,10 +2303,6 @@ class EmailView {
     return textMap[status] || status || 'Pendiente de Envío';
   }
 
-
-
-
-
   formatEmailDate(dateString) {
     const now = new Date();
     const emailDate = new Date(dateString);
@@ -2201,46 +2335,26 @@ class EmailView {
   }
 
   async reloadAroundIndex() {
-    console.log(`\n[reload] ▶ Starting reloadAroundIndex (index=${this.index})`);
-
     // 1) Calcula la página actual en función del this.index
     this.page = Math.floor(this.index / this.emailsPerPage) + 1;
-    console.log(`[reload] 1) Calculated page=${this.page}`);
-
-    // 2) Reinicia cache y loadedPages
+// 2) Reinicia cache y loadedPages
     this.cache = [];
     this.loadedPages.clear();
-    console.log(`[reload] 2) Cleared cache & loadedPages`);
-
-    // 3) Carga replace de la página actual
-    console.log(`[reload] 3) loadBatch page=${this.page} replace=true`);
-    await this.loadBatch(this.page, { replace: true });
+// 3) Carga replace de la página actual
+await this.loadBatch(this.page, { replace: true });
     this.loadedPages.add(this.page);
-    console.log(
-      `[reload]    → after loadBatch ids.length=${this.ids.length}, cache.length=${this.cache.length}`
-    );
-
     // 4) Guarda nuevo inbox_ids y inbox_page
     sessionStorage.setItem('inbox_ids', JSON.stringify(this.ids));
     sessionStorage.setItem('inbox_page', this.page);
-    console.log(
-      `[reload] 4) sessionStorage -> inbox_ids (${this.ids.length} items), inbox_page=${this.page}`
-    );
-
-    // 5) Pre‑fetch de siguiente batch si toca
+// 5) Pre‑fetch de siguiente batch si toca
     const localPos = this.index % this.emailsPerPage;
     const nextPage = this.page + 1;
-    console.log(`[reload] 5) localPos=${localPos}, prefetchThreshold=${this.prefetchThreshold}`);
-    if (
+if (
       localPos >= this.emailsPerPage - this.prefetchThreshold &&
       nextPage <= this.pages
     ) {
-      console.log(`[reload]    → prefetch nextPage=${nextPage}`);
       await this.loadBatch(nextPage, { replace: false });
       this.loadedPages.add(nextPage);
-      console.log(
-        `[reload]    → after prefetch next ids.length=${this.ids.length}, cache.length=${this.cache.length}`
-      );
     }
 
     // 6) Pre‑fetch de page anterior si toca
@@ -2249,19 +2363,11 @@ class EmailView {
       localPos < this.prefetchThreshold &&
       prevPage >= 1
     ) {
-      console.log(`[reload] 6) prefetch prevPage=${prevPage}`);
-      await this.loadBatch(prevPage, { replace: false, prepend: true });
+await this.loadBatch(prevPage, { replace: false, prepend: true });
       this.loadedPages.add(prevPage);
       this.index += this.emailsPerPage;
-      console.log(
-        `[reload]    → after prepend prev ids.length=${this.ids.length}, cache.length=${this.cache.length}, index now=${this.index}`
-      );
     }
-
-    console.log(`[reload] ◀ Finished reloadAroundIndex\n`);
-
   }
-
 
   // Solo reflejo local (sin red)
   reflectPendingIdeasUI(has) {
@@ -2274,7 +2380,6 @@ class EmailView {
   async sendReply() {
     const emailId = this.ids[this.index];
     const pageForEmail = Math.floor(this.index / this.emailsPerPage) + 1;
-    console.log(`[sendReply] emailId=${emailId} at index=${this.index} (page ${pageForEmail})`);
     // Asegurarnos de que el batch esté cargado
     if (!this.loadedPages.has(pageForEmail)) {
       await this.loadBatch(pageForEmail, { replace: false });
@@ -2287,8 +2392,6 @@ class EmailView {
     const recipient = (email.return_mail || email.sender || '').replace(/^<(.+)>$/, '$1');
     const subject = document.getElementById('responseSubject').textContent.trim();
     const message = DOMPurify.sanitize(document.getElementById('responseContent').innerHTML.trim());
-    console.log("message:", message);
-
     // 🆕 Obtener el valor del checkbox de cerrar conversación
     const closeConversationCheck = document.getElementById('closeConversationCheck');
     const shouldCloseConversation = closeConversationCheck?.checked || false;
@@ -2309,7 +2412,6 @@ class EmailView {
         return;
       }
 
-
       // 👉 FormData para adjuntos
       const fd = new FormData();
       fd.append('email_id', emailId);           // reply
@@ -2318,7 +2420,6 @@ class EmailView {
       fd.append('message', message);
       fd.append('close_conversation', shouldCloseConversation ? 'true' : 'false'); // 🆕
       this.pendingFiles.forEach(f => fd.append('files', f, f.name));
-
 
       const res = await fetchWithAuth('/emails/send', {
         method: 'POST',
@@ -2466,44 +2567,49 @@ class EmailView {
    * Abre el modal de refund
    */
   async openRefundModal(email) {
-    if (!email || !email.shopify_order) {
-      console.log(email);
-      notify.error('No hay pedido vinculado');
-      return;
-    }
-
-    const order = email.shopify_order;
-    console.log('Opening refund modal for order:', order);
+    // Usar el método auxiliar para obtener el order correcto
+    const order = this.getSingleOrder(email);
     
-    // Verificar que el pedido esté pagado
-    if (order.financial_status !== 'paid') {
-      notify.error('El pedido no está pagado');
+    if (!order) {
+      notify.error('No hay pedido vinculado o hay múltiples pedidos (selecciona uno primero)');
       return;
     }
-
-    // Inicializar estado del refund
-    this.refundState = {
-      order: order,
-      orderGid: order.order_gid,
-      items: (order.line_items || []).map(item => {
+    // Inicializar estado del refund - filtrar solo items con refundableQty > 0
+    const refundableItems = (order.line_items || [])
+      .filter(item => {
+        const refundableQty = item.refundableQty || item.refundable_qty || 0;
+        return refundableQty > 0;
+      })
+      .map(item => {
         // Construir el lineItemGid si no viene
         const lineItemGid = item.gid || item.lineItemGid || `gid://shopify/LineItem/${item.id}`;
-        const quantity = item.qty || item.quantity || 0;
-        const quantityRefunded = item.quantityRefunded || item.quantity_refunded || 0;
+        const refundableQty = item.refundableQty || item.refundable_qty || 0;
         const price = parseFloat(item.price || 0);
         
         return {
           lineItemGid: lineItemGid,
           title: item.title || item.name || 'Producto',
           price: price,
-          quantity: quantity,
-          quantityRefundable: quantity - quantityRefunded,
+          quantity: refundableQty, // Cantidad refundable, no la cantidad original
+          quantityRefundable: refundableQty,
           quantityToRefund: 0,
           restock: false,
           thumbnail: item.image || item.thumbnail || null,
-          maxRefundableAmount: (quantity - quantityRefunded) * price
+          maxRefundableAmount: refundableQty * price
         };
-      }),
+      });
+    
+    // Si no hay items refundables ni shipping, no abrir el modal
+    const hasRefundableShipping = parseFloat(order.total_shipping || 0) > 0;
+    if (refundableItems.length === 0 && !hasRefundableShipping) {
+      notify.error('No hay items pendientes de reembolso');
+      return;
+    }
+
+    this.refundState = {
+      order: order,
+      orderGid: order.order_gid,
+      items: refundableItems,
       shippingEnabled: false,
       shippingAmount: 0,
       shippingMax: parseFloat(order.total_shipping || 0),
@@ -2523,6 +2629,10 @@ class EmailView {
     
     // Setup event listeners
     this.setupRefundModalListeners();
+
+    // ← Bootstrap: pedir preview vacío para inicializar máximos/sugerencias
+    this.showSummaryLoading(true);
+    this.callPreviewAPI();
   }
 
   /**
@@ -2790,14 +2900,6 @@ class EmailView {
           locationGid: item.restock ? defaultLocation : null
         }));
       
-      // Si no hay items seleccionados, resetear el resumen
-      if (items.length === 0 && !this.refundState.shippingEnabled) {
-        this.refundState.suggestedRefund = null;
-        this.showSummaryLoading(false);
-        this.updateRefundSummary();
-        return;
-      }
-      
       // Preparar payload
       const payload = {
         orderGid: this.refundState.orderGid,
@@ -2822,7 +2924,6 @@ class EmailView {
       }
       
       const data = await res.json();
-      console.log('Preview API response:', data);
       const sr = data.suggestedRefund;
 
       this.refundState.suggestedRefund = sr;
@@ -2912,9 +3013,6 @@ class EmailView {
    */
   updateRefundSummary() {
     const suggested = this.refundState.suggestedRefund;
-    
-    console.log('updateRefundSummary called with:', suggested);
-    
     if (!suggested) {
       // No hay preview, mostrar ceros
       document.getElementById('refundSummaryItemsLabel').textContent = 'No items selected';
@@ -2934,9 +3032,6 @@ class EmailView {
     const duties = parseFloat(suggested.totals.duties || 0);
     const total = subtotal + tax + shipping + duties;
     const maxavailable = parseFloat(suggested.available.max || 0)
-    
-    console.log('Calculated totals:', { subtotal, tax, shipping, duties, total });
-    
     // Contar items seleccionados
     const selectedCount = this.refundState.items.filter(i => i.quantityToRefund > 0).length;
     const itemsLabel = selectedCount === 1 ? '1 item' : `${selectedCount} items`;
@@ -3106,3 +3201,4 @@ class EmailView {
 }
 
 document.addEventListener('DOMContentLoaded', () => new EmailView());
+
