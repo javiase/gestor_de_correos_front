@@ -116,20 +116,20 @@
       <p><strong>Contacto:</strong> <a href="mailto:respondize.info@gmail.com">respondize.info@gmail.com</a></p>
 
       <h2>2. Finalidades y Base Legal</h2>
-      <ol>
-        <li><strong>Mejorar el funcionamiento del bot y la experiencia de usuario</strong>: utilizamos el nombre y la imagen de perfil para personalizar la interfaz y perfiles de usuario.</li>
-        <li><strong>Lectura y envío de correos</strong>: accedemos al contenido de los correos para procesarlos y generar respuestas automatizadas, y enviarlos en nombre del usuario.</li>
-      </ol>
-      <p><strong>Base legal:</strong> ejecución del contrato de servicio y, cuando proceda, consentimiento explícito del usuario.</p>
-
+      <ul>
+        <li><strong>Identificación de la cuenta:</strong> usamos tu correo electrónico (<code>scope userinfo.email</code>) para vincular tu cuenta de Google.</li>
+        <li><strong>Lectura y envío de correos:</strong> accedemos a asunto, cuerpo y adjuntos para generar borradores con IA y, si lo apruebas, enviarlos desde tu buzón (<code>scopes gmail.readonly</code> y <code>gmail.send</code>).</li>
+        <li><strong>Avatar (opcional):</strong> puedes subir manualmente una imagen de perfil en Respondize. No obtenemos nombre ni foto desde Google mientras no autorices scopes de perfil.</li>
+      </ul>
+      <p><strong>Base legal:</strong> ejecución del contrato y, cuando proceda, consentimiento.</p>
+      
       <h2>3. Categorías de Datos Recogidos</h2>
       <ul>
-        <li>Identificadores básicos: nombre, correo electrónico (userinfo.email).</li>
-        <li>Contenido de correos: asunto, cuerpo, archivos adjuntos (gmail.readonly, gmail.send).</li>
-        <li>Imagen de perfil (userinfo.profile).</li>
-        <li>Registros de uso y métricas de interacción.</li>
-        <li>Datos de facturación y pago (Stripe).</li>
-        <li>Datos de comercio y automatización (Shopify), incluyendo eventos de usuario, pedidos y configuraciones de flujo de trabajo.</li>
+        <li><strong>Identificadores:</strong> correo electrónico (<code>scope userinfo.email</code>).</li>
+        <li><strong>Contenido de correos:</strong> asunto, cuerpo, adjuntos (lectura con <code>gmail.readonly</code>; envío con <code>gmail.send</code>).</li>
+        <li><strong>Avatar opcional:</strong> subido por el usuario (si lo aportas en la app).</li>
+        <li><strong>Facturación:</strong> datos de pago (Stripe).</li>
+        <li><strong>(Futuro) Integraciones:</strong> Shopify, etc., cuando estén activas y documentadas.</li>
       </ul>
 
       <h2>4. Destinatarios y Cesiones</h2>
@@ -147,13 +147,13 @@
         <li>MongoDB Atlas también cifra los datos en reposo y tránsito de acuerdo con el estándar AES‑256 y TLS.</li>
       </ul>
 
-      <h2>6. Plazos de Conservación</h2>
+      <h2>6. Plazos de conservación</h2>
       <ul>
-        <li>Conservamos los correos y el historial de conversación hasta 1 mes tras su envío o recepción —criterio que responde a nuestra necesidad de auditar y depurar el servicio sin incurrir en costes excesivos—. Para dar flexibilidad futura, mantenemos la opción de ampliar este plazo hasta el tiempo que la cuenta permanezca activa o, en caso de inactividad, hasta 6 meses, adaptándonos siempre al principio de minimización.</li>
-        <li>Datos de perfil (nombre, imagen): conservados mientras exista la cuenta.</li>
-        <li>Métricas de uso: No se recogen ni retienen actualmente. Se informará en esta misma sección cuando comiencen a implementarse.</li>
-        <li>Tras 4 meses de inactividad de la cuenta, <strong>TODOS</strong> los datos se eliminan automáticamente.</li>
-        <li>Datos de facturación: según normativa fiscal, mínimo 5 años.</li>
+        <li><strong>Contenido procesado y metadatos:</strong> 30 días; purga automática (TTL).</li>
+        <li><strong>Inactividad:</strong> 2 meses sin uso → cierre y purga de cuenta/datos.</li>
+        <li><strong>Eliminación de cuenta (tombstone):</strong> guardamos durante 6 meses un registro mínimo sin contenido de Gmail (hash irreversible de email, estado de suscripción/flags de prueba, fechas) para reactivación y prevención de fraude.</li>
+        <li><strong>Lista de supresión antifraude:</strong> conservamos un identificador no reversible (hash con pepper) para impedir múltiples pruebas gratuitas con el mismo email; plazo: 5 años.</li>
+        <li><strong>Facturación:</strong> 5 años (obligación legal).</li>
       </ul>
 
       <h2>7. Derechos de los Usuarios</h2>
@@ -182,7 +182,15 @@
             <em>En el futuro</em> podríamos integrar otras plataformas de IA (por ejemplo, Google Gemini).  
             En tal caso, siempre se regirán por términos de protección de datos compatibles (Limited Use o equivalentes) y se actualizará esta política.
         </li>
-    </ul>
+      </ul>
+      <br>
+      <p>
+        The use of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.
+      </p>
+      <p>
+        El uso de la información recibida de Google APIs cumple la Google API Services User Data Policy, incluyendo los requisitos de Limited Use.
+      </p>
+      
 
       <h2>10. Protección de datos de menores</h2>
         <ol>
@@ -204,12 +212,15 @@
             <a href="mailto:respondize.info@gmail.com">respondize.info@gmail.com</a>, indicando los datos del menor y aportando prueba de la representación legal.
         </li>
         </ol>
+      <h2>11. Revocación de permisos</h2>
+      <p>Puedes revocar el acceso desde tu <strong>Cuenta de Google</strong> → Seguridad → Acceso de terceros → “Respondize” → Eliminar acceso.  
+      También puedes eliminar tu cuenta en la app para revocar y purgar datos.</p>
 
 
-      <h2>11. Cookies</h2>
+      <h2>12. Cookies</h2>
       <p>Actualmente no utilizamos cookies, aunque podría implementarse en el futuro para mejorar la seguridad y personalización.</p>
 
-      <h2>12. Delegado de Protección de Datos (DPO)</h2>
+      <h2>13. Delegado de Protección de Datos (DPO)</h2>
       <p>No se ha designado Delegado de Protección de Datos.</p>
     </div>
   </main>
