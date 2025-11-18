@@ -3,6 +3,142 @@ import { fetchWithAuth, getToken, API_BASE } from '/js/utils/api.js';
 import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
+// ============ MENÚ MÓVIL HAMBURGUESA ============
+function setupMobileMenu() {
+  const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+  const navbarCenter = document.querySelector('.navbar-center');
+
+  if (!mobileMenuBtn || !navbarCenter) {
+    console.log('Menu elements not found in plans page');
+    return;
+  }
+
+  function openMenu() {
+    mobileMenuBtn.classList.add('active');
+    navbarCenter.classList.add('active');
+    navbarCenter.style.maxHeight = '20rem';
+    navbarCenter.style.opacity = '1';
+    navbarCenter.style.visibility = 'visible';
+    navbarCenter.style.padding = '0.5rem 0';
+  }
+
+  function closeMenu() {
+    mobileMenuBtn.classList.remove('active');
+    navbarCenter.classList.remove('active');
+    navbarCenter.style.maxHeight = '0';
+    navbarCenter.style.opacity = '0';
+    navbarCenter.style.visibility = 'hidden';
+    navbarCenter.style.padding = '0';
+  }
+
+  let isTogglingMenu = false;
+  
+  mobileMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (isTogglingMenu) return;
+    isTogglingMenu = true;
+    
+    const isActive = mobileMenuBtn.classList.contains('active');
+    
+    if (isActive) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+    
+    setTimeout(() => {
+      isTogglingMenu = false;
+    }, 100);
+  });
+
+  // Cerrar menú al hacer clic en un enlace
+  const navLinks = navbarCenter.querySelectorAll('a');
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      closeMenu();
+    });
+  });
+
+  // Cerrar menú al hacer clic fuera
+  setTimeout(() => {
+    document.addEventListener('click', (e) => {
+      if (isTogglingMenu) return;
+      
+      if (!mobileMenuBtn.contains(e.target) && !navbarCenter.contains(e.target)) {
+        const isActive = navbarCenter.classList.contains('active');
+        if (isActive) {
+          closeMenu();
+        }
+      }
+    });
+  }, 500);
+}
+
+// Inicializar menú móvil
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupMobileMenu);
+} else {
+  setupMobileMenu();
+}
+
+// ============ TOOLTIP QUE SIGUE EL CURSOR ============
+function setupCursorTooltip() {
+  const tooltip = document.createElement('div');
+  tooltip.className = 'cursor-tooltip';
+  tooltip.style.cssText = `
+    position: fixed;
+    background: #0b0f1a;
+    color: #e5e7eb;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid #1f2937;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10000;
+  `;
+  document.body.appendChild(tooltip);
+
+  let currentElement = null;
+
+  document.addEventListener('mousemove', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    
+    if (target) {
+      if (currentElement !== target) {
+        currentElement = target;
+        tooltip.textContent = target.getAttribute('data-tooltip');
+        tooltip.style.opacity = '1';
+      }
+      
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY + 12) + 'px';
+    } else {
+      if (currentElement) {
+        tooltip.style.opacity = '0';
+        currentElement = null;
+      }
+    }
+  });
+
+  document.addEventListener('mouseleave', () => {
+    tooltip.style.opacity = '0';
+    currentElement = null;
+  });
+}
+
+// Inicializar tooltip
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupCursorTooltip);
+} else {
+  setupCursorTooltip();
+}
+
 // 🆕 EARLY CHECK: Si no hay token inmediatamente, muestra las cards sin esperar
 // Esto previene el flash de "sin contenido" en la landing page
 if (!getToken() && !localStorage.getItem("login_state")) {
@@ -43,20 +179,23 @@ function setupPublicButtons() {
   const freeBtn = document.getElementById('freeBtn');
   const starterBtn = document.getElementById('starterBtn');
   
+  // Los botones están deshabilitados con data-tooltip="Próximamente"
+  // No añadimos ningún onclick para que permanezcan deshabilitados
   if (freeBtn) {
     freeBtn.onclick = (e) => {
       e.preventDefault();
-      window.location.href = '/secciones/register.html';
+      // No hacer nada - botón deshabilitado
     };
   }
   
   if (starterBtn) {
     starterBtn.onclick = (e) => {
       e.preventDefault();
-      window.location.href = '/secciones/register.html';
+      // No hacer nada - botón deshabilitado
     };
   }
 }
+
 // Funciones auxiliares para fechas
 function toDate(dateLike) {
   if (!dateLike) return null;
@@ -94,39 +233,203 @@ function updatePopoverBillingDate(dateLike) {
 
 // Inicializar popover de ayuda
 function initPlanHelpPopover() {
+  console.log('🔧 [POPOVER] Inicializando popover...');
+  
   const btn = document.getElementById('planHelpBtn');
   const pop = document.getElementById('planHelpPopover');
 
-  if (!btn || !pop) return;
+  console.log('🔧 [POPOVER] Botón encontrado:', btn);
+  console.log('🔧 [POPOVER] Popover encontrado:', pop);
+
+  if (!btn || !pop) {
+    console.error('❌ [POPOVER] No se encontró el botón o el popover');
+    return;
+  }
 
   btn.setAttribute('aria-controls', 'planHelpPopover');
   btn.setAttribute('aria-haspopup', 'dialog');
   btn.setAttribute('aria-expanded', 'false');
   pop.hidden = true;
 
+  // Crear backdrop para mobile
+  let backdrop = document.querySelector('.plan-popover-backdrop');
+  if (!backdrop) {
+    console.log('🔧 [POPOVER] Creando backdrop...');
+    backdrop = document.createElement('div');
+    backdrop.className = 'plan-popover-backdrop';
+    document.body.appendChild(backdrop);
+    console.log('✅ [POPOVER] Backdrop creado y añadido al body');
+  } else {
+    console.log('✅ [POPOVER] Backdrop ya existía');
+  }
+
   const open = () => {
+    console.log('🔓 [POPOVER] Abriendo popover...');
+    console.log('🔧 [POPOVER] Estilos computados del popover:', window.getComputedStyle(pop).position);
+    console.log('🔧 [POPOVER] Ancho del viewport:', window.innerWidth);
+    
     pop.hidden = false;
     btn.setAttribute('aria-expanded', 'true');
+    backdrop.classList.add('active');
+    
+    console.log('✅ [POPOVER] Popover visible:', !pop.hidden);
+    console.log('✅ [POPOVER] Backdrop activo:', backdrop.classList.contains('active'));
+    console.log('🔧 [POPOVER] Position del popover:', window.getComputedStyle(pop).position);
+    console.log('🔧 [POPOVER] Left del popover:', window.getComputedStyle(pop).left);
+    console.log('🔧 [POPOVER] Top del popover:', window.getComputedStyle(pop).top);
+    console.log('🔧 [POPOVER] Transform del popover:', window.getComputedStyle(pop).transform);
+    
     pop.focus?.();
   };
 
   const closePop = () => {
+    console.log('🔒 [POPOVER] Cerrando popover...');
     pop.hidden = true;
     btn.setAttribute('aria-expanded', 'false');
+    backdrop.classList.remove('active');
+    console.log('✅ [POPOVER] Popover cerrado');
   };
 
   btn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log('👆 [POPOVER] Click en botón, estado actual:', pop.hidden ? 'cerrado' : 'abierto');
     pop.hidden ? open() : closePop();
   });
 
+  // Cerrar al hacer click en el backdrop
+  backdrop.addEventListener('click', () => {
+    console.log('👆 [POPOVER] Click en backdrop');
+    closePop();
+  });
+
+  // Cerrar al hacer click fuera (desktop)
   document.addEventListener('click', (e) => {
     if (pop.hidden) return;
     if (!pop.contains(e.target) && !btn.contains(e.target)) {
+      console.log('👆 [POPOVER] Click fuera del popover');
       closePop();
     }
   });
+  
+  console.log('✅ [POPOVER] Popover completamente inicializado');
+}
+
+// ===== TOOLTIPS MOBILE CON BACKDROP =====
+function initMobileTooltips() {
+  console.log('🔧 [TOOLTIPS] Inicializando tooltips mobile...');
+  
+  // Solo en mobile
+  if (window.innerWidth > 768) {
+    console.log('⏭️ [TOOLTIPS] Desktop detectado, saltando inicialización');
+    return;
+  }
+
+  // Crear backdrop si no existe
+  let backdrop = document.querySelector('.tooltip-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'tooltip-backdrop';
+    document.body.appendChild(backdrop);
+    console.log('✅ [TOOLTIPS] Backdrop creado');
+  }
+
+  let currentTooltip = null;
+
+  const showTooltip = (tooltip) => {
+    console.log('🔓 [TOOLTIPS] Mostrando tooltip');
+    currentTooltip = tooltip;
+    tooltip.style.opacity = '1';
+    tooltip.style.visibility = 'visible';
+    backdrop.classList.add('active');
+  };
+
+  const hideTooltip = () => {
+    if (currentTooltip) {
+      console.log('🔒 [TOOLTIPS] Ocultando tooltip');
+      currentTooltip.style.opacity = '0';
+      currentTooltip.style.visibility = 'hidden';
+      currentTooltip = null;
+    }
+    backdrop.classList.remove('active');
+  };
+
+  // Cerrar al tocar el backdrop
+  backdrop.addEventListener('click', (e) => {
+    console.log('👆 [TOOLTIPS] Click en backdrop');
+    e.preventDefault();
+    e.stopPropagation();
+    hideTooltip();
+  });
+
+  // Manejar .info-icon-wrapper (label tooltips)
+  document.querySelectorAll('.info-icon-wrapper').forEach(wrapper => {
+    const icon = wrapper.querySelector('.info-icon');
+    const tooltip = wrapper.querySelector('.info-tooltip');
+    
+    if (icon && tooltip) {
+      console.log('✅ [TOOLTIPS] Configurando info-icon-wrapper');
+      
+      wrapper.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('👆 [TOOLTIPS] Click en info-icon-wrapper');
+        
+        if (currentTooltip === tooltip) {
+          hideTooltip();
+        } else {
+          hideTooltip();
+          showTooltip(tooltip);
+        }
+      });
+    }
+  });
+
+  // Manejar .has-tooltip (features list)
+  document.querySelectorAll('.features-list li.has-tooltip').forEach(item => {
+    const tooltip = item.querySelector('.tooltip');
+    
+    if (tooltip) {
+      console.log('✅ [TOOLTIPS] Configurando has-tooltip');
+      
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('👆 [TOOLTIPS] Click en has-tooltip');
+        
+        if (currentTooltip === tooltip) {
+          hideTooltip();
+        } else {
+          hideTooltip();
+          showTooltip(tooltip);
+        }
+      });
+    }
+  });
+
+  // Manejar .info-icon (Pack Extra button)
+  document.querySelectorAll('.info-icon').forEach(icon => {
+    const tooltip = icon.querySelector('.info-tooltip');
+    
+    if (tooltip) {
+      console.log('✅ [TOOLTIPS] Configurando info-icon');
+      
+      icon.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('👆 [TOOLTIPS] Click en info-icon');
+        
+        if (currentTooltip === tooltip) {
+          hideTooltip();
+        } else {
+          hideTooltip();
+          showTooltip(tooltip);
+        }
+      });
+    }
+  });
+
+  console.log('✅ [TOOLTIPS] Tooltips mobile completamente inicializados');
 }
 
 async function fetchStoreFresh() {
@@ -341,7 +644,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       logoutBtn.textContent = 'Iniciar sesión';
       logoutBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = '/secciones/login.html';
+        // Si tiene la clase disabled-link, no navegar
+        if (!logoutBtn.classList.contains('disabled-link')) {
+          window.location.href = '/secciones/login.html';
+        }
       });
     }
 
@@ -352,23 +658,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    // Configurar botones para usuarios sin sesión - Redirigir a registro
-    const freeBtn = document.getElementById('freeBtn');
-    const starterBtn = document.getElementById('starterBtn');
-
-    if (freeBtn) {
-      freeBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = '/secciones/register.html';
-      });
-    }
-
-    if (starterBtn) {
-      starterBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = '/secciones/register.html';
-      });
-    }
+    // Los botones están deshabilitados con data-tooltip="Próximamente"
+    // La configuración de los botones se hace en setupPublicButtons() 
+    // que se llama desde showCardsForPublic()
     
     return; // Salimos aquí si no hay token - NO llamamos enforceFlowGate()
   }
@@ -838,61 +1130,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else if (packCard) {
     packCard.classList.add("hidden");
   }
+
+  // ➐ Inicializar tooltips mobile con backdrop
+  console.log('🚀 [INIT] Inicializando tooltips mobile...');
+  initMobileTooltips();
 });
-
-// ============ TOOLTIP QUE SIGUE EL CURSOR ============
-function setupCursorTooltip() {
-  // Crear el elemento del tooltip
-  const tooltip = document.createElement('div');
-  tooltip.className = 'cursor-tooltip';
-  tooltip.style.cssText = `
-    position: fixed;
-    background: #0b0f1a;
-    color: #e5e7eb;
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-    display: none;
-  `;
-  document.body.appendChild(tooltip);
-
-  // Seleccionar todos los enlaces con data-tooltip
-  const tooltipElements = document.querySelectorAll('[data-tooltip]');
-
-  tooltipElements.forEach(element => {
-    element.addEventListener('mouseenter', () => {
-      const tooltipText = element.getAttribute('data-tooltip');
-      tooltip.textContent = tooltipText;
-      tooltip.style.display = 'block';
-      setTimeout(() => {
-        tooltip.style.opacity = '1';
-      }, 10);
-    });
-
-    element.addEventListener('mousemove', (e) => {
-      // Posicionar el tooltip cerca del cursor (un poco abajo y a la derecha)
-      tooltip.style.left = `${e.clientX + 15}px`;
-      tooltip.style.top = `${e.clientY + 15}px`;
-    });
-
-    element.addEventListener('mouseleave', () => {
-      tooltip.style.opacity = '0';
-      setTimeout(() => {
-        tooltip.style.display = 'none';
-      }, 200);
-    });
-  });
-}
-
-// Inicializar tooltip del cursor cuando el DOM esté listo
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupCursorTooltip);
-} else {
-  setupCursorTooltip();
-}

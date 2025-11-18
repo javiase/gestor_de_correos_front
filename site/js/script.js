@@ -31,32 +31,95 @@ const progressLine = document.querySelector('.progress-line');
 
 let currentFeature = 0;
 const totalFeatures = featureItems.length;
+let autoAdvanceInterval;
+let isMobileLayout = false;
+
+// Reorganizar estructura para móvil
+function reorganizeForMobile() {
+  const isMobile = window.innerWidth <= 768;
+  
+  if (isMobile && !isMobileLayout) {
+    // Mover cada detail dentro de su item correspondiente
+    featureItems.forEach((item, index) => {
+      const detail = featureDetails[index];
+      if (detail && !item.contains(detail)) {
+        item.appendChild(detail.cloneNode(true));
+        // Actualizar la referencia
+        const newDetail = item.querySelector('.feature-apple-detail');
+        if (newDetail) {
+          newDetail.setAttribute('data-mobile-detail', index);
+        }
+      }
+    });
+    isMobileLayout = true;
+  } else if (!isMobile && isMobileLayout) {
+    // Restaurar estructura original (los details vuelven al display)
+    const display = document.querySelector('.features-apple-display');
+    if (display) {
+      featureItems.forEach((item, index) => {
+        const mobileDetail = item.querySelector('[data-mobile-detail]');
+        if (mobileDetail) {
+          mobileDetail.remove();
+        }
+      });
+    }
+    isMobileLayout = false;
+  }
+}
 
 function activateFeature(index) {
   if (index < 0 || index >= totalFeatures) return;
   
-  // Desactivar todo
-  featureItems.forEach(item => item.classList.remove('active'));
-  featureDetails.forEach(detail => detail.classList.remove('active'));
-  progressDots.forEach(dot => {
-    dot.classList.remove('active');
-    dot.classList.remove('passed');
-  });
+  // Detectar si estamos en móvil
+  const isMobile = window.innerWidth <= 768;
   
-  // Activar el nuevo
-  featureItems[index].classList.add('active');
-  featureDetails[index].classList.add('active');
-  progressDots[index].classList.add('active');
-  
-  // Marcar los anteriores como pasados
-  for (let i = 0; i < index; i++) {
-    progressDots[i].classList.add('passed');
-  }
-  
-  // Actualizar la línea de progreso
-  const progressPercent = (index / (totalFeatures - 1)) * 100;
-  if (progressLine) {
-    progressLine.style.setProperty('--progress-width', `${progressPercent}%`);
+  if (isMobile) {
+    // Modo acordeón en móvil - solo toggle el item clickeado
+    const clickedItem = featureItems[index];
+    const wasActive = clickedItem.classList.contains('active');
+    
+    // Cerrar todos
+    featureItems.forEach(item => {
+      item.classList.remove('active');
+      const mobileDetail = item.querySelector('[data-mobile-detail]');
+      if (mobileDetail) {
+        mobileDetail.classList.remove('active');
+      }
+    });
+    
+    // Si no estaba activo, abrirlo
+    if (!wasActive) {
+      clickedItem.classList.add('active');
+      const mobileDetail = clickedItem.querySelector('[data-mobile-detail]');
+      if (mobileDetail) {
+        mobileDetail.classList.add('active');
+      }
+    }
+  } else {
+    // Modo desktop - comportamiento original
+    // Desactivar todo
+    featureItems.forEach(item => item.classList.remove('active'));
+    featureDetails.forEach(detail => detail.classList.remove('active'));
+    progressDots.forEach(dot => {
+      dot.classList.remove('active');
+      dot.classList.remove('passed');
+    });
+    
+    // Activar el nuevo
+    featureItems[index].classList.add('active');
+    featureDetails[index].classList.add('active');
+    progressDots[index].classList.add('active');
+    
+    // Marcar los anteriores como pasados
+    for (let i = 0; i < index; i++) {
+      progressDots[i].classList.add('passed');
+    }
+    
+    // Actualizar la línea de progreso
+    const progressPercent = (index / (totalFeatures - 1)) * 100;
+    if (progressLine) {
+      progressLine.style.setProperty('--progress-width', `${progressPercent}%`);
+    }
   }
   
   currentFeature = index;
@@ -75,6 +138,12 @@ document.head.appendChild(progressStyle);
 featureItems.forEach((item, index) => {
   item.addEventListener('click', () => {
     activateFeature(index);
+    
+    // Detener auto-avance cuando el usuario interactúa
+    if (autoAdvanceInterval) {
+      clearInterval(autoAdvanceInterval);
+      startAutoAdvance();
+    }
   });
 });
 
@@ -82,42 +151,53 @@ featureItems.forEach((item, index) => {
 progressDots.forEach((dot, index) => {
   dot.addEventListener('click', () => {
     activateFeature(index);
+    
+    // Detener auto-avance cuando el usuario interactúa
+    if (autoAdvanceInterval) {
+      clearInterval(autoAdvanceInterval);
+      startAutoAdvance();
+    }
   });
 });
 
-// Auto-avanzar cada 10 segundos (opcional)
-let autoAdvanceInterval = setInterval(() => {
-  const nextFeature = (currentFeature + 1) % totalFeatures;
-  activateFeature(nextFeature);
-}, 10000);
-
-// Pausar auto-avance cuando el usuario interactúa
-featureItems.forEach((item, index) => {
-  item.addEventListener('click', () => {
+// Función para iniciar auto-avance solo en desktop
+function startAutoAdvance() {
+  if (autoAdvanceInterval) {
     clearInterval(autoAdvanceInterval);
-    activateFeature(index);
-    // Reiniciar auto-avance después de 8 segundos de inactividad
+  }
+  
+  // Solo auto-avanzar en desktop
+  if (window.innerWidth > 768) {
     autoAdvanceInterval = setInterval(() => {
       const nextFeature = (currentFeature + 1) % totalFeatures;
       activateFeature(nextFeature);
     }, 10000);
-  });
+  }
+}
+
+// Manejar cambios de tamaño de ventana
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    // Reorganizar estructura según tamaño
+    reorganizeForMobile();
+    
+    // Reiniciar auto-avance basado en el nuevo tamaño
+    if (autoAdvanceInterval) {
+      clearInterval(autoAdvanceInterval);
+    }
+    startAutoAdvance();
+    
+    // Reactivar la feature actual para ajustar el modo de visualización
+    activateFeature(currentFeature);
+  }, 250);
 });
 
-progressDots.forEach((dot, index) => {
-  dot.addEventListener('click', () => {
-    clearInterval(autoAdvanceInterval);
-    activateFeature(index);
-    // Reiniciar auto-avance después de 8 segundos de inactividad
-    autoAdvanceInterval = setInterval(() => {
-      const nextFeature = (currentFeature + 1) % totalFeatures;
-      activateFeature(nextFeature);
-    }, 10000);
-  });
-});
-
-// Inicializar primera feature
+// Inicializar
+reorganizeForMobile();
 activateFeature(0);
+startAutoAdvance();
 
 // Animation observer for sections and elements
 const observerOptions = {
@@ -157,6 +237,22 @@ const navbarCenter = document.querySelector('.navbar-center');
 mobileMenuBtn.addEventListener('click', () => {
   navbarCenter.classList.toggle('active');
   mobileMenuBtn.classList.toggle('active');
+  
+  // Prevenir scroll cuando el menú está abierto
+  if (navbarCenter.classList.contains('active')) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+});
+
+// Cerrar menú al hacer clic en cualquier enlace
+navbarCenter.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    navbarCenter.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
+    document.body.style.overflow = '';
+  });
 });
 
 // FAQ accordion functionality
@@ -402,4 +498,88 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupCursorTooltip);
 } else {
   setupCursorTooltip();
+}
+
+// ============ AJUSTAR PATH RESPONSE-OUT EN MÓVIL ============
+function adjustSVGPathsForMobile() {
+  const pathResponseOut = document.getElementById('path-response-out');
+  const gmailOutgoing = document.querySelector('.gmail-outgoing');
+  const outlookOutgoing = document.querySelector('.outlook-outgoing');
+  
+  if (!pathResponseOut) return;
+  
+  function updatePath() {
+    const isMobile = window.innerWidth <= 640;
+    
+    if (isMobile) {
+      // Móvil: path más largo hacia la derecha
+      pathResponseOut.setAttribute('d', 'M 500 525 L 1000 525');
+      
+      // Hacer que se desvanezcan más rápido en móvil
+      if (gmailOutgoing) {
+        const gmailAnimate = gmailOutgoing.querySelector('animate[attributeName="opacity"]');
+        if (gmailAnimate) {
+          gmailAnimate.setAttribute('dur', '2s');
+        }
+        const gmailMotion = gmailOutgoing.querySelector('animateMotion');
+        if (gmailMotion) {
+          gmailMotion.setAttribute('dur', '2s');
+        }
+      }
+      
+      if (outlookOutgoing) {
+        const outlookAnimate = outlookOutgoing.querySelector('animate[attributeName="opacity"]');
+        if (outlookAnimate) {
+          outlookAnimate.setAttribute('dur', '2s');
+          outlookAnimate.setAttribute('begin', '1s'); // Mismo intervalo que la duración
+        }
+        const outlookMotion = outlookOutgoing.querySelector('animateMotion');
+        if (outlookMotion) {
+          outlookMotion.setAttribute('dur', '2s');
+          outlookMotion.setAttribute('begin', '1s'); // Mismo intervalo que la duración
+        }
+      }
+    } else {
+      // Desktop: path original
+      pathResponseOut.setAttribute('d', 'M 550 570 L 950 570');
+      
+      // Restaurar duración original
+      if (gmailOutgoing) {
+        const gmailAnimate = gmailOutgoing.querySelector('animate[attributeName="opacity"]');
+        if (gmailAnimate) {
+          gmailAnimate.setAttribute('dur', '5s');
+        }
+        const gmailMotion = gmailOutgoing.querySelector('animateMotion');
+        if (gmailMotion) {
+          gmailMotion.setAttribute('dur', '5s');
+        }
+      }
+      
+      if (outlookOutgoing) {
+        const outlookAnimate = outlookOutgoing.querySelector('animate[attributeName="opacity"]');
+        if (outlookAnimate) {
+          outlookAnimate.setAttribute('dur', '5s');
+          outlookAnimate.setAttribute('begin', '2.5s'); // Restaurar intervalo original
+        }
+        const outlookMotion = outlookOutgoing.querySelector('animateMotion');
+        if (outlookMotion) {
+          outlookMotion.setAttribute('dur', '5s');
+          outlookMotion.setAttribute('begin', '2.5s'); // Restaurar intervalo original
+        }
+      }
+    }
+  }
+  
+  // Ejecutar al cargar
+  updatePath();
+  
+  // Ejecutar al cambiar tamaño de ventana
+  window.addEventListener('resize', updatePath);
+}
+
+// Inicializar ajustes de SVG
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', adjustSVGPathsForMobile);
+} else {
+  adjustSVGPathsForMobile();
 }

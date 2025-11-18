@@ -102,6 +102,11 @@ body::-webkit-scrollbar-thumb:hover {
 .cta-btn.big { padding: 0.75rem 1.5rem; font-size: 1.125rem;}
 .mobile-menu-btn { display: none;}
 
+/* Ocultar botón de login mobile en desktop */
+.navbar-center .mobile-login-btn {
+  display: none;
+}
+
 /* Hero Section */
 .hero { padding: 12rem 2rem 4rem; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;}
 .hero-image { display: flex; justify-content: flex-end; padding-left: 1rem;}
@@ -222,7 +227,6 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 .feature-apple-item.active {
-  background: rgba(251, 191, 36, 0.1);
   border-color: #fbbf24;
 }
 
@@ -311,16 +315,6 @@ body::-webkit-scrollbar-thumb:hover {
   animation: rotateMinute 4s linear infinite;
 }
 
-.pulse-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 110px;
-  height: 110px;
-  border: 2px solid rgba(251, 191, 36, 0.4);
-  border-radius: 50%;
-}
 
 @keyframes rotateHour {
   from { transform: rotate(0deg); }
@@ -822,7 +816,7 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 .step-card[data-step="4"] {
-  top: 73vh;
+  top: 75vh;
 }
 
 .step-card.active {
@@ -1082,7 +1076,8 @@ body::-webkit-scrollbar-thumb:hover {
   .process-steps-vertical {
     max-width: 500px;
     margin: 0 auto;
-    min-height: auto;
+    height: auto; /* Quitar el mega scroll */
+    max-height: none;
   }
 
   .step-card {
@@ -1159,38 +1154,50 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 @media (max-width: 640px) {
+  /* Quitar el mega scroll */
+  .process-steps-vertical {
+    height: auto !important;
+    max-height: none !important;
+  }
+
   .step-card {
     flex-direction: column;
     text-align: center;
     padding: 1.25rem;
+    position: relative !important;
+    top: auto !important;
   }
 
   .step-number {
     font-size: 2rem;
   }
 
+  /* Hacer el diagrama más cuadrado y compacto */
   .flow-diagram {
-    height: 650px;
+    height: 450px; /* Más compacto verticalmente */
     padding: 1rem;
+    max-width: 100%;
   }
 
   .flow-node {
-    min-width: 90px;
-    padding: 0.75rem;
+    min-width: 75px;
+    padding: 0.65rem;
+    gap: 0.3rem;
   }
 
   .node-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
   }
 
   .node-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
+  /* Ocultar descripciones en móvil */
   .node-description {
-    font-size: 0.7rem;
+    display: none !important;
   }
 
   .flow-label {
@@ -1198,23 +1205,112 @@ body::-webkit-scrollbar-thumb:hover {
     padding: 0.25rem 0.5rem;
   }
 
+  /* Ajustar posiciones para mantener proporciones en un espacio más cuadrado */
   .store-node {
-    top: 3%;
-    left: 3%;
+    top: 7%;
+    left: 6%;
   }
 
   .customer-node {
-    top: 3%;
-    right: 3%;
+    top: 7%;
+    right: 6%;
+  }
+
+  .bot-node {
+    top: 37%;
+    left: 48%;
+    transform: translateX(-50%);
   }
 
   .user-node {
-    top: 52%;
-    left: 3%;
+    top: 62%;
+    left: 5%;
   }
 
   .response-node {
-    bottom: 3%;
+    bottom: 13%;
+    left: 54%;
+    transform: translateX(-50%);
+  }
+
+  /* Hacer más pequeños "Tú" y "Borrador" en móvil */
+  .user-node,
+  .response-node {
+    min-width: 70px;
+    padding: 0.5rem;
+    scale: 0.9;
+  }
+
+  .user-node .node-icon,
+  .response-node .node-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+  }
+
+  .user-node .node-label,
+  .response-node .node-label {
+    font-size: 0.75rem;
+  }
+
+  /* Hacer más pequeño el nodo de Respondize (bot) */
+  .bot-node {
+    min-width: 90px;
+    padding: 0.65rem;
+    scale: 0.85;
+  }
+
+  .bot-node .node-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .bot-node .node-label {
+    font-size: 0.85rem;
+  }
+
+  .bot-node .bot-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  /* Hacer más grandes todas las imágenes que se mueven por las líneas */
+  .document-particle,
+  .gmail-particle,
+  .outlook-particle,
+  .tick-particle,
+  .particle {
+    width: 45px !important;
+    height: 45px !important;
+  }
+
+  /* Ajustar posición Y de Gmail y Outlook que vienen del cliente */
+  .gmail-particle,
+  .outlook-particle {
+    y: -25;
+  }
+
+  /* Hacer el círculo más grande (de Respondize a Borrador) */
+  .particle {
+    r: 10;
+  }
+
+  /* Ajustar posición Y del tick */
+  .tick-particle {
+    y: -20;
+  }
+
+  /* Hacer más grandes los iconos salientes */
+  .gmail-outgoing,
+  .outlook-outgoing {
+    width: 45px !important;
+    height: 45px !important;
+  }
+
+  /* Mover los iconos salientes más a la derecha */
+  .gmail-outgoing,
+  .outlook-outgoing {
+    transform: translateX(220px);
   }
 }
 
@@ -1470,30 +1566,362 @@ footer {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-}
 
-@media (max-width: 768px) {
-  .navbar-center {
-    display: none;
+  /* Trust badges más pequeños en tablet */
+  .trust-item {
+    max-width: 450px;
+    min-height: 90px;
+    padding: 0.85rem 1rem;
   }
 
+  .trust-item img {
+    width: 170px;
+    height: 170px;
+  }
+}
+
+/* ====================== RESPONSIVE MOBILE ====================== */
+@media (max-width: 768px) {
+  /* Prevenir scroll horizontal */
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  * {
+    max-width: 100%;
+  }
+
+  /* ===== NAVBAR RESPONSIVE ===== */
+  .navbar {
+    padding: 0 0.5rem;
+  }
+
+  .navbar-content {
+    padding: 0.75rem 1rem;
+    flex-wrap: nowrap;
+    position: relative;
+    overflow: visible;
+  }
+
+  .logo-text {
+    font-size: 1.3rem;
+  }
+
+  /* Ocultar botones de login/registro en desktop view del navbar */
+  .navbar-right {
+    display: none !important;
+  }
+
+  /* Mostrar botón hamburguesa */
   .mobile-menu-btn {
-    display: block;
+    display: flex;
     background: none;
     border: none;
     padding: 0.5rem;
     cursor: pointer;
+    position: relative;
+    width: 1.5rem;
+    height: 1.1rem;
+    z-index: 1001;
   }
 
   .mobile-menu-btn span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
     display: block;
-    width: 24px;
-    height: 2px;
-    background: var(--text-primary);
-    margin: 4px 0;
-    transition: all 0.2s;
+    width: 1.5rem;
+    height: 0.15rem;
+    background: #ffffff;
+    border-radius: 0.125rem;
+    transition: transform 0.25s ease, opacity 0.2s ease;
+    transform-origin: center;
   }
 
+  /* Posición inicial: arriba, centro, abajo */
+  .mobile-menu-btn span:nth-child(1) {
+    top: 0;
+  }
+
+  .mobile-menu-btn span:nth-child(2) {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .mobile-menu-btn span:nth-child(3) {
+    bottom: 0;
+  }
+
+  /* Animación de hamburguesa a X */
+  .mobile-menu-btn.active span:nth-child(1),
+  .mobile-menu-btn.active span:nth-child(3) {
+    top: 50%;
+    bottom: auto;
+  }
+
+  .mobile-menu-btn.active span:nth-child(1) {
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .mobile-menu-btn.active span:nth-child(2) {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.5);
+  }
+
+  .mobile-menu-btn.active span:nth-child(3) {
+    transform: translateY(-50%) rotate(-45deg);
+  }
+
+  /* Menú desplegable móvil */
+  .navbar-center {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background: rgba(26, 26, 26, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    flex-direction: column;
+    gap: 0;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+
+  .navbar-center.active {
+    max-height: 400px;
+    opacity: 1;
+    visibility: visible;
+    padding: 0.5rem 0;
+  }
+
+  .navbar-center a {
+    padding: 1rem 1.5rem;
+    color: #e5e7eb;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.2s ease;
+  }
+
+  .navbar-center a:last-child {
+    border-bottom: none;
+  }
+
+  .navbar-center a:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Agregar botón de login al menú móvil */
+  .navbar-center .mobile-login-btn {
+    display: block;
+    background: rgba(107, 100, 230, 0.15);
+    color: var(--primary);
+    font-weight: 600;
+    margin: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    border-bottom: none !important;
+  }
+
+  /* ===== TRUST BADGES MÁS PEQUEÑOS ===== */
+  .trust-badges {
+    padding: 3rem 1.5rem 1.5rem;
+  }
+
+  .trust-title {
+    font-size: 1.6rem;
+  }
+
+  .trust-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .trust-inner {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 3vh;
+  }
+
+  .trust-item {
+    max-width: 100%;
+    min-height: 80px;
+    padding: 0.75rem 1rem;
+  }
+
+  .trust-item img {
+    width: 140px;
+    height: 140px;
+  }
+
+  .trust-text strong {
+    font-size: 0.95rem;
+  }
+
+  /* ===== BENEFICIOS DESTACADOS - ACORDEÓN MÓVIL ===== */
+  .features-apple-section {
+    padding: 5rem 1.5rem;
+  }
+
+  .features-apple-title {
+    font-size: 2rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .features-apple-content {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .features-apple-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .feature-apple-item {
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 0;
+    background: transparent;
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-apple-item h3 {
+    font-size: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1rem;
+    margin: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: transparent;
+  }
+
+  .feature-apple-item:hover h3 {
+    background: rgba(251, 191, 36, 0.05);
+    border-color: rgba(251, 191, 36, 0.2);
+  }
+
+  .feature-apple-item.active h3 {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: #fbbf24;
+  }
+
+  .feature-apple-item h3::after {
+    content: '\f078';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+    color: #9ca3af;
+  }
+
+  .feature-apple-item.active h3::after {
+    transform: rotate(180deg);
+  }
+
+  .features-apple-display {
+    position: relative;
+    display: none !important;
+  }
+
+  .feature-apple-detail {
+    position: static;
+    opacity: 1;
+    transform: none;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.5s ease, margin 0.5s ease;
+    padding: 0 0;
+    margin: 0;
+    display: block !important;
+    background: transparent;
+  }
+
+  .feature-apple-detail.active {
+    max-height: 800px;
+    padding: 1.5rem 0.5rem;
+    margin-top: 1rem;
+    background: transparent;
+  }
+
+  .feature-apple-detail .feature-icon-large {
+    margin-bottom: 2rem;
+  }
+
+  /* Hacer los iconos más pequeños en móvil */
+  .clock-animation {
+    width: 70px;
+    height: 70px;
+  }
+
+  .clock-circle {
+    width: 70px;
+    height: 70px;
+  }
+
+  .clock-hand.hour {
+    height: 20px;
+  }
+
+  .clock-hand.minute {
+    height: 28px;
+  }
+
+  .multiplier-x2 {
+    font-size: 5rem;
+  }
+
+  .connection-visual {
+    transform: scale(1.2);
+  }
+
+  .checkboxes-animation {
+    gap: 15px;
+  }
+
+  .checkbox-box {
+    width: 40px;
+    height: 40px;
+  }
+
+  .checkbox-check {
+    width: 28px;
+    height: 28px;
+  }
+
+  .timer-text {
+    font-size: 1rem;
+  }
+
+  .chart-animation {
+    width: 120px;
+    height: 80px;
+  }
+
+  .feature-apple-detail p {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #d1d5db;
+  }
+
+  /* Ocultar barra de progreso en móvil */
+  .features-progress-bar {
+    display: none;
+  }
+
+  /* ===== FOOTER ===== */
   .footer-content {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -1521,6 +1949,17 @@ footer {
 
   .secondary-btn {
     justify-content: center;
+  }
+
+  /* Trust badges aún más pequeños en móviles pequeños */
+  .trust-item img {
+    width: 120px;
+    height: 120px;
+  }
+
+  .trust-item {
+    min-height: 70px;
+    padding: 0.65rem 0.85rem;
   }
 }
 
