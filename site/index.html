@@ -23,8 +23,8 @@
         <a href="#faq">FAQ</a>
       </nav>
       <div class="navbar-right">
-        <a href="/secciones/login.html" id="loginBtn" class="login-btn">Iniciar sesión</a>
-        <a href="/secciones/register.html" id="joinBtn" class="cta-btn">Únete gratis</a>
+        <a href="#" id="loginBtn" class="login-btn disabled-link" data-tooltip="Próximamente">Iniciar sesión</a>
+        <a href="#" id="joinBtn" class="cta-btn disabled-link" data-tooltip="Próximamente">Únete gratis</a>
       </div>
       <button class="mobile-menu-btn">
         <span></span>
@@ -35,21 +35,16 @@
   </header>
 
   <main>
+    <!-- Gradiente animado de fondo -->
+    <div class="animated-gradient"></div>
+
     <!-- HERO -->
     <section class="hero">
       <div class="hero-content">
         <h1>Atención al cliente e-commerce rápida y humana</h1>
         <p class="hero-subtitle">Reduce hasta un 60% el tiempo de respuesta y dedica más tiempo a lo que importa</p>
         <div class="hero-cta">
-          <a href="/secciones/register.html" class="cta-btn big">Únete gratis</a>
-          <a href="#demo" class="secondary-btn">Ver demo <i class="fas fa-arrow-right"></i></a>
-        </div>
-        <div class="social-proof">
-          <p>Integrado con</p>
-          <div class="platform-logos">
-            <img src="assets/icons/shopify.webp" alt="Shopify">
-            <img src="assets/icons/google.png" alt="Google">
-          </div>
+          <a href="#" class="cta-btn big disabled-link" data-tooltip="Próximamente">Únete gratis</a>
         </div>
       </div>
 
@@ -80,39 +75,122 @@
       </div>
     </section>
 
-    <!-- BENEFICIOS -->
-    <section id="features" class="features-section">
-      <h2>Beneficios destacados</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-          <h3>Respuestas en minutos</h3>
-          <p>Atiende 24/7 con borradores listos para enviar y menos esperas para tus clientes.</p>
+    <!-- BENEFICIOS DESTACADOS - ESTILO APPLE -->
+    <section id="features" class="features-apple-section">
+      <div class="features-apple-container">
+        <h2 class="features-apple-title">Beneficios destacados</h2>
+        
+        <div class="features-apple-content">
+          <!-- Lista de títulos a la izquierda -->
+          <div class="features-apple-list">
+            <div class="feature-apple-item" data-feature="0">
+              <h3>Respuestas 24/7</h3>
+            </div>
+            <div class="feature-apple-item" data-feature="1">
+              <h3>Duplica el rendimiento de tu equipo</h3>
+            </div>
+            <div class="feature-apple-item" data-feature="2">
+              <h3>Respuestas conectadas a pedidos</h3>
+            </div>
+            <div class="feature-apple-item" data-feature="3">
+              <h3>Onboarding en menos de 10 minutos</h3>
+            </div>
+            <div class="feature-apple-item" data-feature="4">
+              <h3>Métricas que sí ayudan a decidir</h3>
+            </div>
+          </div>
+
+          <!-- Descripción a la derecha -->
+          <div class="features-apple-display">
+            <div class="feature-apple-detail active" data-feature="0">
+              <div class="feature-icon-large feature-247">
+                <div class="clock-animation">
+                  <div class="clock-circle">
+                    <div class="clock-hand hour"></div>
+                    <div class="clock-hand minute"></div>
+                  </div>
+                  <div class="pulse-ring"></div>
+                </div>
+              </div>
+              <p>Respondize no descansa: genera borradores y respuestas día y noche para que tú puedas centrarte en lo que de verdad importa. Cuando entras a tu bandeja ya tienes todo preparado para revisar y enviar.</p>
+            </div>
+            <div class="feature-apple-detail" data-feature="1">
+              <div class="feature-icon-large feature-2x">
+                <div class="multiplier-x2">×2</div>
+              </div>
+              <p>Nuestros primeros testers están viendo mejoras de hasta un 60 % en el número de conversaciones que resuelven al día con el mismo equipo. Respondize se ocupa de las respuestas repetitivas y tu equipo de los casos de más valor.</p>
+            </div>
+            <div class="feature-apple-detail" data-feature="2">
+              <div class="feature-icon-large feature-shopify-connection">
+                <div class="connection-visual">
+                  <div class="inbox-icon"><i class="fas fa-inbox"></i></div>
+                  <div class="connection-line">
+                    <div class="connection-dot"></div>
+                  </div>
+                  <div class="shopify-logo-box">
+                    <img src="assets/icons/shopify.webp" alt="Shopify" class="shopify-mini-logo">
+                  </div>
+                </div>
+              </div>
+              <p>Si trabajas con Shopify, puedes conectar tu tienda para que Respondize consulte pedidos, estados de envío... Así gestionas devoluciones, cambios e incidencias sin salir del propio correo.</p>
+            </div>
+            <div class="feature-apple-detail" data-feature="3">
+              <div class="feature-icon-large feature-onboarding">
+                <div class="checkboxes-container">
+                  <div class="checkboxes-animation">
+                    <div class="checkbox-item checkbox-1">
+                      <div class="checkbox-box">
+                        <svg viewBox="0 0 24 24" class="checkbox-check">
+                          <path d="M5,12 L10,17 L19,7" class="check-path"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div class="checkbox-item checkbox-2">
+                      <div class="checkbox-box">
+                        <svg viewBox="0 0 24 24" class="checkbox-check">
+                          <path d="M5,12 L10,17 L19,7" class="check-path"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div class="checkbox-item checkbox-3">
+                      <div class="checkbox-box">
+                        <svg viewBox="0 0 24 24" class="checkbox-check">
+                          <path d="M5,12 L10,17 L19,7" class="check-path"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="timer-text">10 minutos</div>
+                </div>
+              </div>
+              <p>Conecta tu correo, sube tus políticas y responde a unas pocas preguntas sobre tu negocio. Sin instalaciones, sin código y sin proyectos de IT: en menos de 10 minutos tienes a Respondize lista para ayudar.</p>
+            </div>
+            <div class="feature-apple-detail" data-feature="4">
+              <div class="feature-icon-large feature-metrics">
+                <div class="chart-animation">
+                  <div class="bar-chart">
+                    <div class="bar bar-1"></div>
+                    <div class="bar bar-2"></div>
+                    <div class="bar bar-3"></div>
+                    <div class="bar bar-4"></div>
+                  </div>
+                </div>
+              </div>
+              <p>Ve tiempos de respuesta, motivos de contacto y volumen por tipo de consulta para decidir dónde automatizar más y dónde reforzar tu equipo. (Disponible próximamente).</p>
+            </div>
+          </div>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-handshake"></i></div>
-          <h3>Control humano</h3>
-          <p>La IA redacta; tú apruebas y mantienes el tono de marca en cada respuesta.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
-          <h3>Escala sin gastos mayores</h3>
-          <p>Más volumen con el mismo equipo.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
-          <h3>Métricas accionables</h3>
-          <p>Tiempos, resolución y motivos top para priorizar mejoras y reducir tickets.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-          <h3>Privacidad y cumplimiento</h3>
-          <p>OAuth de Google, GDPR y verificación de seguridad (CASA Tier 2). Sin entrenar modelos globales.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-store"></i></div>
-          <h3>Listo para e-commerce</h3>
-          <p>Conecta tu tienda (según plan) para responder con datos de pedido cuando haga falta.</p>
+
+        <!-- Barra de progreso horizontal -->
+        <div class="features-progress-bar">
+          <div class="progress-line"></div>
+          <div class="progress-dots">
+            <div class="progress-dot active" data-feature="0"></div>
+            <div class="progress-dot" data-feature="1"></div>
+            <div class="progress-dot" data-feature="2"></div>
+            <div class="progress-dot" data-feature="3"></div>
+            <div class="progress-dot" data-feature="4"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -120,26 +198,171 @@
     <!-- CÓMO FUNCIONA -->
     <section id="how-it-works" class="how-it-works">
       <h2>Cómo funciona</h2>
-      <div class="steps-container">
-        <div class="step">
-          <div class="step-number">1</div>
-          <h3>Conecta y configura</h3>
-          <p>Autoriza con Google y sube tus políticas y FAQs. Sin código y en minutos.</p>
+      
+      <!-- Contenedor con diseño izquierda-derecha -->
+      <div class="how-it-works-container">
+        <!-- Pasos a la izquierda -->
+        <div class="process-steps-vertical">
+          <div class="step-card" data-step="1">
+            <div class="step-number">01</div>
+            <div class="step-content">
+              <h3>Conecta tu tienda</h3>
+              <p>Sube información de tus productos, políticas y FAQs para que Respondize conozca tu negocio.</p>
+            </div>
+          </div>
+          
+          <div class="step-card" data-step="2">
+            <div class="step-number">02</div>
+            <div class="step-content">
+              <h3>Llegan consultas</h3>
+              <p>Tus clientes envían preguntas desde Gmail (Outlook próximamente) directamente a tu bandeja.</p>
+            </div>
+          </div>
+          
+          <div class="step-card" data-step="3">
+            <div class="step-number">03</div>
+            <div class="step-content">
+              <h3>Respondize genera respuesta</h3>
+              <p>Respondize analiza el contexto y redacta un borrador personalizado en un par de minutos.</p>
+            </div>
+          </div>
+          
+          <div class="step-card" data-step="4">
+            <div class="step-number">04</div>
+            <div class="step-content">
+              <h3>Tú apruebas y envías</h3>
+              <p>Revisas, editas si quieres, y envías con un click. Control total en tus manos.</p>
+            </div>
+          </div>
         </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <h3>La IA redacta por ti</h3>
-          <p>Clasifica el correo y propone un borrador on-brand.</p>
+        
+        <!-- Diagrama a la derecha (sticky) -->
+        <div class="flow-diagram-sticky">
+        <div class="flow-diagram">
+        <!-- Tienda (arriba izquierda) -->
+        <div class="flow-node store-node" data-node="store">
+          <div class="node-icon">
+            <i class="fas fa-store"></i>
+          </div>
+          <div class="node-label">Tienda Online</div>
+          <div class="node-description">Sube la información<br>de tu tienda</div>
         </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <h3>Apruebas y envías</h3>
-          <p>Revisa, ajusta si quieres y envía en un clic.</p>
+
+        <!-- Cliente (arriba derecha) -->
+        <div class="flow-node customer-node" data-node="customer">
+          <div class="node-icon">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="node-label">Cliente</div>
+          <div class="node-description">Envía consulta</div>
         </div>
+
+        <!-- Bot IA (centro) -->
+        <div class="flow-node bot-node" data-node="bot">
+          <div class="node-icon pulse">
+            <img src="logo-120x120.png" alt="Respondize Logo" class="bot-logo">
+          </div>
+          <div class="node-label">Respondize</div>
+          <div class="node-description">Procesa y redacta</div>
+        </div>
+
+        <!-- Usuario (centro izquierda) -->
+        <div class="flow-node user-node" data-node="user">
+          <div class="node-icon">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="node-label">Tú</div>
+          <div class="node-description">Revisas y apruebas</div>
+        </div>
+
+        <!-- Respuesta final (abajo centro) -->
+        <div class="flow-node response-node" data-node="response">
+          <div class="node-icon">
+            <i class="fas fa-inbox"></i>
+          </div>
+          <div class="node-label">Borrador generado</div>
+          <div class="node-description">Bandeja de entrada</div>
+        </div>
+
+        <!-- Flechas y partículas animadas con SVG -->
+        <svg class="flow-connections" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+              <polygon points="0 0, 10 3, 0 6" fill="rgba(16, 185, 129, 0.8)" />
+            </marker>
+          </defs>
+          
+          <!-- Tienda -> Bot (curva desde arriba izquierda al centro) -->
+          <path id="path-store-bot" class="connection-line" 
+                d="M 200 150 Q 300 250 500 300" 
+                marker-end="url(#arrowhead)"/>
+          <image href="/assets/icons/document.png" width="28" height="28" x="-14" y="-14" class="document-particle">
+            <animateMotion dur="3s" repeatCount="indefinite" begin="0s">
+              <mpath href="#path-store-bot"/>
+            </animateMotion>
+          </image>
+          
+          <!-- Cliente -> Bot (curva desde arriba derecha al centro) -->
+          <path id="path-customer-bot" class="connection-line" 
+                d="M 800 150 Q 700 250 500 300" 
+                marker-end="url(#arrowhead)"/>
+          <!-- Gmail alternado -->
+          <image href="/assets/icons/Gmail.png" width="24" height="24" x="-12" y="-12" class="gmail-particle">
+            <animateMotion dur="5s" repeatCount="indefinite" begin="0s">
+              <mpath href="#path-customer-bot"/>
+            </animateMotion>
+          </image>
+          <!-- Outlook alternado -->
+          <image href="/assets/icons/Outlook.png" width="24" height="24" x="-12" y="-12" class="outlook-particle">
+            <animateMotion dur="5s" repeatCount="indefinite" begin="2.5s">
+              <mpath href="#path-customer-bot"/>
+            </animateMotion>
+          </image>
+          
+          <!-- Bot -> Respuesta (recta vertical hacia abajo) -->
+          <path id="path-bot-response" class="connection-line" 
+                d="M 500 380 L 500 530" 
+                marker-end="url(#arrowhead)"/>
+          <circle class="particle" r="5">
+            <animateMotion dur="2s" repeatCount="indefinite" begin="0.6s">
+              <mpath href="#path-bot-response"/>
+            </animateMotion>
+          </circle>
+          
+          <!-- Usuario -> Respuesta (curva desde izquierda centro a abajo centro) -->
+          <path id="path-user-response" class="connection-line" 
+                d="M 220 500 Q 350 600 460 570" 
+                marker-end="url(#arrowhead)"/>
+          <image href="/assets/icons/tick.png" width="32" height="32" x="-16" y="-16" class="tick-particle">
+            <animateMotion dur="2.5s" repeatCount="indefinite" begin="0.9s">
+              <mpath href="#path-user-response"/>
+            </animateMotion>
+          </image>
+          
+          <!-- Iconos que salen de Respuesta hacia la derecha y desaparecen -->
+          <image href="/assets/icons/Gmail.png" width="28" height="28" class="outgoing-email gmail-outgoing">
+            <animateMotion dur="5s" repeatCount="indefinite" begin="0s">
+              <mpath href="#path-response-out"/>
+            </animateMotion>
+            <animate attributeName="opacity" from="1" to="0" dur="5s" repeatCount="indefinite" begin="0s"/>
+          </image>
+          <image href="/assets/icons/Outlook.png" width="28" height="28" class="outgoing-email outlook-outgoing">
+            <animateMotion dur="5s" repeatCount="indefinite" begin="2.5s">
+              <mpath href="#path-response-out"/>
+            </animateMotion>
+            <animate attributeName="opacity" from="1" to="0" dur="5s" repeatCount="indefinite" begin="2.5s"/>
+          </image>
+          
+          <!-- Path para los iconos salientes (invisible, más largo para que aguanten más) -->
+          <path id="path-response-out" d="M 500 570 L 750 570" style="stroke: none; fill: none;"/>
+        </svg>
+
+      </div>
+      </div>
       </div>
     </section>
 
-    <!-- FAQ -->
+        <!-- FAQ -->
     <section id="faq" class="faq-section">
       <h2>Preguntas frecuentes</h2>
       <div class="faq-grid">
@@ -149,7 +372,15 @@
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Usamos OAuth de Google y cifrado en tránsito y en reposo. Nuestra base de datos está cifrada, lo que protege tus datos frente a accesos no autorizados. Cumplimos GDPR y aplicamos prácticas evaluadas en la verificación de seguridad de Google (CASA Tier 2). No utilizamos tus datos para entrenar modelos globales.</p>
+            <p>
+              Sí. Los usuarios inician sesión con correo y contraseña y estas se almacenan
+              de forma <strong>hasheada</strong> (no guardamos la contraseña en texto plano).
+              La conexión con Gmail y otros servicios se hace mediante OAuth oficial y los
+              datos se cifran tanto en tránsito como en reposo. Respondize está diseñada para
+              cumplir con el GDPR y ha superado la verificación de seguridad de Google
+              <strong>CASA Tier 2</strong> para apps con acceso a datos restringidos. 
+              Tus correos no se utilizan para entrenar modelos de IA globales.
+            </p>
           </div>
         </div>
 
@@ -159,17 +390,27 @@
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Sí. La IA propone borradores y tú siempre decides antes de enviar.</p>
+            <p>
+              Siempre. Respondize genera borradores y respuestas automáticas, pero tú decides
+              qué se envía. Puedes revisar, editar y aprobar cada mensaje, o limitar la
+              automatización a ciertos tipos de consultas. La herramienta se adapta al nivel
+              de control que quieras mantener.
+            </p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-question">
-            ¿Cómo se cuentan los correos?
+            ¿Cómo se cuentan las conversaciones?
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Por borradores/respuestas generadas y enviadas desde la app. Puedes ampliar con packs cuando superes tu límite.</p>
+            <p>
+              Contamos las <strong>conversaciones (tickets)</strong> cuando un problema se marca
+              como solucionado en Respondize. Es decir, cada conversación resuelta consume una
+              unidad de tu uso mensual. Mientras un caso sigue abierto o en seguimiento, no se
+              vuelve a contar. Si necesitas más capacidad, podrás ampliarla con packs adicionales.
+            </p>
           </div>
         </div>
 
@@ -179,7 +420,14 @@
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Gmail por defecto; en planes avanzados (próximamente), Shopify e Instagram/WhatsApp Business.</p>
+            <p>
+              Actualmente Respondize se integra con <strong>Gmail</strong> y con
+              <strong>Shopify</strong>, lo que permite responder a tus clientes con datos de
+              pedido, devoluciones y estado de envío directamente desde el correo. Estamos
+              trabajando en la integración con <strong>Outlook</strong> y, más adelante, en
+              canales como Instagram o WhatsApp Business para centralizar toda la atención
+              al cliente en un mismo sitio.
+            </p>
           </div>
         </div>
 
@@ -189,7 +437,13 @@
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>Sí, cuando quieras; ten en cuenta que, tras 2 meses de inactividad, eliminaremos todos tus datos para cumplir con la normativa europea de protección de datos.</p>
+            <p>
+              Sí. Puedes cancelar tu suscripción cuando quieras desde el panel de cuenta.
+              No se te cobrará el siguiente ciclo de facturación y, tras un periodo de
+              <strong>2 meses de inactividad</strong>, eliminaremos tus datos para cumplir
+              con la normativa europea de protección de datos, salvo que la ley exija
+              conservarlos durante más tiempo.
+            </p>
           </div>
         </div>
 
@@ -199,18 +453,26 @@
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="faq-answer">
-            <p>No. En pocos minutos la tendrás funcionando y adaptada a tus políticas.</p>
+            <p>
+              No. En la mayoría de casos tendrás Respondize funcionando en menos de
+              <strong>10 minutos</strong>: creas tu cuenta, conectas tu correo, subes tus
+              políticas y añades la información básica de tu tienda (metodos de pago,
+              tarifas...). A partir de ahí, Respondize ya puede empezar a generar respuestas
+              adaptadas a tu negocio.
+            </p>
           </div>
         </div>
       </div>
     </section>
+
+
 
     <!-- CTA FINAL -->
     <section class="cta-section" id="start">
       <div class="cta-content">
         <h2>Gana tiempo para lo que de verdad importa</h2>
         <p>Deja el trabajo repetitivo en nuestras manos y dedica tu día a clientes, producto y crecimiento.</p>
-        <a href="/secciones/register.html" class="cta-btn big">Empieza gratis</a>
+        <a href="#" class="cta-btn big disabled-link" data-tooltip="Próximamente">Empieza gratis</a>
       </div>
     </section>
   </main>
@@ -236,9 +498,7 @@
         <div class="footer-column">
           <h4>Social</h4>
           <div class="social-links">
-            <a href="#"><i class="fab fa-twitter"></i></a>
-            <a href="#"><i class="fab fa-linkedin"></i></a>
-            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="https://www.linkedin.com/in/javierasensiogomez/" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i></a>
           </div>
         </div>
       </div>

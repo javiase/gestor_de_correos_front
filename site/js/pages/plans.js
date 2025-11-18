@@ -839,3 +839,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     packCard.classList.add("hidden");
   }
 });
+
+// ============ TOOLTIP QUE SIGUE EL CURSOR ============
+function setupCursorTooltip() {
+  // Crear el elemento del tooltip
+  const tooltip = document.createElement('div');
+  tooltip.className = 'cursor-tooltip';
+  tooltip.style.cssText = `
+    position: fixed;
+    background: #0b0f1a;
+    color: #e5e7eb;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: none;
+  `;
+  document.body.appendChild(tooltip);
+
+  // Seleccionar todos los enlaces con data-tooltip
+  const tooltipElements = document.querySelectorAll('[data-tooltip]');
+
+  tooltipElements.forEach(element => {
+    element.addEventListener('mouseenter', () => {
+      const tooltipText = element.getAttribute('data-tooltip');
+      tooltip.textContent = tooltipText;
+      tooltip.style.display = 'block';
+      setTimeout(() => {
+        tooltip.style.opacity = '1';
+      }, 10);
+    });
+
+    element.addEventListener('mousemove', (e) => {
+      // Posicionar el tooltip cerca del cursor (un poco abajo y a la derecha)
+      tooltip.style.left = `${e.clientX + 15}px`;
+      tooltip.style.top = `${e.clientY + 15}px`;
+    });
+
+    element.addEventListener('mouseleave', () => {
+      tooltip.style.opacity = '0';
+      setTimeout(() => {
+        tooltip.style.display = 'none';
+      }, 200);
+    });
+  });
+}
+
+// Inicializar tooltip del cursor cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupCursorTooltip);
+} else {
+  setupCursorTooltip();
+}
