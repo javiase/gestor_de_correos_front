@@ -432,7 +432,7 @@ function setupScrollAnimation() {
     const scrollProgress = Math.max(0, -containerTop);
     
     // Cada tarjeta se activa después de cierto scroll
-    const stepHeight = window.innerHeight * 0.8; // Cada step necesita 80vh de scroll
+    const stepHeight = window.innerHeight * 0.3; // Cada step necesita 80vh de scroll
     
     // Determinar qué paso está actualmente en la parte superior (sticky position)
     let activeStep = 0;

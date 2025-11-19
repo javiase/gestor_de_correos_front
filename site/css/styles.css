@@ -781,7 +781,7 @@ body::-webkit-scrollbar-thumb:hover {
 /* Pasos del proceso - diseño vertical izquierda con sticky */
 .process-steps-vertical {
   position: relative;
-  height: 450vh;
+  height: 250vh;
   max-height: 450vh;
   overflow: visible;
 }
