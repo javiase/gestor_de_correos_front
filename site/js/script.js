@@ -1,7 +1,12 @@
 import { API_BASE } from '/js/utils/api.js';
 
 // ============ GRADIENTE ANIMADO CON SCROLL ============
+let scrollListener = null;
+
 function updateGradientPosition() {
+  // Solo en desktop para mejor rendimiento
+  if (window.innerWidth <= 768) return;
+  
   const scrollY = window.scrollY;
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
   const scrollPercent = scrollY / maxScroll;
@@ -16,11 +21,36 @@ function updateGradientPosition() {
   }
 }
 
-// Escuchar el scroll
-window.addEventListener('scroll', updateGradientPosition, { passive: true });
+// Función para activar/desactivar el listener basado en el tamaño de pantalla
+function toggleGradientListener() {
+  const isDesktop = window.innerWidth > 768;
+  
+  if (isDesktop && !scrollListener) {
+    // Activar listener en desktop
+    scrollListener = true;
+    window.addEventListener('scroll', updateGradientPosition, { passive: true });
+    updateGradientPosition(); // Actualizar posición inicial
+  } else if (!isDesktop && scrollListener) {
+    // Desactivar listener en móvil
+    scrollListener = false;
+    window.removeEventListener('scroll', updateGradientPosition);
+    
+    // Resetear posición del gradiente en móvil
+    const gradientElement = document.querySelector('.animated-gradient');
+    if (gradientElement) {
+      gradientElement.style.transform = 'translateY(0)';
+    }
+  }
+}
 
-// Inicializar posición
-updateGradientPosition();
+// Inicializar
+toggleGradientListener();
+
+// Reactivar/desactivar en resize
+window.addEventListener('resize', () => {
+  clearTimeout(window.gradientResizeTimeout);
+  window.gradientResizeTimeout = setTimeout(toggleGradientListener, 250);
+});
 
 // ============ SECCIÓN BENEFICIOS ESTILO APPLE ============
 const featuresSection = document.querySelector('.features-apple-section');
