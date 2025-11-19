@@ -1174,7 +1174,7 @@ body::-webkit-scrollbar-thumb:hover {
 
   /* Hacer el diagrama más cuadrado y compacto */
   .flow-diagram {
-    height: 450px; /* Más compacto verticalmente */
+    height: 400px; /* Más compacto verticalmente */
     padding: 1rem;
     max-width: 100%;
   }
