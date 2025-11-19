@@ -219,8 +219,13 @@ window.addEventListener('resize', () => {
     }
     startAutoAdvance();
     
-    // Reactivar la feature actual para ajustar el modo de visualización
-    activateFeature(currentFeature);
+    // En móvil, NO llamamos a activateFeature() para evitar
+    // que el acordeón se abra/cierre solo con los resize
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) {
+      // Reactivar la feature actual para ajustar el modo de visualización solo en desktop
+      activateFeature(currentFeature);
+    }
   }, 250);
 });
 
