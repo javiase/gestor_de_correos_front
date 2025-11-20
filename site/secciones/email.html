@@ -139,8 +139,8 @@
                         <span>Reembolso</span>
                     </button>
                     <button class="action-btn" id="actionCancelar" disabled data-tooltip="No disponible">
-                        <i class="fas fa-ban"></i>
-                        <span>Cancelar/Modificar</span>
+                        <i class="fas fa-edit"></i>
+                        <span>Modificar</span>
                     </button>
                     <button class="action-btn" id="actionTracking" disabled data-tooltip="No disponible">
                         <i class="fas fa-shipping-fast"></i>
@@ -274,13 +274,13 @@
                   <div class="refund-summary-manual">
                     <span class="refund-text-small">Manual</span>
                     <div class="refund-input-wrapper">
-                      <span class="refund-input-prefix">$</span>
                       <input 
                         type="text" 
                         id="refundManualAmount" 
                         class="refund-input" 
                         placeholder="0.00"
                       >
+                      <span class="refund-input-suffix">$</span>
                     </div>
                     <span id="refundAvailableAmount" class="refund-text-small refund-text-muted">$0.00 available for refund</span>
                   </div>
@@ -294,6 +294,133 @@
                   Refund $0.00
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🆕 MODAL DE DESCUENTO -->
+  <div id="discountModal" class="refund-modal" style="display: none;">
+    <div class="refund-modal-overlay"></div>
+    <div class="refund-modal-content discount-modal-content">
+      <div class="refund-modal-header">
+        <h2>Crear código de descuento</h2>
+        <button class="refund-modal-close" id="closeDiscountModal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="refund-modal-body discount-body">
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="discount-main">
+          <div class="refund-card">
+            <div class="refund-card-body">
+              <h3 class="refund-section-title">Datos del descuento</h3>
+
+              <label class="refund-input-label" for="discountCodeInput">Código de descuento</label>
+              <input
+                id="discountCodeInput"
+                class="refund-input refund-input-full"
+                type="text"
+                autocomplete="off"
+                placeholder="Ej. GRACIAS10"
+              />
+
+              <p id="discountCodeHelp" class="refund-help-text">
+                Código de 1 solo uso para este cliente.
+              </p>
+
+              <div class="discount-type-group">
+                <span class="refund-section-title">Tipo de descuento</span>
+                <div class="discount-type-options">
+                  <label class="refund-checkbox-label">
+                    <input
+                      id="discountTypePercent"
+                      type="radio"
+                      name="discountType"
+                      value="PERCENT"
+                      checked
+                    />
+                    <span class="refund-checkbox-text">Porcentaje</span>
+                  </label>
+                  <label class="refund-checkbox-label">
+                    <input
+                      id="discountTypeAmount"
+                      type="radio"
+                      name="discountType"
+                      value="AMOUNT"
+                    />
+                    <span class="refund-checkbox-text">Cantidad fija</span>
+                  </label>
+                </div>
+              </div>
+
+              <label class="refund-input-label" for="discountValueInput">Valor</label>
+              <div class="refund-input-wrapper">
+                <input
+                  id="discountValueInput"
+                  class="refund-input"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  autocomplete="off"
+                />
+                <span class="refund-input-suffix" id="discountValueSuffix">%</span>
+              </div>
+              <p class="refund-help-text" id="discountValueHelp">
+                Para porcentaje, usa valores entre 0 y 100.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div class="discount-sidebar">
+          <div class="refund-card refund-summary">
+            <div class="refund-card-body">
+              <h3 class="refund-summary-title">Resumen</h3>
+
+              <div class="refund-summary-row">
+                <span>Cliente</span>
+                <span id="discountCustomerLabel" class="refund-summary-value">
+                  —
+                </span>
+              </div>
+
+              <div class="refund-summary-divider"></div>
+
+              <div class="refund-summary-row">
+                <span>Descuento</span>
+                <span id="discountSummaryMain" class="refund-summary-value">
+                  Define el importe del descuento
+                </span>
+              </div>
+
+              <p id="discountSummaryDetails" class="refund-help-text">
+                1 uso · sin mínimo de compra · sin combinaciones · activo al crearse.
+              </p>
+
+              <div class="refund-summary-divider"></div>
+
+              <button
+                id="discountSubmitBtn"
+                class="refund-submit-btn"
+                disabled
+              >
+                <i class="fas fa-percent"></i>
+                Crear código
+              </button>
+
+              <button
+                id="openDiscountsInShopifyBtn"
+                class="refund-submit-btn refund-submit-secondary"
+                type="button"
+              >
+                <i class="fas fa-external-link-alt"></i>
+                Abrir descuentos avanzados en Shopify
+              </button>
             </div>
           </div>
         </div>

@@ -179,19 +179,18 @@ function setupPublicButtons() {
   const freeBtn = document.getElementById('freeBtn');
   const starterBtn = document.getElementById('starterBtn');
   
-  // Los botones están deshabilitados con data-tooltip="Próximamente"
-  // No añadimos ningún onclick para que permanezcan deshabilitados
+  // Redirigir a registro cuando se hace clic en los botones
   if (freeBtn) {
     freeBtn.onclick = (e) => {
       e.preventDefault();
-      // No hacer nada - botón deshabilitado
+      window.location.href = '/secciones/register.html';
     };
   }
   
   if (starterBtn) {
     starterBtn.onclick = (e) => {
       e.preventDefault();
-      // No hacer nada - botón deshabilitado
+      window.location.href = '/secciones/register.html';
     };
   }
 }
@@ -707,32 +706,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (fresh) data = fresh;
   }
 
-  // ➊ Ajustar navbar
+  // ➊ Ajustar navbar para usuarios autenticados
   if (logoutBtn) {
     logoutBtn.removeAttribute('onclick');
-    if (isActive) {
-      logoutBtn.textContent = 'Volver al perfil';
-      logoutBtn.addEventListener('click', () => {
-        window.location.href = '/secciones/perfil.html';
-      });
-    } else {
-      logoutBtn.textContent = 'Volver al inicio';
-      logoutBtn.addEventListener('click', () => {
-        window.location.href = '/index.html';
-      });
-    }
+    // Siempre mostrar "Volver al perfil" cuando hay sesión activa
+    logoutBtn.textContent = 'Volver al perfil';
+    logoutBtn.href = '/secciones/perfil.html';
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/secciones/perfil.html';
+    });
   }
 
   if (logo) {
     logo.style.cursor = 'pointer';
-    logo.addEventListener('click', () => {
-      if (isActive) {
-        window.location.href = '/secciones/perfil.html';
-      } else {
-        window.location.href = '/index.html';
-      }
+    logo.href = '/secciones/inbox.html';
+    logo.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/secciones/inbox.html';
     });
   }
+
+  // Ocultar links de landing cuando hay sesión activa
+  const landingLinks = document.querySelectorAll('.landing-link');
+  landingLinks.forEach(link => {
+    link.style.display = 'none';
+  });
 
   // ➋ Bloqueo de plan Free
   const freeBlockUntil = data.free_block_until;

@@ -1622,14 +1622,20 @@ class EmailView {
       </div>
       
       <div class="order-selector-controls">
-        <select id="orderDropdown" class="order-dropdown">
-          <option value="">Selecciona un pedido...</option>
-          ${orders.map(order => `
-            <option value="${order._id}">
-              ${order.name || order.order_number} - ${this.formatShopifyDate(order.created_at)}
-            </option>
-          `).join('')}
-        </select>
+        <div class="custom-dropdown">
+          <button class="dropdown-trigger" id="orderDropdownTrigger">
+            <span class="dropdown-label">Selecciona un pedido...</span>
+            <i class="fas fa-chevron-down dropdown-icon"></i>
+          </button>
+          <div class="dropdown-menu" id="orderDropdownMenu">
+            ${orders.map(order => `
+              <div class="dropdown-option" data-order-id="${order._id}">
+                <div class="order-option-name">${order.name || order.order_number}</div>
+                <div class="order-option-date">${this.formatShopifyDate(order.created_at)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
         
         <button id="associateOrderBtn" class="btn-associate-order" disabled>
           <i class="fas fa-link"></i>
@@ -1988,10 +1994,12 @@ class EmailView {
    * Configura el selector de pedidos cuando hay múltiples orders
    */
   setupOrderSelector(email) {
-    const dropdown = document.getElementById('orderDropdown');
+    const trigger = document.getElementById('orderDropdownTrigger');
+    const menu = document.getElementById('orderDropdownMenu');
     const associateBtn = document.getElementById('associateOrderBtn');
     const previewContainer = document.getElementById('selectedOrderPreview');
-    if (!dropdown || !associateBtn || !previewContainer) {
+    
+    if (!trigger || !menu || !associateBtn || !previewContainer) {
       console.error('[setupOrderSelector] Faltan elementos del DOM');
       return;
     }
@@ -2000,37 +2008,70 @@ class EmailView {
     let selectedOrder = null;
     
     // Limpiar listeners anteriores (clonar elementos)
-    const newDropdown = dropdown.cloneNode(true);
-    dropdown.parentNode.replaceChild(newDropdown, dropdown);
+    const newTrigger = trigger.cloneNode(true);
+    trigger.parentNode.replaceChild(newTrigger, trigger);
+    
+    const newMenu = menu.cloneNode(true);
+    menu.parentNode.replaceChild(newMenu, menu);
     
     const newAssociateBtn = associateBtn.cloneNode(true);
     associateBtn.parentNode.replaceChild(newAssociateBtn, associateBtn);
     
-    // Evento: cambio en el dropdown
-    newDropdown.addEventListener('change', (e) => {
-      const orderId = e.target.value;
+    // Toggle del dropdown
+    newTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = newMenu.classList.contains('active');
       
-      if (!orderId) {
-        // No hay selección: deshabilitar botón y limpiar preview
-        newAssociateBtn.disabled = true;
-        previewContainer.innerHTML = '';
-        selectedOrder = null;
-        return;
+      if (isActive) {
+        newMenu.classList.remove('active');
+        newTrigger.classList.remove('active');
+      } else {
+        newMenu.classList.add('active');
+        newTrigger.classList.add('active');
       }
-      
-      // Encontrar el order seleccionado
-      selectedOrder = orders.find(o => o._id === orderId);
-      if (selectedOrder) {
-        // Habilitar botón y mostrar preview
-        newAssociateBtn.disabled = false;
-        previewContainer.innerHTML = this.renderOrderCard(selectedOrder, email);
+    });
+    
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', (e) => {
+      if (!newTrigger.contains(e.target) && !newMenu.contains(e.target)) {
+        newMenu.classList.remove('active');
+        newTrigger.classList.remove('active');
       }
+    });
+    
+    // Selección de pedidos
+    const options = newMenu.querySelectorAll('.dropdown-option');
+    options.forEach(option => {
+      option.addEventListener('click', () => {
+        const orderId = option.dataset.orderId;
+        
+        // Remover selección anterior
+        options.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        
+        // Encontrar el order seleccionado
+        selectedOrder = orders.find(o => o._id === orderId);
+        
+        if (selectedOrder) {
+          // Actualizar el texto del trigger
+          const orderName = option.querySelector('.order-option-name').textContent;
+          const orderDate = option.querySelector('.order-option-date').textContent;
+          newTrigger.querySelector('.dropdown-label').textContent = `${orderName} - ${orderDate}`;
+          
+          // Cerrar dropdown
+          newMenu.classList.remove('active');
+          newTrigger.classList.remove('active');
+          
+          // Habilitar botón y mostrar preview
+          newAssociateBtn.disabled = false;
+          previewContainer.innerHTML = this.renderOrderCard(selectedOrder, email);
+        }
+      });
     });
     
     // Evento: click en botón de asociar
     newAssociateBtn.addEventListener('click', async () => {
       if (!selectedOrder) {
-        console.warn('[setupOrderSelector] No hay order seleccionado');
         return;
       }
       
@@ -2043,6 +2084,7 @@ class EmailView {
         if (!conversationId) {
           throw new Error('No se encontró conversationId');
         }
+        
         const res = await fetchWithAuth('/emails/select_order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2114,19 +2156,23 @@ class EmailView {
       btnReembolso.setAttribute('data-tooltip', 'Sin pedido vinculado');
     }
     
-    // Botón de cancelar
+    // Botón de modificar pedido (anteriormente cancelar)
     const btnCancelar = document.getElementById('actionCancelar');
     if (hasMultiple) {
       btnCancelar.disabled = true;
+      btnCancelar.onclick = null;
       btnCancelar.setAttribute('data-tooltip', 'Selecciona un pedido primero');
-    } else if (order && !order.cancelled_at && order.fulfillment_status !== 'fulfilled') {
+    } else if (order && order.shopify_id) {
       btnCancelar.disabled = false;
-      btnCancelar.setAttribute('data-tooltip', 'Cancelar/Modificar pedido');
+      btnCancelar.setAttribute('data-tooltip', 'Modificar pedido en Shopify');
+      btnCancelar.onclick = () => {
+        const shopifyUrl = `https://admin.shopify.com/store/${this.shopName}/orders/${order.shopify_id}`;
+        window.open(shopifyUrl, '_blank');
+      };
     } else {
       btnCancelar.disabled = true;
-      btnCancelar.setAttribute('data-tooltip', order?.cancelled_at ? 'Pedido ya cancelado' : 
-                                                order?.fulfillment_status === 'fulfilled' ? 'Pedido ya enviado' : 
-                                                'Sin pedido vinculado');
+      btnCancelar.onclick = null;
+      btnCancelar.setAttribute('data-tooltip', 'Sin pedido vinculado');
     }
     
     // Botón de tracking
@@ -2150,12 +2196,15 @@ class EmailView {
     const btnDescuento = document.getElementById('actionDescuento');
     if (hasMultiple) {
       btnDescuento.disabled = true;
+      btnDescuento.onclick = null;
       btnDescuento.setAttribute('data-tooltip', 'Selecciona un pedido primero');
     } else if (order) {
       btnDescuento.disabled = false;
       btnDescuento.setAttribute('data-tooltip', 'Crear código de descuento');
+      btnDescuento.onclick = () => this.openDiscountModal(email);
     } else {
       btnDescuento.disabled = true;
+      btnDescuento.onclick = null;
       btnDescuento.setAttribute('data-tooltip', 'Sin pedido vinculado');
     }
   }
@@ -2559,6 +2608,359 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
 
   /**
    * ============================================================
+   * DISCOUNT MODAL FUNCTIONALITY
+   * ============================================================
+   */
+
+  openDiscountModal(email) {
+    const order = this.getSingleOrder(email);
+    if (!order) {
+      notify.error('No hay pedido vinculado o hay múltiples pedidos.');
+      return;
+    }
+
+    const customer =
+      email.shopify_customer ||
+      order.customer ||
+      null;
+
+    this.discountState = {
+      order,
+      customer,
+      isSubmitting: false
+    };
+
+    const modal = document.getElementById('discountModal');
+    const codeInput = document.getElementById('discountCodeInput');
+    const valueInput = document.getElementById('discountValueInput');
+    const percentRadio = document.getElementById('discountTypePercent');
+    const amountRadio = document.getElementById('discountTypeAmount');
+    const customerLabel = document.getElementById('discountCustomerLabel');
+
+    if (!modal || !codeInput || !valueInput || !percentRadio || !amountRadio) {
+      console.error('[discount] Falta parte del DOM del modal de descuento');
+      return;
+    }
+
+    // Reset campos
+    codeInput.value = '';
+    valueInput.value = '';
+    percentRadio.checked = true;
+    amountRadio.checked = false;
+
+    // Info cliente en el resumen
+    if (customer) {
+      const name = customer.name || customer.first_name || customer.last_name || 'Cliente';
+      const emailText = customer.email ? ` · ${customer.email}` : '';
+      customerLabel.textContent = `${name}${emailText}`;
+    } else {
+      customerLabel.textContent = 'Cliente del pedido actual';
+    }
+
+    // Mostrar modal
+    modal.style.display = 'flex';
+
+    this.setupDiscountModalListeners();
+    this.updateDiscountSummary();
+  }
+
+  setupDiscountModalListeners() {
+    if (this.discountListenersAttached) {
+      return;
+    }
+    this.discountListenersAttached = true;
+
+    const modal = document.getElementById('discountModal');
+    const closeBtn = document.getElementById('closeDiscountModal');
+    const submitBtn = document.getElementById('discountSubmitBtn');
+    const openShopifyBtn = document.getElementById('openDiscountsInShopifyBtn');
+    const valueInput = document.getElementById('discountValueInput');
+    const codeInput = document.getElementById('discountCodeInput');
+    const percentRadio = document.getElementById('discountTypePercent');
+    const amountRadio = document.getElementById('discountTypeAmount');
+
+    if (!modal || !closeBtn || !submitBtn || !valueInput || !codeInput) {
+      console.error('[discount] No se pudieron inicializar los listeners del modal');
+      return;
+    }
+
+    closeBtn.addEventListener('click', () => this.closeDiscountModal());
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        this.closeDiscountModal();
+      }
+    });
+
+    submitBtn.addEventListener('click', () => this.handleDiscountSubmit());
+
+    if (openShopifyBtn) {
+      openShopifyBtn.addEventListener('click', () => {
+        const url = `https://admin.shopify.com/store/${this.shopName}/discounts`;
+        window.open(url, '_blank');
+        this.closeDiscountModal();
+      });
+    }
+
+    valueInput.addEventListener('input', () => {
+      // Validación en tiempo real según el tipo
+      const percentRadio = document.getElementById('discountTypePercent');
+      const isPercent = percentRadio && percentRadio.checked;
+      
+      if (isPercent) {
+        // Modo porcentaje: limitar 0-100
+        let val = valueInput.value.replace(',', '.');
+        
+        // Permitir solo números y punto decimal
+        val = val.replace(/[^0-9.]/g, '');
+        
+        // Permitir solo un punto decimal
+        const parts = val.split('.');
+        if (parts.length > 2) {
+          val = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Limitar a 100 máximo
+        const num = parseFloat(val);
+        if (!isNaN(num) && num > 100) {
+          val = '100';
+        }
+        
+        // Si tiene decimales, limitar a 2 decimales
+        if (parts.length === 2 && parts[1].length > 2) {
+          val = parts[0] + '.' + parts[1].substring(0, 2);
+        }
+        
+        valueInput.value = val;
+      } else {
+        // Modo cantidad fija: solo números y decimales, sin límite superior
+        let val = valueInput.value.replace(',', '.');
+        
+        // Permitir solo números y punto decimal
+        val = val.replace(/[^0-9.]/g, '');
+        
+        // Permitir solo un punto decimal
+        const parts = val.split('.');
+        if (parts.length > 2) {
+          val = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Si tiene decimales, limitar a 2 decimales
+        if (parts.length === 2 && parts[1].length > 2) {
+          val = parts[0] + '.' + parts[1].substring(0, 2);
+        }
+        
+        valueInput.value = val;
+      }
+      
+      this.updateDiscountSummary();
+    });
+
+    codeInput.addEventListener('input', () => {
+      this.updateDiscountSummary();
+    });
+
+    if (percentRadio && amountRadio) {
+      const suffixEl = document.getElementById('discountValueSuffix');
+      const helpEl = document.getElementById('discountValueHelp');
+      const valueInputEl = document.getElementById('discountValueInput');
+
+      const updateTypeUI = () => {
+        if (percentRadio.checked) {
+          // Modo porcentaje
+          if (suffixEl) {
+            suffixEl.textContent = '%';
+          }
+          if (helpEl) {
+            helpEl.textContent = 'Para porcentaje, usa valores entre 0 y 100.';
+          }
+          // Mantener como text, sin cambiar tipo
+        } else {
+          // Modo cantidad fija
+          const currency =
+            this.currency ||
+            this.discountState?.order?.currency ||
+            '€';
+          if (suffixEl) {
+            suffixEl.textContent = currency;
+          }
+          if (helpEl) {
+            helpEl.textContent = 'Cantidad fija en la moneda de la tienda.';
+          }
+          // Mantener como text, sin cambiar tipo
+        }
+        
+        // Limpiar el input al cambiar de tipo
+        if (valueInputEl) {
+          valueInputEl.value = '';
+        }
+        
+        this.updateDiscountSummary();
+      };
+
+      percentRadio.addEventListener('change', updateTypeUI);
+      amountRadio.addEventListener('change', updateTypeUI);
+    }
+  }
+
+  updateDiscountSummary() {
+    const codeInput = document.getElementById('discountCodeInput');
+    const valueInput = document.getElementById('discountValueInput');
+    const percentRadio = document.getElementById('discountTypePercent');
+    const summaryMain = document.getElementById('discountSummaryMain');
+    const summaryDetails = document.getElementById('discountSummaryDetails');
+    const submitBtn = document.getElementById('discountSubmitBtn');
+
+    if (!codeInput || !valueInput || !summaryMain || !summaryDetails || !submitBtn) {
+      return;
+    }
+
+    const rawCode = codeInput.value.trim();
+    const rawValue = (valueInput.value || '').replace(',', '.');
+    const valueNum = parseFloat(rawValue);
+    const type = percentRadio && percentRadio.checked ? 'PERCENT' : 'AMOUNT';
+
+    let isValid = !!rawCode && !Number.isNaN(valueNum) && valueNum > 0;
+
+    // Validación específica para porcentaje (0-100)
+    if (type === 'PERCENT' && (valueNum < 0 || valueNum > 100)) {
+      isValid = false;
+    }
+
+    const currency =
+      this.currency ||
+      this.discountState?.order?.currency ||
+      '€';
+
+    if (!rawCode || Number.isNaN(valueNum) || valueNum <= 0) {
+      summaryMain.textContent = 'Define código e importe del descuento';
+    } else if (type === 'PERCENT') {
+      summaryMain.textContent = `${valueNum.toFixed(0)} % de descuento`;
+    } else {
+      summaryMain.textContent = `${valueNum.toFixed(2)} ${currency} de descuento`;
+    }
+
+    summaryDetails.textContent =
+      '1 uso · sin mínimo de compra · sin combinaciones · activo al crearse.';
+
+    submitBtn.disabled = !isValid || (this.discountState && this.discountState.isSubmitting);
+  }
+
+  async handleDiscountSubmit() {
+    if (!this.discountState || this.discountState.isSubmitting) {
+      return;
+    }
+
+    const codeInput = document.getElementById('discountCodeInput');
+    const valueInput = document.getElementById('discountValueInput');
+    const percentRadio = document.getElementById('discountTypePercent');
+    const submitBtn = document.getElementById('discountSubmitBtn');
+
+    if (!codeInput || !valueInput || !submitBtn) {
+      return;
+    }
+
+    const rawCode = codeInput.value.trim();
+    const rawValue = (valueInput.value || '').replace(',', '.');
+    const valueNum = parseFloat(rawValue);
+    const type = percentRadio && percentRadio.checked ? 'PERCENTAGE' : 'FIXED_AMOUNT';
+
+    if (!rawCode) {
+      notify.error('El código de descuento no puede estar vacío.');
+      codeInput.focus();
+      return;
+    }
+
+    if (Number.isNaN(valueNum) || valueNum <= 0) {
+      notify.error('Introduce un valor de descuento mayor que 0.');
+      valueInput.focus();
+      return;
+    }
+
+    if (type === 'PERCENTAGE' && valueNum > 100) {
+      notify.error('El porcentaje no puede ser mayor que 100.');
+      valueInput.focus();
+      return;
+    }
+
+    const order = this.discountState.order;
+    const customer = this.discountState.customer;
+
+    const payload = {
+      code: rawCode,
+      value: valueNum,
+      type, // 'PERCENTAGE' | 'FIXED_AMOUNT'
+      // Estos IDs los usas en el backend para limitar a ese cliente / pedido
+      order_gid:
+        order?.orderGid ||
+        order?.order_gid ||
+        order?.admin_graphql_api_id ||
+        null,
+      customer_gid:
+        customer?.customer_gid ||
+        customer?.shopify_gid ||
+        customer?.admin_graphql_api_id ||
+        null
+      // En el backend: 1 uso, sin mínimos, sin combinaciones, startsAt ahora
+    };
+
+    try {
+      this.discountState.isSubmitting = true;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando…';
+
+      const res = await fetchWithAuth('/shopify/discounts/create-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+
+      const data = await res.json().catch(() => ({}));
+
+      notify.success('Código de descuento creado correctamente.');
+
+      // Copiar código al portapapeles (si se puede)
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(rawCode);
+          notify.info('Código copiado al portapapeles');
+        }
+      } catch (e) {
+        // no pasa nada si falla
+      }
+
+      // Si tu backend devuelve una URL al descuento, puedes abrirla:
+      if (data && data.discount_admin_url) {
+        window.open(data.discount_admin_url, '_blank');
+      }
+
+      this.closeDiscountModal();
+    } catch (error) {
+      console.error('[discount] Error al crear descuento:', error);
+      notify.error(error.message || 'Error al crear el descuento.');
+      this.discountState.isSubmitting = false;
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-percent"></i> Crear código';
+    }
+  }
+
+  closeDiscountModal() {
+    const modal = document.getElementById('discountModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+    this.discountState = null;
+  }
+
+  /**
+   * ============================================================
    * REFUND MODAL FUNCTIONALITY
    * ============================================================
    */
@@ -2633,6 +3035,12 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
     // ← Bootstrap: pedir preview vacío para inicializar máximos/sugerencias
     this.showSummaryLoading(true);
     this.callPreviewAPI();
+    
+    // Verificar el estado inicial del método de reembolso
+    const refundMethodSelect = document.getElementById('refundMethod');
+    if (refundMethodSelect) {
+      this.handleRefundMethodChange(refundMethodSelect.value);
+    }
   }
 
   /**
@@ -2763,6 +3171,12 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       this.handleManualAmountChange(manualAmountInput.value);
     });
     
+    // Refund method selector
+    const refundMethodSelect = document.getElementById('refundMethod');
+    refundMethodSelect.addEventListener('change', () => {
+      this.handleRefundMethodChange(refundMethodSelect.value);
+    });
+    
     // Botón submit
     const submitBtn = document.getElementById('submitRefundBtn');
     submitBtn.onclick = () => this.handleRefundSubmit();
@@ -2864,6 +3278,68 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
   handleManualAmountChange(value) {
     this.refundState.manualAmount = value;
     this.updateRefundSummary();
+  }
+
+  /**
+   * Maneja cambio de método de reembolso
+   */
+  handleRefundMethodChange(method) {
+    const storeCreditWarning = document.getElementById('storeCreditWarning');
+    
+    if (method === 'STORE_CREDIT' || method === 'ORIGINAL_AND_STORE_CREDIT') {
+      // Mostrar advertencia con botón a Shopify
+      if (!storeCreditWarning) {
+        this.renderStoreCreditWarning();
+      } else {
+        storeCreditWarning.style.display = 'block';
+      }
+    } else {
+      // Ocultar advertencia
+      if (storeCreditWarning) {
+        storeCreditWarning.style.display = 'none';
+      }
+    }
+  }
+
+  /**
+   * Renderiza la advertencia de store credit
+   */
+  renderStoreCreditWarning() {
+    const refundSummary = document.querySelector('.refund-summary .refund-card-body');
+    const refundMethodSection = refundSummary.querySelector('.refund-summary-section');
+    
+    // Crear el elemento de advertencia
+    const warningDiv = document.createElement('div');
+    warningDiv.id = 'storeCreditWarning';
+    warningDiv.className = 'store-credit-warning';
+    warningDiv.innerHTML = `
+      <div class="warning-content">
+        <i class="fas fa-info-circle warning-icon"></i>
+        <div class="warning-text">
+          <strong>Reembolsos con Store Credit</strong>
+          <p>Los reembolsos mediante crédito de tienda deben realizarse directamente desde Shopify.</p>
+        </div>
+      </div>
+      <button id="openOrderInShopify" class="shopify-redirect-btn">
+        <i class="fas fa-external-link-alt"></i>
+        Abrir pedido en Shopify
+      </button>
+    `;
+    
+    // Insertar después de la sección de refund method
+    refundMethodSection.insertAdjacentElement('afterend', warningDiv);
+    
+    // Agregar listener al botón
+    const shopifyBtn = document.getElementById('openOrderInShopify');
+    shopifyBtn.onclick = () => {
+      const order = this.refundState.order;
+      if (order && order.shopify_id) {
+        const shopifyUrl = `https://admin.shopify.com/store/${this.shopName}/orders/${order.shopify_id}`;
+        window.open(shopifyUrl, '_blank');
+      } else {
+        notify.error('No se pudo encontrar el ID de Shopify del pedido');
+      }
+    };
   }
 
   /**
