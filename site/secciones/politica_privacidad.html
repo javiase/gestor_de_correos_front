@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Respondize – Política de Privacidad</title>
@@ -106,124 +105,385 @@
     </div>
   </header>
 
-  <main style="padding-top: 8rem;">
+    <main style="padding-top: 8rem;">
     <div class="container">
       <h1>Política de Privacidad</h1>
+      <p><em>Última actualización: Noviembre 2025</em></p>
 
-      <h2>1. Responsable del Tratamiento</h2>
-      <p><strong>Titular del sitio web</strong></p>
-      <p><strong>Dirección:</strong> Fuengirola, Málaga</p>
-      <p><strong>Contacto:</strong> <a href="mailto:respondize.info@gmail.com">respondize.info@gmail.com</a></p>
+      <h2>1. Responsable del tratamiento</h2>
+      <p><strong>Responsable:</strong> Javier Asensio Gómez (“Respondize”)</p>
+      <p><strong>Localidad:</strong> Fuengirola (Málaga), España</p>
+      <p><strong>Correo de contacto:</strong> <a href="mailto:respondize.info@gmail.com">respondize.info@gmail.com</a></p>
 
-      <h2>2. Finalidades y Base Legal</h2>
+      <h2>2. Ámbito y roles: responsable vs encargado</h2>
+      <p>
+        Respondize puede actuar en dos posiciones distintas bajo el RGPD:
+      </p>
       <ul>
-        <li><strong>Identificación de la cuenta:</strong> usamos tu correo electrónico (<code>scope userinfo.email</code>) para vincular tu cuenta de Google.</li>
-        <li><strong>Lectura y envío de correos:</strong> accedemos a asunto, cuerpo y adjuntos para generar borradores con IA y, si lo apruebas, enviarlos desde tu buzón (<code>scopes gmail.readonly</code> y <code>gmail.send</code>).</li>
-        <li><strong>Avatar (opcional):</strong> puedes subir manualmente una imagen de perfil en Respondize. No obtenemos nombre ni foto desde Google mientras no autorices scopes de perfil.</li>
-      </ul>
-      <p><strong>Base legal:</strong> ejecución del contrato y, cuando proceda, consentimiento.</p>
-      
-      <h2>3. Categorías de Datos Recogidos</h2>
-      <ul>
-        <li><strong>Identificadores:</strong> correo electrónico (<code>scope userinfo.email</code>).</li>
-        <li><strong>Contenido de correos:</strong> asunto, cuerpo, adjuntos (lectura con <code>gmail.readonly</code>; envío con <code>gmail.send</code>).</li>
-        <li><strong>Avatar opcional:</strong> subido por el usuario (si lo aportas en la app).</li>
-        <li><strong>Facturación:</strong> datos de pago (Stripe).</li>
-        <li><strong>(Futuro) Integraciones:</strong> Shopify, etc., cuando estén activas y documentadas.</li>
-      </ul>
-
-      <h2>4. Destinatarios y Cesiones</h2>
-      <ul>
-        <li>Proveedores de servicios de correo: Google (APIs de Gmail).</li>
-        <li>Procesamiento de IA: OpenAI (y, en su caso, otras plataformas compatibles como Gemini).</li>
-        <li>Integración y automatización de comercio electrónico: Shopify.</li>
-        <li>Pasarelas de pago: Stripe.</li>
-        <li>Futuras integraciones: Meta (Instagram, WhatsApp).</li>
-      </ul>
-
-      <h2>5. Transferencias Internacionales</h2>
-      <ul>
-        <li>Los datos se almacenan principalmente en servidores de Google Cloud ubicados en EU‑West.</li>
-        <li>MongoDB Atlas también cifra los datos en reposo y tránsito de acuerdo con el estándar AES‑256 y TLS.</li>
-      </ul>
-
-      <h2>6. Plazos de conservación</h2>
-      <ul>
-        <li><strong>Contenido procesado y metadatos:</strong> 30 días; purga automática (TTL).</li>
-        <li><strong>Inactividad:</strong> 2 meses sin uso → cierre y purga de cuenta/datos.</li>
-        <li><strong>Eliminación de cuenta (tombstone):</strong> guardamos durante 6 meses un registro mínimo sin contenido de Gmail (hash irreversible de email, estado de suscripción/flags de prueba, fechas) para reactivación y prevención de fraude.</li>
-        <li><strong>Lista de supresión antifraude:</strong> conservamos un identificador no reversible (hash con pepper) para impedir múltiples pruebas gratuitas con el mismo email; plazo: 5 años.</li>
-        <li><strong>Facturación:</strong> 5 años (obligación legal).</li>
-      </ul>
-
-      <h2>7. Derechos de los Usuarios</h2>
-      <ul>
-        <li>Acceso, rectificación, supresión, oposición, limitación y portabilidad.</li>
-        <li>Ejercicio: enviando solicitud a <a href="mailto:respondize.info@gmail.com">respondize.info@gmail.com</a>.</li>
-        <li>Supresión de cuenta: al eliminar la cuenta, se borran todos los datos personales.</li>
-      </ul>
-
-      <h2>8. Medidas de Seguridad</h2>
-      <ul>
-        <li>Autenticación a través de OAuth 2.0 y tokens de sesión.</li>
-        <li>Cifrado en tránsito (TLS) y en reposo (AES‑256) proporcionado por MongoDB Atlas y Google Cloud.</li>
-        <li>Cifrado adicional de cierta información mediante la librería <code>cryptography</code> con claves gestionadas por el servicio.</li>
-        <li>Las credenciales y claves están en Secret Manager, cifradas en reposo (AES‑256) y accesibles solo vía IAM roles mínimos</li>
-        <li>Control de accesos internos basado en roles.</li>
-        <li>Auditorías regulares y monitorización de logs.</li>
-      </ul>
-
-      <h2>9. Uso de IA y Limited Use de Google Workspace APIs</h2>
-      <p>Respondize transmite fragmentos de correos de Google Workspace <strong>solo en tiempo real</strong> a plataformas de IA bajo el modelo Limited Use (actualmente OpenAI) para generar respuestas personalizadas, <strong>incluyendo siempre el parámetro `user`</strong> para delimitar cada solicitud al usuario correspondiente.</p>
-      <ul>
-        <li><strong>No</strong> usamos fine‑tuning ni datos para entrenar modelos globales. </li>
-        <li>Conservamos los correos y el historial de conversación hasta 1 mes tras su envío o recepción —criterio que responde a nuestra necesidad de auditar y depurar el servicio sin incurrir en costes excesivos—. Para dar flexibilidad futura, mantenemos la opción de ampliar este plazo hasta el tiempo que la cuenta permanezca activa o, en caso de inactividad, hasta 6 meses, adaptándonos siempre al principio de minimización.</li>
         <li>
-            <em>En el futuro</em> podríamos integrar otras plataformas de IA (por ejemplo, Google Gemini).  
-            En tal caso, siempre se regirán por términos de protección de datos compatibles (Limited Use o equivalentes) y se actualizará esta política.
+          <strong>Como Responsable del tratamiento:</strong> respecto a los datos de las tiendas y usuarios que contratan y utilizan Respondize
+          (cuentas, facturación, soporte, logs, etc.).
+        </li>
+        <li>
+          <strong>Como Encargado del tratamiento:</strong> respecto a los datos de los clientes finales de las tiendas (personas que envían
+          correos al ecommerce, realizan pedidos en Shopify, etc.). En estos casos, la tienda es la responsable del tratamiento y Respondize
+          trata los datos únicamente para prestar el Servicio según el contrato.
         </li>
       </ul>
-      <br>
+
+            <h2>3. Categorías de datos tratados</h2>
+
+      <h3>3.1. Datos de cuenta y de la tienda</h3>
+      <ul>
+        <li>Datos de identificación y contacto del titular de la cuenta (por ejemplo, correo electrónico y nombre opcional).</li>
+        <li>Datos básicos de la tienda: nombre comercial, dirección web, país, idioma, categoría y preferencias de comunicación.</li>
+        <li>Datos de configuración del servicio: planes contratados, límites de uso, estado de la suscripción, avisos de cuota, etc.</li>
+        <li>Credenciales técnicas cifradas necesarias para integrar servicios externos (como los tokens de acceso a Gmail o Shopify).</li>
+        <li>Un identificador derivado (hash irreversible del correo electrónico) para fines de seguridad y prevención de fraude.</li>
+      </ul>
+
+      <h3>3.2. Datos de comunicaciones</h3>
+      <ul>
+        <li>
+          Correos electrónicos entrantes y salientes relacionados con la atención al cliente de la tienda, que pueden incluir:
+          remitente, destinatario, asunto, fecha, contenido del mensaje en texto plano y HTML, y adjuntos.
+        </li>
+        <li>
+          Metadatos necesarios para reconstruir las conversaciones y gestionarlas dentro de la Plataforma (identificadores de hilo,
+          estado de la conversación, número de mensajes, fechas de primera y última actividad, indicadores de si un mensaje es
+          procesable por IA, etc.).
+        </li>
+        <li>
+          Información generada por Respondize sobre esos correos, como ideas clave, clasificación por tipo de consulta o etiquetas internas.
+        </li>
+      </ul>
+
+      <h3>3.3. Datos de clientes finales y pedidos</h3>
+      <ul>
+        <li>
+          Cuando integras tu tienda online, tratamos los datos de tus clientes finales necesarios para gestionar la atención al cliente:
+          nombre, correo electrónico, dirección de envío y facturación, idioma, historial de pedidos y valor total gastado.
+        </li>
+        <li>
+          Información de pedidos y devoluciones: identificadores de pedido, productos adquiridos, cantidades, importes,
+          moneda, estados de pago, reembolsos y notas internas de la tienda cuando existan.
+        </li>
+        <li>
+          Estos datos se utilizan para cruzar correos con pedidos, dar contexto a las respuestas y generar métricas para la tienda.
+          En estos tratamientos Respondize actúa como encargado de tratamiento.
+        </li>
+      </ul>
+
+      <h3>3.4. Políticas y contenido de la tienda</h3>
+      <ul>
+        <li>
+          Textos de políticas de envíos, devoluciones, cambios, garantías, preguntas frecuentes (FAQs) y otra información que la tienda
+          sube o configura en la Plataforma.
+        </li>
+        <li>
+          Extractos y versiones “sanitizadas” de estas políticas para que los agentes de IA puedan generar respuestas coherentes con las
+          normas de la tienda.
+        </li>
+      </ul>
+
+      <h3>3.5. Datos de uso y mejora del servicio</h3>
+      <ul>
+        <li>
+          Información sobre cómo se utiliza la Plataforma (por ejemplo, tipos de consultas más frecuentes, ideas clave repetidas
+          o acciones realizadas sobre los borradores), normalmente en forma agregada o seudonimizada.
+        </li>
+        <li>
+          Registros de eventos relacionados con la suscripción y el funcionamiento del sistema (altas y bajas de planes, cambios de configuración,
+          errores técnicos, etc.).
+        </li>
+        <li>
+          Estos datos se emplean para mejorar la calidad del servicio, detectar patrones de errores y diseñar nuevas funciones.
+        </li>
+      </ul>
+
+      <h3>3.6. Datos técnicos de sesión e integraciones</h3>
+      <ul>
+        <li>
+          Datos técnicos necesarios para gestionar el inicio de sesión y las integraciones con terceros: identificadores internos de usuario,
+          tokens de sesión, dominios de tienda, marcas de tiempo de creación y expiración, y datos similares.
+        </li>
+        <li>
+          Estos datos tienen una vida útil muy corta y se eliminan automáticamente una vez completados los flujos correspondientes.
+        </li>
+      </ul>
+
+      <h3>3.7. Datos de facturación y pagos</h3>
+      <ul>
+        <li>
+          Identificadores de cliente y de suscripción de la pasarela de pago (por ejemplo, Stripe), plan contratado, importes facturados,
+          moneda y estado de los cobros.
+        </li>
+        <li>No almacenamos el número completo de la tarjeta de pago, que es gestionado directamente por la pasarela.</li>
+      </ul>
+
+      <h3>3.8. Datos de antifraude y cuentas eliminadas</h3>
+      <ul>
+        <li>
+          Registros mínimos asociados a cuentas eliminadas (por ejemplo, identificador de tienda, un hash irreversible del email y
+          estado de los periodos de prueba) para prevenir abusos de las pruebas gratuitas y poder gestionar reactivaciones durante un
+          tiempo limitado.
+        </li>
+      </ul>
+
+      <h3>3.9. Logs técnicos</h3>
+      <ul>
+        <li>
+          Registros técnicos generados por la infraestructura (por ejemplo, identificadores de usuario, marcas de tiempo, códigos de error
+          y mensajes de diagnóstico).
+        </li>
+        <li>No incluimos cuerpos completos de correos ni datos de tarjeta en estos logs.</li>
+      </ul>
+
+      <h3>3.10. Cookies y tecnologías similares</h3>
+      <ul>
+        <li>Actualmente no utilizamos cookies de analítica ni de marketing.</li>
+        <li>
+          Podemos usar almacenamiento local del navegador (por ejemplo, <code>localStorage</code>) únicamente para funciones técnicas necesarias,
+          como mantener la sesión o el estado de la interfaz.
+        </li>
+      </ul>
+
+      <h2>4. Finalidades y base legal</h2>
+      <ul>
+        <li>
+          <strong>Prestación del Servicio (ejecución del contrato, art. 6.1.b RGPD):</strong>
+          creación y mantenimiento de la cuenta, conexión con Gmail y Shopify, procesamiento de correos y pedidos, generación de borradores
+          con IA y presentación de métricas y analíticas.
+        </li>
+        <li>
+          <strong>Facturación y obligaciones legales (art. 6.1.c RGPD):</strong>
+          gestión de suscripciones y cobros con Stripe, conservación de registros de facturación durante los plazos exigidos.
+        </li>
+        <li>
+          <strong>Seguridad y prevención del fraude (interés legítimo, art. 6.1.f RGPD):</strong>
+          uso de hashes de email para evitar abusos de pruebas gratuitas, monitorización de accesos, defensa frente a ataques.
+        </li>
+        <li>
+          <strong>Mejora del servicio y desarrollo de producto (interés legítimo, art. 6.1.f RGPD):</strong>
+          análisis de patrones de uso y tipos de consulta, depuración de errores, evaluación de la calidad de las respuestas de IA,
+          siempre con minimización de datos personales.
+        </li>
+        <li>
+          <strong>Comunicaciones de servicio y soporte:</strong>
+          avisos sobre cambios en el servicio, incidencias de seguridad, límites de uso, así como respuesta a consultas de soporte.
+        </li>
+        <li>
+          <strong>Comunicaciones comerciales:</strong>
+          solo se enviarán cuando exista base legal (consentimiento o interés legítimo) y siempre con opción de darse de baja.
+        </li>
+      </ul>
+
+      <h2>5. Origen de los datos</h2>
+      <p>Los datos que tratamos pueden proceder de:</p>
+      <ul>
+        <li>El propio usuario, al registrarse, configurar su tienda o subir políticas.</li>
+        <li>Google, a través de las APIs de Gmail / Google Workspace.</li>
+        <li>Shopify, a través de sus APIs de tienda, pedidos y clientes.</li>
+        <li>Stripe, para la información de cliente y suscripción.</li>
+        <li>Registros técnicos generados por el uso de la Plataforma.</li>
+      </ul>
+
+      <h2>6. Destinatarios y encargados de tratamiento</h2>
+      <p>Para prestar el Servicio, Respondize utiliza proveedores que actúan como encargados del tratamiento, entre otros:</p>
+      <ul>
+        <li>Google Cloud Platform (Cloud Run, Pub/Sub, Storage, Secret Manager, Logging).</li>
+        <li>MongoDB Atlas (base de datos gestionada).</li>
+        <li>OpenAI (modelos de IA generativa como GPT-4o-mini y o4-mini).</li>
+        <li>Shopify (plataforma de comercio electrónico conectada por el usuario).</li>
+        <li>Stripe (pasarela de pago y facturación de suscripciones).</li>
+        <li>
+          Futuras integraciones, como Meta (Instagram, WhatsApp) u otros proveedores de mensajería, cuando se activen e incorporen a esta Política.
+        </li>
+      </ul>
+      <p>
+        Estos proveedores tratan los datos únicamente siguiendo instrucciones de Respondize, bajo contratos de encargo de tratamiento y,
+        cuando sea necesario, con cláusulas contractuales tipo para transferencias internacionales.
+      </p>
+      <p>No vendemos tus datos ni los de tus clientes a terceros.</p>
+
+      <h2>7. Transferencias internacionales</h2>
+      <p>
+        Algunos proveedores (por ejemplo, OpenAI, Stripe o ciertas regiones de Google Cloud y MongoDB Atlas) pueden tratar datos desde
+        fuera del Espacio Económico Europeo (EEE), principalmente en Estados Unidos.
+      </p>
+      <p>
+        En esos casos, se utilizan mecanismos de garantía como las Cláusulas Contractuales Tipo (SCC) aprobadas por la Comisión Europea y,
+        cuando proceda, medidas adicionales (cifrado, seudonimización) para reducir los riesgos.
+      </p>
+
+      <h2>8. Plazos de conservación</h2>
+      <ul>
+        <li>
+          <strong>Datos de cuenta y suscripción:</strong> mientras la cuenta esté activa y, tras la baja, hasta un máximo de 6 meses
+          para gestionar incidencias y posibles reclamaciones.
+        </li>
+        <li>
+          <strong>Contenido de correos y conversaciones:</strong> regla general de hasta 2 meses desde la recepción/envío del correo,
+          pudiendo mantenerse mientras la conversación siga activa o el usuario necesite un histórico razonable.
+        </li>
+        <li>
+          <strong>Datos de clientes y pedidos Shopify:</strong> mientras la tienda utilice Respondize y, tras la baja, hasta 6 meses
+          antes de eliminarse o seudonimizarse.
+        </li>
+        <li>
+          <strong>Logs técnicos:</strong> hasta 6 meses, salvo que sea necesario conservarlos más tiempo para investigar incidentes
+          de seguridad o fraude.
+        </li>
+        <li>
+          <strong>Facturación y contabilidad:</strong> hasta 5 años, conforme a la normativa fiscal y contable aplicable.
+        </li>
+        <li>
+          <strong>Cuentas eliminadas y antifraude:</strong> los registros mínimos asociados a cuentas eliminadas se conservan durante 6 meses.
+          Determinados identificadores derivados (hashes irreversibles) para prevención de abusos de pruebas gratuitas pueden conservarse hasta 5 años.
+        </li>
+        <li>
+          <strong>Inactividad:</strong> en caso de inactividad total de la cuenta durante un periodo prolongado (por ejemplo, 2 meses),
+          Respondize podrá cerrar la cuenta y eliminar los datos, manteniendo únicamente la información necesaria para cumplimiento legal
+          y antifraude.
+        </li>
+      </ul>
+
+      <h2>9. Uso de IA y transparencia</h2>
+      <p>
+        Respondize integra modelos de IA generativa proporcionados principalmente por OpenAI (como GPT-4o-mini y o4-mini) para:
+      </p>
+      <ul>
+        <li>Analizar el contenido de correos y extraer ideas clave.</li>
+        <li>Proponer borradores de respuesta que el usuario puede revisar, editar y enviar.</li>
+        <li>
+          En el futuro, de forma opcional, automatizar ciertos flujos de respuesta (autorespuestas) que la tienda podrá activar o desactivar.
+        </li>
+      </ul>
+      <p>
+        Por defecto, los borradores no se envían automáticamente: el usuario mantiene el control para aprobar o modificar cada respuesta.
+        Si se activan flujos totalmente automáticos, esto se indicará claramente en la configuración.
+      </p>
+      <p>
+        Solo se envía al proveedor de IA la información necesaria del correo (asunto, cuerpo y ciertos metadatos) y las políticas configuradas
+        para la tienda. No se utilizan estos datos para decisiones automatizadas con efectos legales o similares sobre las personas; se trata
+        de soporte a la atención al cliente.
+      </p>
+      <p>
+        Actualmente Respondize no realiza <em>fine-tuning</em> de modelos propios con datos de clientes finales. OpenAI no puede utilizar los
+        datos enviados desde la API para entrenar modelos generales, conforme a su configuración por defecto. Si en el futuro se implementa
+        <em>fine-tuning</em> u otros usos, se actualizará esta Política y, cuando sea necesario, se recabará el consentimiento o se ofrecerán
+        mecanismos claros de exclusión.
+      </p>
+
+      <h2>10. Cumplimiento de la Google API Services User Data Policy (Limited Use)</h2>
+      <p>
+        El uso de las APIs de Google (incluyendo Gmail y Google Workspace) se ajusta a la Google API Services User Data Policy,
+        incluyendo los requisitos de Limited Use.
+      </p>
+      <p>
+        Los datos de Gmail se utilizan únicamente para:
+      </p>
+      <ul>
+        <li>Leer los correos relevantes de atención al cliente.</li>
+        <li>Generar borradores de respuesta mediante IA.</li>
+        <li>Enviar respuestas desde la cuenta de Gmail del usuario cuando este lo aprueba.</li>
+      </ul>
+      <p>
+        No utilizamos los datos de Gmail para fines publicitarios o de marketing directo ajenos al Servicio,
+        ni para construir perfiles fuera del ámbito del propio usuario o su tienda,
+        ni para entrenar modelos generales de IA.
+      </p>
+      <p>
+        El acceso humano a datos de Gmail se limita a tareas de soporte técnico, mantenimiento, investigación de incidentes de seguridad
+        o cumplimiento legal, bajo acuerdos de confidencialidad y con registros de acceso.
+      </p>
+      <p>
+        En las llamadas a las APIs y a los modelos de IA se incluye siempre un identificador de usuario (por ejemplo, el parámetro
+        <code>user</code>) para delimitar claramente cada solicitud al usuario correspondiente.
+      </p>
       <p>
         The use of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.
       </p>
       <p>
         El uso de la información recibida de Google APIs cumple la Google API Services User Data Policy, incluyendo los requisitos de Limited Use.
       </p>
-      
 
-      <h2>10. Protección de datos de menores</h2>
-        <ol>
-        <li>
-            <strong>Edad mínima</strong><br>
-            Este servicio está dirigido a usuarios mayores de 16 años (o de la mayoría de edad en su jurisdicción, si ésta es superior).
-        </li>
-        <li>
-            <strong>Consentimiento parental</strong><br>
-            Los menores de 16 años deben disponer del consentimiento previo y verificable de sus padres o tutores legales para el tratamiento de sus datos personales en nuestra plataforma.
-        </li>
-        <li>
-            <strong>Derecho de revocación</strong><br>
-            En caso de detectar que un menor ha proporcionado datos sin el debido consentimiento, procederemos a la <strong>eliminación inmediata</strong> de sus datos personales y al cierre de su cuenta.
-        </li>
-        <li>
-            <strong>Ejercicio de derechos</strong><br>
-            Los padres o tutores pueden ejercer los derechos de acceso, rectificación, supresión y otros previstos en el RGPD en nombre de sus hijos enviando una solicitud a 
-            <a href="mailto:respondize.info@gmail.com">respondize.info@gmail.com</a>, indicando los datos del menor y aportando prueba de la representación legal.
-        </li>
-        </ol>
-      <h2>11. Revocación de permisos</h2>
-      <p>Puedes revocar el acceso desde tu <strong>Cuenta de Google</strong> → Seguridad → Acceso de terceros → “Respondize” → Eliminar acceso.  
-      También puedes eliminar tu cuenta en la app para revocar y purgar datos.</p>
+      <h2>11. Menores de edad</h2>
+      <p>
+        El Servicio está dirigido exclusivamente a personas mayores de 18 años.
+        Si tienes menos de 18 años, no debes registrarte ni utilizar Respondize.
+      </p>
+      <p>
+        Si detectamos que un menor ha creado una cuenta, procederemos a cancelar la cuenta y eliminar sus datos personales en la medida de lo posible.
+      </p>
 
+      <h2>12. Medidas de seguridad</h2>
+      <ul>
+        <li>Cifrado en tránsito (TLS) y en reposo proporcionado por Google Cloud y MongoDB Atlas.</li>
+        <li>Cifrado adicional a nivel de aplicación para datos sensibles (emails, nombres, teléfonos) con claves gestionadas en Google Cloud KMS.</li>
+        <li>Gestión de secretos a través de Secret Manager, con control de accesos basado en roles (IAM) y privilegios mínimos.</li>
+        <li>Uso de tokens de sesión y de integración con expiraciones cortas.</li>
+        <li>Registros y auditorías de acceso y errores para detectar actividad anómala.</li>
+        <li>Entornos de prueba con datos limitados y políticas internas de acceso restringido a datos reales.</li>
+      </ul>
 
-      <h2>12. Cookies</h2>
-      <p>Actualmente no utilizamos cookies, aunque podría implementarse en el futuro para mejorar la seguridad y personalización.</p>
+      <h2>13. Derechos de las personas usuarias</h2>
+      <p>Los usuarios pueden ejercer en cualquier momento los siguientes derechos:</p>
+      <ul>
+        <li>Acceso.</li>
+        <li>Rectificación.</li>
+        <li>Supresión.</li>
+        <li>Limitación del tratamiento.</li>
+        <li>Oposición.</li>
+        <li>Portabilidad, cuando proceda.</li>
+      </ul>
+      <p>
+        Para ejercitarlos, puedes enviar un correo a
+        <a href="mailto:respondize.info@gmail.com">respondize.info@gmail.com</a>
+        indicando el derecho que deseas ejercer y la dirección de correo asociada a tu cuenta.
+      </p>
+      <p>
+        Si Respondize actúa como Encargado respecto a los datos de tus clientes finales, canalizaremos la solicitud hacia la tienda responsable,
+        según lo previsto en el contrato.
+      </p>
+      <p>
+        También tienes derecho a presentar una reclamación ante la autoridad de control competente, en España la Agencia Española de Protección de Datos (AEPD).
+      </p>
 
-      <h2>13. Delegado de Protección de Datos (DPO)</h2>
-      <p>No se ha designado Delegado de Protección de Datos.</p>
+      <h2>14. Revocación de permisos y eliminación de cuenta</h2>
+      <p>
+        Puedes revocar el acceso de Respondize a tu cuenta de Google desde tu propia Cuenta de Google:
+        <strong>Cuenta de Google → Seguridad → Acceso de terceros → “Respondize” → Eliminar acceso</strong>.
+      </p>
+      <p>
+        También puedes eliminar tu cuenta desde la propia aplicación. Al hacerlo, se revocan los permisos de Google y se purgan los datos operativos,
+        conservando únicamente la información mínima necesaria durante los plazos indicados para facturación y antifraude.
+      </p>
+
+      <h2>15. Cookies y tecnologías similares</h2>
+      <p>
+        Actualmente Respondize no utiliza cookies de analítica ni cookies de marketing. Si en el futuro se introducen,
+        se mostrará un aviso de cookies y se solicitará el consentimiento correspondiente, actualizando esta Política.
+      </p>
+
+      <h2>16. Cambios en la Política de Privacidad</h2>
+      <p>
+        Respondize podrá actualizar esta Política para reflejar cambios legales o técnicos en el Servicio (por ejemplo,
+        nuevas integraciones o usos de IA). En caso de cambios relevantes, se notificará al usuario con antelación razonable
+        a través de la Plataforma o por correo electrónico.
+      </p>
+      <p>
+        El uso continuado del Servicio tras la entrada en vigor de la nueva Política implicará su aceptación.
+      </p>
+
+      <h2>17. Delegado de Protección de Datos (DPO)</h2>
+      <p>
+        Actualmente no se ha designado Delegado de Protección de Datos. En caso de nombrarse uno, se actualizará esta Política
+        indicando sus datos de contacto.
+      </p>
     </div>
   </main>
+
 
   <!-- Importa aquí tu script de menú móvil si lo necesitas -->
   <script>
