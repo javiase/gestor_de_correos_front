@@ -1099,6 +1099,9 @@ class EmailView {
       loadingHidden = true;
       this.hideLoading();
       this.updateRightSidebar(email);
+      // 🆕 Ejecutar scroll DESPUÉS de que todo esté cargado y visible
+      // Esperar un poco más para que el navegador termine de renderizar
+      setTimeout(() => this.scrollToLastReceivedMessage(email), 200);
     };
 
     // Usar requestAnimationFrame para renderizar en el siguiente frame
@@ -1331,28 +1334,102 @@ class EmailView {
       closeConversationCheck.checked = false;
     }
 
-    // ——— Scroll automático al “mensaje recibido” ———
-    const chat = document.getElementById('chatContainer');
-    const hasHistory = hist && hist.style.display !== 'none' && hist.children.length > 0;
-    const recib = document.querySelector('.mail-container.actual');
-
-    // Si hay scroll disponible
-    if (chat.scrollHeight > chat.clientHeight) {
-      if (hasHistory && recib) {
-        recib.style.marginTop = '0px';
-
-        // Desplaza para que quede 15% más abajo
-        const offset = recib.offsetTop - chat.clientHeight * 0.15;
-        chat.scrollTop = Math.max(offset, 0);
-      } else {
-        // No hay historial → forzamos scroll hacia arriba
-        recib.style.marginTop = '2vh';  // Ajusta este valor según el diseño
-
-      }
-    }
-
     // 🆕 RENDERIZAR BARRA LATERAL CON INFORMACIÓN DE SHOPIFY
     this.renderShopifySidebar(email);
+  }
+
+  /**
+   * Scroll automático al bloque del último mensaje (el panel del correo actual)
+   * Queremos quedar justo por encima del título "Último mensaje enviado/recibido".
+   * En vez de asumir window o #chatContainer, detectamos dinámicamente
+   * el contenedor que realmente tiene el scroll.
+   */
+  scrollToLastReceivedMessage(email) {
+    // Dejamos tiempo a:
+    // - hideLoading (transiciones)
+    // - render de iframes / paneles
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // 1) Localizar el panel del mensaje actual usando #receivedContent
+          const receivedContent = document.getElementById('receivedContent');
+          if (!receivedContent) {
+            console.warn('[scrollToLastReceivedMessage] No se encontró #receivedContent');
+            return;
+          }
+
+          const panel = receivedContent.closest('.panel');
+          const mailWrapper = panel?.closest('.mail-container') || panel || receivedContent;
+
+          const titleEl =
+            mailWrapper.querySelector('h3, h4') ||
+            mailWrapper.querySelector('.panel-header') ||
+            mailWrapper;
+
+          const targetEl = titleEl || mailWrapper;
+          if (!targetEl) {
+            console.warn('[scrollToLastReceivedMessage] No se encontró elemento destino para scroll');
+            return;
+          }
+
+          // 2) Detectar el contenedor que realmente tiene el scroll
+          const scrollContainer = this.findScrollContainer(targetEl);
+          if (!scrollContainer) {
+            console.warn('[scrollToLastReceivedMessage] No se encontró contenedor de scroll');
+            return;
+          }
+
+          // Offset en rem (convertido a px para el scrollTop)
+          const rootFontSize = parseFloat(
+            getComputedStyle(document.documentElement).fontSize
+          ) || 16;
+          const offsetPx = rootFontSize * 12; // ≈ 4rem por encima del título
+
+          const targetRect = targetEl.getBoundingClientRect();
+          const containerIsWindow =
+            scrollContainer === document.documentElement ||
+            scrollContainer === document.body;
+
+          if (containerIsWindow) {
+            const scrollBase = window.scrollY || window.pageYOffset || 0;
+            const pageY = targetRect.top + scrollBase;
+            const targetScroll = Math.max(pageY - offsetPx, 0);
+
+            window.scrollTo({ top: targetScroll, behavior: 'auto' });
+
+            requestAnimationFrame(() => {
+              const finalY = window.scrollY || window.pageYOffset || 0;
+              console.log(
+                '[scrollToLastReceivedMessage] Scroll en window → target:',
+                targetScroll,
+                'final window.scrollY:',
+                finalY
+              );
+            });
+          } else {
+            // Contenedor scrollable (por ejemplo #mainContent)
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const currentScroll = scrollContainer.scrollTop || 0;
+
+            const targetScroll =
+              (targetRect.top - containerRect.top) + currentScroll - offsetPx;
+
+            scrollContainer.scrollTop = targetScroll;
+
+            requestAnimationFrame(() => {
+              console.log(
+                '[scrollToLastReceivedMessage] Scroll en contenedor →',
+                scrollContainer.id || scrollContainer.className || scrollContainer.tagName,
+                'targetScroll:',
+                targetScroll,
+                'final scrollTop:',
+                scrollContainer.scrollTop
+              );
+            });
+          }
+        });
+      });
+    }, 300);
   }
 
   /**
@@ -3488,7 +3565,10 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
    * Actualiza el resumen del refund
    */
   updateRefundSummary() {
-    const suggested = this.refundState.suggestedRefund;
+    const suggested   = this.refundState?.suggestedRefund;
+    const submitBtn   = document.getElementById('submitRefundBtn');
+    const isSubmitting = !!this.refundState?.isSubmitting;
+
     if (!suggested) {
       // No hay preview, mostrar ceros
       document.getElementById('refundSummaryItemsLabel').textContent = 'No items selected';
@@ -3496,21 +3576,30 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       document.getElementById('refundSummaryShippingRow').style.display = 'none';
       document.getElementById('refundSummaryTotal').textContent = '$0.00';
       document.getElementById('refundAvailableAmount').textContent = '$0.00 available for refund';
-      document.getElementById('submitRefundBtn').disabled = true;
-      document.getElementById('submitRefundBtn').innerHTML = '<i class="fas fa-undo"></i> Refund $0.00';
+
+      if (submitBtn) {
+        // Si ya estamos enviando, NO tocar el texto del botón (mantener spinner)
+        if (isSubmitting) {
+          submitBtn.disabled = true;
+        } else {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fas fa-undo"></i> Refund $0.00';
+        }
+      }
       return;
     }
     
     // Calcular totales
-    const subtotal = parseFloat(suggested.totals.subtotal || 0);
-    const tax = parseFloat(suggested.totals.tax || 0);
-    const shipping = parseFloat(suggested.totals.shipping || 0);
-    const duties = parseFloat(suggested.totals.duties || 0);
-    const total = subtotal + tax + shipping + duties;
-    const maxavailable = parseFloat(suggested.available.max || 0)
+    const subtotal     = parseFloat(suggested.totals.subtotal || 0);
+    const tax          = parseFloat(suggested.totals.tax || 0);
+    const shipping     = parseFloat(suggested.totals.shipping || 0);
+    const duties       = parseFloat(suggested.totals.duties || 0);
+    const total        = subtotal + tax + shipping + duties;
+    const maxavailable = parseFloat(suggested.available.max || 0);
+
     // Contar items seleccionados
     const selectedCount = this.refundState.items.filter(i => i.quantityToRefund > 0).length;
-    const itemsLabel = selectedCount === 1 ? '1 item' : `${selectedCount} items`;
+    const itemsLabel    = selectedCount === 1 ? '1 item' : `${selectedCount} items`;
     
     // Actualizar subtotal
     document.getElementById('refundSummaryItemsLabel').textContent = itemsLabel;
@@ -3529,18 +3618,26 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
     
     // Verificar si hay manual amount
     const manualAmount = parseFloat(this.refundState.manualAmount) || 0;
-    const finalAmount = manualAmount > 0 ? manualAmount : total;
+    const finalAmount  = manualAmount > 0 ? manualAmount : total;
     
-    // Validar que el manual amount no exceda el total
+    // Validar que el manual amount no exceda el total disponible
     const isValid = manualAmount === 0 || (manualAmount > 0 && manualAmount <= maxavailable);
     
     // Actualizar available amount
-    document.getElementById('refundAvailableAmount').textContent = `$${maxavailable.toFixed(2)} available for refund`;
+    document.getElementById('refundAvailableAmount').textContent =
+      `$${maxavailable.toFixed(2)} available for refund`;
     
-    // Actualizar botón submit
-    const submitBtn = document.getElementById('submitRefundBtn');
-    submitBtn.disabled = !isValid || finalAmount === 0 || this.refundState.isSubmitting;
-    submitBtn.innerHTML = `<i class="fas fa-undo"></i> Refund $${finalAmount.toFixed(2)}`;
+    if (submitBtn) {
+      if (isSubmitting) {
+        // Estamos en medio del commit → solo aseguramos que siga disabled,
+        // pero NO tocamos innerHTML (mantener spinner)
+        submitBtn.disabled = true;
+      } else {
+        // Estado normal (antes de enviar): botón con importe
+        submitBtn.disabled = !isValid || finalAmount === 0;
+        submitBtn.innerHTML = `<i class="fas fa-undo"></i> Refund $${finalAmount.toFixed(2)}`;
+      }
+    }
     
     // Mostrar error si manual amount es inválido
     if (manualAmount > 0 && manualAmount > maxavailable) {
@@ -3602,7 +3699,8 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
         if (!first) {
           notify.error('No se pudo determinar la transacción base para reembolso manual');
           this.refundState.isSubmitting = false;
-          this.updateRefundSummary();
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="fas fa-undo"></i> Refund $${this.refundState.suggestedRefund?.totals?.total || '0.00'}`;
           return;
         }
         payload.transactions = [{
@@ -3627,8 +3725,10 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       
       const data = await res.json();
       
-      // Éxito
+      // ✅ Éxito - mantener spinner mientras se cierra el modal y recarga
       notify.success('Reembolso creado exitosamente');
+      
+      // Cerrar modal (el spinner sigue visible hasta que se cierre)
       this.closeRefundModal();
       
       // Recargar el email para ver el estado actualizado
@@ -3639,10 +3739,13 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       console.error('Error al crear refund:', error);
       notify.error(error.message || 'Error al crear el reembolso');
       
-      // Solo actualizar el estado si el modal no se cerró
-      if (this.refundState) {
+      // ❌ Error - restaurar botón al estado anterior
+      const submitBtn = document.getElementById('submitRefundBtn');
+      if (submitBtn && this.refundState) {
         this.refundState.isSubmitting = false;
-        this.updateRefundSummary(); // Re-habilitar el botón
+        submitBtn.disabled = false;
+        const total = this.refundState.suggestedRefund?.totals?.total || '0.00';
+        submitBtn.innerHTML = `<i class="fas fa-undo"></i> Refund $${total}`;
       }
     }
   }
@@ -3652,15 +3755,16 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
    */
   closeRefundModal() {
     const modal = document.getElementById('refundModal');
-    modal.style.display = 'none';
-    
-    // Limpiar estado
-    this.refundState = null;
-    
-    // Limpiar timeout de preview si existe
-    if (this.refundState?.previewTimeout) {
-      clearTimeout(this.refundState.previewTimeout);
+    if (modal) {
+      modal.style.display = 'none';
     }
+
+    const state = this.refundState;
+    if (state?.previewTimeout) {
+      clearTimeout(state.previewTimeout);
+    }
+
+    this.refundState = null;
   }
 
   /**
@@ -3672,6 +3776,41 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       const v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
     });
+  }
+
+  /**
+   * Busca el primer ancestro que:
+   *  - tenga overflow-y auto/scroll
+   *  - y tenga scrollHeight > clientHeight
+   * Si no lo encuentra, devuelve document.scrollingElement como fallback.
+   */
+  findScrollContainer(targetEl) {
+    let el = targetEl.parentElement;
+    let levels = 0;
+
+    while (el && levels < 15) {
+      const style = getComputedStyle(el);
+      const overflowY = style.overflowY || style.overflow || '';
+      const canScroll = /(auto|scroll)/i.test(overflowY);
+      const hasScroll = el.scrollHeight > (el.clientHeight + 10);
+
+      if (canScroll && hasScroll) {
+        console.log(
+          '[findScrollContainer] Usando contenedor:',
+          el.id || el.className || el.tagName
+        );
+        return el;
+      }
+      el = el.parentElement;
+      levels++;
+    }
+
+    const docScroller = document.scrollingElement || document.documentElement || document.body;
+    console.log(
+      '[findScrollContainer] Fallback a document.scrollingElement:',
+      docScroller.tagName
+    );
+    return docScroller;
   }
   
 }
