@@ -1,9 +1,26 @@
+// perfil.js
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, logout, getToken } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js'; 
 import { isProfileComplete, enforceFlowGate, markCompletionInBackend } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
+// Helper para refrescar cache del store desde el servidor
+async function fetchStoreFresh() {
+  try {
+    const res = await fetchWithAuth('/stores/me');
+    if (!res.ok) {
+      console.warn('[fetchStoreFresh] Response not OK:', res.status);
+      return null;
+    }
+    const data = await res.json();
+    localStorage.setItem('store', JSON.stringify(data));
+    return data;
+  } catch (e) {
+    console.warn('[fetchStoreFresh] Error al refrescar store:', e);
+    return null;
+  }
+}
 
 const PLAN_LABEL = {
   free:      "Plan Free",
@@ -1762,13 +1779,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   const hasToken = await waitToken();
   if (!hasToken) { window.location.replace('/index.html'); return; }
 
-  // 3) ahora sí, gate de sesión
+  // 3) Esperar a appUser si existe
+  if (window.appUserPromise) { try { await window.appUserPromise; } catch(_) {} }
+  
+  // 4) SIEMPRE refrescar el cache ANTES del gate (captura cambios recientes de planes)
+  console.log('[perfil.js] 🔄 Refrescando cache del store...');
+  const fresh = await fetchStoreFresh();
+  if (fresh) {
+    window.appUser = fresh;
+    console.log('[perfil.js] ✅ Cache actualizado - active:', fresh.active, 'plan:', fresh.plan);
+  } else {
+    console.warn('[perfil.js] ⚠️ No se pudo refrescar store, usando cache existente');
+  }
+
+  // 5) Ahora sí, aplicar enforceFlowGate con datos actualizados
   try { enforceFlowGate?.(); } catch {}
 
-  // 4) espera a appUser si existe
-  if (window.appUserPromise) { try { await window.appUserPromise; } catch(_) {} }
-
-  // 5) sidebar + perfil
+  // 6) Inicializar sidebar + perfil (appUser ya está cargado arriba)
   try {
     await initSidebar('#sidebarContainer');
     const userProfile = new UserProfile();

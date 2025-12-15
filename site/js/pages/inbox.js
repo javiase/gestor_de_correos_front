@@ -472,6 +472,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { await window.configReady; } catch(_) {}
   }
 
+  // Verificar si hay un mensaje en la URL (como shopify_connected)
+  const urlParams = new URLSearchParams(window.location.search);
+  const msg = urlParams.get('msg');
+  
+  if (msg === 'shopify_connected') {
+    notify.success('¡Shopify conectado correctamente! Ya puedes sincronizar pedidos y clientes.');
+    // Limpiar URL
+    window.history.replaceState({}, document.title, '/secciones/inbox.html');
+  }
+
   // Si no hay token, escucha un pelín por si acaba de llegar
   let tk = getToken();
   if (!tk) {

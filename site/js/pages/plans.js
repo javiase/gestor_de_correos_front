@@ -1,6 +1,6 @@
 ﻿// plans.js
 import { fetchWithAuth, getToken, API_BASE } from '/js/utils/api.js';
-import { enforceFlowGate } from '/js/utils/flow-gate.js';
+import { enforceFlowGate, getUserContext } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 
 // ============ MENÚ MÓVIL HAMBURGUESA ============
@@ -179,18 +179,19 @@ function setupPublicButtons() {
   const freeBtn = document.getElementById('freeBtn');
   const starterBtn = document.getElementById('starterBtn');
   
-  // Redirigir a registro cuando se hace clic en los botones
+  // Los botones están deshabilitados con data-tooltip="Próximamente"
+  // No añadimos ningún onclick para que permanezcan deshabilitados
   if (freeBtn) {
     freeBtn.onclick = (e) => {
       e.preventDefault();
-      window.location.href = '/secciones/register.html';
+      // No hacer nada - botón deshabilitado
     };
   }
   
   if (starterBtn) {
     starterBtn.onclick = (e) => {
       e.preventDefault();
-      window.location.href = '/secciones/register.html';
+      // No hacer nada - botón deshabilitado
     };
   }
 }
@@ -664,7 +665,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     return; // Salimos aquí si no hay token - NO llamamos enforceFlowGate()
   }
 
-  // 5) Si HAY token, continuamos con la lógica normal
+  // 5) Si HAY token, refrescar cache ANTES de enforceFlowGate
+  // Esto asegura que el gate use datos actualizados del backend
+  let data = null;
+  
+  if (window.appUserPromise) {
+    try { await window.appUserPromise; } catch(_) {}
+  }
+
+  let cached = localStorage.getItem("store");
+  data = cached ? JSON.parse(cached) : (window.appUser || null);
+
+  if (!data) {
+    const fetched = await fetchStoreFresh();
+    if (fetched) data = fetched;
+  }
+
+  // 🔄 SIEMPRE refrescamos el cache cuando hay token (para capturar cambios recientes)
+  const fresh = await fetchStoreFresh();
+  if (fresh) data = fresh;
+
+  if (!data) {
+    notify.error("No pudimos cargar tus planes");
+    return;
+  }
+
+  // 6) Ahora sí, aplicar enforceFlowGate con datos actualizados
   // IMPORTANTE: Solo llamamos enforceFlowGate() cuando SÍ hay token
   try { 
     await enforceFlowGate({
@@ -674,23 +700,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }); 
   } catch {}
 
-  // 6) Cargar datos del usuario
-  if (window.appUserPromise) {
-    try { await window.appUserPromise; } catch(_) {}
-  }
-
-  let cached = localStorage.getItem("store");
-  let data = cached ? JSON.parse(cached) : (window.appUser || null);
-
-  if (!data) {
-    const fetched = await fetchStoreFresh();
-    if (fetched) data = fetched;
-  }
-
-  if (!data) {
-    notify.error("No pudimos cargar tus planes");
-    return;
-  }
+  // 7) Extraer datos del usuario
 
   const isActive = data.active;
   const currentPlan = data.plan; // "free" | "starter" | …
@@ -700,38 +710,52 @@ document.addEventListener("DOMContentLoaded", async () => {
   const trialEndDate = toDate(data.trial_end);
   const inTrial = !!trialEndDate && trialEndDate.getTime() > Date.now();
 
-  // 🔄 Si la tienda está activa, refrescamos
-  if (isActive) {
-    const fresh = await fetchStoreFresh();
-    if (fresh) data = fresh;
-  }
-
-  // ➊ Ajustar navbar para usuarios autenticados
+  // ➊ Ajustar navbar según contexto del usuario
+  const userContext = getUserContext(); // 'guest' | 'inactive' | 'active'
+  
   if (logoutBtn) {
     logoutBtn.removeAttribute('onclick');
-    // Siempre mostrar "Volver al perfil" cuando hay sesión activa
-    logoutBtn.textContent = 'Volver al perfil';
-    logoutBtn.href = '/secciones/perfil.html';
-    logoutBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = '/secciones/perfil.html';
-    });
+    
+    switch (userContext) {
+      case 'guest':
+        // Usuario sin sesión
+        logoutBtn.textContent = 'Iniciar sesión';
+        logoutBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (!logoutBtn.classList.contains('disabled-link')) {
+            window.location.href = '/secciones/login.html';
+          }
+        });
+        break;
+        
+      case 'inactive':
+        // Usuario registrado pero sin plan activo
+        logoutBtn.textContent = 'Volver al inicio';
+        logoutBtn.addEventListener('click', () => {
+          window.location.href = '/index.html';
+        });
+        break;
+        
+      case 'active':
+        // Usuario con plan activo
+        logoutBtn.textContent = 'Volver al perfil';
+        logoutBtn.addEventListener('click', () => {
+          window.location.href = '/secciones/perfil.html';
+        });
+        break;
+    }
   }
 
   if (logo) {
     logo.style.cursor = 'pointer';
-    logo.href = '/secciones/inbox.html';
-    logo.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = '/secciones/inbox.html';
+    logo.addEventListener('click', () => {
+      if (userContext === 'active') {
+        window.location.href = '/secciones/perfil.html';
+      } else {
+        window.location.href = '/index.html';
+      }
     });
   }
-
-  // Ocultar links de landing cuando hay sesión activa
-  const landingLinks = document.querySelectorAll('.landing-link');
-  landingLinks.forEach(link => {
-    link.style.display = 'none';
-  });
 
   // ➋ Bloqueo de plan Free
   const freeBlockUntil = data.free_block_until;
@@ -847,6 +871,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
           const res = await fetchWithAuth("/billing/select-free-plan", { method: "POST" });
           if (res.ok) {
+            // ✅ IMPORTANTE: Refrescar el localStorage antes de redirigir
+            await fetchStoreFresh();
             window.location.href = "/secciones/perfil.html";
             return;
           }

@@ -45,6 +45,19 @@ export function resetOnboardingIfOwnerChanged(store = getStoreSync()) {
   }
 }
 
+/**
+ * Obtiene el contexto actual del usuario basado en sesión y estado activo.
+ * @returns {'guest'|'inactive'|'active'}
+ * - 'guest': No hay token (usuario sin sesión)
+ * - 'inactive': Hay token pero active=false (usuario registrado sin plan activo)
+ * - 'active': Hay token y active=true (usuario con plan activo)
+ */
+export function getUserContext() {
+  if (!getToken()) return 'guest';
+  const store = getStoreSync();
+  return store?.active ? 'active' : 'inactive';
+}
+
 function norm(p) {
   // normaliza rutas: quita / final, a minúsculas; garantiza "/" para raíz
   const v = (p || '/').replace(/\/+$/, '').toLowerCase();
@@ -87,17 +100,34 @@ export function isProfileComplete(s) {
  * Lee la tienda desde cache local; si falta, la pide a /stores/me y cachea.
  */
 export async function getStoreCached() {
+  console.log('[getStoreCached] 🔍 Leyendo store...');
   let s = null;
-  try { s = JSON.parse(localStorage.getItem('store') || 'null'); } catch {}
+  try { 
+    s = JSON.parse(localStorage.getItem('store') || 'null'); 
+    console.log('[getStoreCached] - Store desde localStorage:', s);
+    console.log('[getStoreCached] - active:', s?.active);
+  } catch (e) {
+    console.warn('[getStoreCached] ⚠️ Error parseando localStorage:', e);
+  }
+  
   if (!s) {
+    console.log('[getStoreCached] ⚠️ No hay store en cache, haciendo fetch...');
     try {
       const r = await fetchWithAuth('/stores/me');
       if (r.ok) {
         s = await r.json();
         localStorage.setItem('store', JSON.stringify(s));
+        console.log('[getStoreCached] ✅ Store obtenido del servidor:', s);
+        console.log('[getStoreCached] - active:', s?.active);
+      } else {
+        console.warn('[getStoreCached] ⚠️ Fetch failed, status:', r.status);
       }
-    } catch {}
+    } catch (e) {
+      console.warn('[getStoreCached] ⚠️ Error en fetch:', e);
+    }
   }
+  
+  console.log('[getStoreCached] 📤 Retornando store con active =', s?.active);
   return s;
 }
 
@@ -293,9 +323,10 @@ export async function enforceSessionGate({
 /**
  * Enforce del flujo completo:
  *  1) Sin sesión → /index.html
- *  2) Perfil incompleto → /secciones/perfil.html
- *  3) Onboarding (info) incompleto → /secciones/info.html
- *  4) Todo OK → deja pasar
+ *  2) Sin plan activo → /secciones/plans.html
+ *  3) Perfil incompleto → /secciones/perfil.html
+ *  4) Onboarding (info) incompleto → /secciones/info.html
+ *  5) Todo OK → deja pasar
  *
  * Configúralo con las listas allow* para permitir páginas de destino
  * (p. ej. permitir permanecer en /secciones/perfil.html al completar perfil).
@@ -316,6 +347,7 @@ export async function enforceFlowGate({
   /* Redirecciones por defecto del flujo */
   redirects        = {
     noSession:     '/secciones/login.html',
+    needPlan:      '/secciones/plans.html',
     needProfile:   '/secciones/perfil.html',
     needOnboarding:'/secciones/info.html',
   },
@@ -323,6 +355,7 @@ export async function enforceFlowGate({
   /* Mensajes (como query ?msg=) que puedes leer y mostrar en la página destino */
   messages         = {
     noSession:     'Tu sesión ha expirado. Inicia sesión.',
+    needPlan:      'Selecciona un plan para continuar.',
     needProfile:   'Completa tu perfil para continuar.',
     needOnboarding:'Completa esta sección antes de continuar.',
   },
@@ -331,6 +364,12 @@ export async function enforceFlowGate({
   waitTokenMs      = 3000,
 } = {}) {
   const here = norm(location.pathname);
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🔒 [enforceFlowGate] INICIO');
+  console.log('[enforceFlowGate] - Página actual:', here);
+  console.log('[enforceFlowGate] - localStorage store:', localStorage.getItem('store'));
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Construye el set de rutas explícitamente permitidas (normalizadas)
   const allowSet = new Set([
@@ -357,22 +396,48 @@ export async function enforceFlowGate({
   }
 
   /* ➋ ─────────────────────────────────────────────
+   *  PLAN ACTIVO (verificar active) - PRIORIDAD MÁXIMA
+   *  - Si el usuario NO tiene active: true, redirige a /secciones/plans.html
+   *  - ANTES de validar perfil/onboarding
+   *  ───────────────────────────────────────────── */
+  const store = await getStoreCached();
+  resetOnboardingIfOwnerChanged(store);
+  
+  console.log('[enforceFlowGate] ➋ Verificando plan activo...');
+  console.log('[enforceFlowGate] - store:', store);
+  console.log('[enforceFlowGate] - store.active:', store?.active);
+  console.log('[enforceFlowGate] - Página actual (here):', here);
+  
+  const allowWithoutPlan = ['/secciones/plans.html'].map(norm);
+  console.log('[enforceFlowGate] - allowWithoutPlan:', allowWithoutPlan);
+  console.log('[enforceFlowGate] - ¿Estoy en allowWithoutPlan?:', allowWithoutPlan.includes(here));
+  
+  if (!store?.active && !allowWithoutPlan.includes(here)) {
+    console.log('🚨 [enforceFlowGate] ❌ REDIRIGIENDO A PLANS - Usuario sin plan activo');
+    console.log('🚨 [enforceFlowGate] - Razón: store.active =', store?.active);
+    console.log('🚨 [enforceFlowGate] - Desde página:', here);
+    const url = new URL(redirects.needPlan, location.origin);
+    url.searchParams.set('msg', messages.needPlan);
+    return location.replace(url.toString());
+  }
+  
+  console.log('[enforceFlowGate] ✅ Plan activo OK, continuando al siguiente gate...');
+
+  /* ➌ ─────────────────────────────────────────────
    *  PERFIL (parte de perfil)
    *  - Si perfil incompleto y NO estamos ya en una ruta permitida para completarlo,
    *    redirige a /secciones/perfil.html con ?msg=
    *  ───────────────────────────────────────────── */
-  const store = await getStoreCached();
-  resetOnboardingIfOwnerChanged(store);
   if (!store || !isProfileComplete(store)) {
     if (!allowProfile.map(norm).includes(here)) {
       const url = new URL(redirects.needProfile, location.origin);
       url.searchParams.set('msg', messages.needProfile);
       return location.replace(url.toString());
     }
-    return; // ya estamos en una ruta “perfil” → permitir continuar allí
+    return; // ya estamos en una ruta "perfil" → permitir continuar allí
   }
 
-  /* ➌ ─────────────────────────────────────────────
+  /* ➍ ─────────────────────────────────────────────
    *  ONBOARDING / INFO (parte de info)
    *  - Si los pasos requeridos no están completos y NO estamos ya en info,
    *    redirige a /secciones/info.html con ?msg=
@@ -383,10 +448,10 @@ export async function enforceFlowGate({
       url.searchParams.set('msg', messages.needOnboarding);
       return location.replace(url.toString());
     }
-    return; // ya estamos en una ruta “info” → permitir continuar allí
+    return; // ya estamos en una ruta "info" → permitir continuar allí
   }
 
-  /* ➍ ─────────────────────────────────────────────
+  /* ➎ ─────────────────────────────────────────────
    *  TODO OK (parte común final)
    *  - No hace nada: se deja pasar a la página actual.
    *  ───────────────────────────────────────────── */

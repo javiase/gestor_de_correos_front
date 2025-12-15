@@ -6,6 +6,10 @@ const urlParams = new URLSearchParams(window.location.search);
 const email = urlParams.get('email');
 const state = urlParams.get('state');
 
+// SHOPIFY: Obtener query params de Shopify si existen
+const shopifyState = urlParams.get('shopify_state');
+const shopifyShop = urlParams.get('shop');
+
 // Si no hay email o state, redirigir a login
 if (!email || !state) {
   window.location.href = '/secciones/login.html';
@@ -297,12 +301,18 @@ async function startPolling(pollState) {
           // Disparar evento para que otros módulos sepan que hay token
           window.dispatchEvent(new CustomEvent('auth-token-ready'));
           
-          // Redirigir según si la cuenta está activa o no
+          // NUEVO FLUJO: Si venimos de Shopify (login) y tiene cuenta activa → inbox con mensaje
+          if (shopifyState && shopifyShop && data.active_account) {
+            window.location.href = '/secciones/inbox.html?msg=shopify_connected';
+            return;
+          }
+          
+          // Flujo normal según si la cuenta está activa o no
           if (data.active_account) {
-            // Cuenta activa → ir al perfil
-            window.location.href = '/secciones/perfil.html';
+            // Cuenta activa → ir al inbox (flujo normal) o perfil (flujo registro)
+            window.location.href = '/secciones/inbox.html';
           } else {
-            // Cuenta NO activa → ir a seleccionar plan
+            // Cuenta NO activa → ir a contratar plan primero
             window.location.href = '/secciones/plans.html';
           }
         } else {

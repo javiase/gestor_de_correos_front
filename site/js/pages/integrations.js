@@ -327,24 +327,28 @@ async function connectShopify(shopDomain) {
     shopifyBtn.disabled = true;
     shopifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
     
-    // Solicitar URL de OAuth al backend
+    // Solicitar URL de la app (App Store) al backend
     const response = await fetchWithAuth(`/shopify/connect?shop=${encodeURIComponent(shopDomain)}`, {
       method: 'GET'
     });
     
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Error al conectar' }));
-      throw new Error(error.detail || 'Error al iniciar OAuth');
+      throw new Error(error.detail || 'Error al iniciar conexión con Shopify');
     }
     
-    // El backend debería redirigir automáticamente, pero por si acaso:
     const data = await response.json().catch(() => null);
-    console.log('auth_url:', data?.auth_url);
-
-    if (data && data.auth_url) {
-      window.location.href = data.auth_url;
+    console.log('shopify connect data:', data);
+    
+    // Backend devuelve app_store_url (y opcionalmente podríamos soportar auth_url por compatibilidad)
+    const targetUrl = data?.app_store_url || data?.auth_url;
+    
+    if (targetUrl) {
+      window.location.href = targetUrl;
+      return;
     }
-    // Si no hay JSON, el backend ya redirigió con RedirectResponse
+    
+    throw new Error('No se recibió ninguna URL para continuar la conexión con Shopify');
     
   } catch (error) {
     console.error('Error al conectar Shopify:', error);
