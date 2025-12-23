@@ -700,14 +700,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     }); 
   } catch {}
 
-  // 7) Extraer datos del usuario
 
-  const isActive = data.active;
-  const currentPlan = data.plan; // "free" | "starter" | …
-  const usedFreeStarter = data.used_free_trial_starter;
+  // 7) Extraer datos del usuario (ESTRUCTURA NUEVA: payments.*)
+  const payments = data.payments || {};
+  const billingSource = String(payments.billing_source || "stripe").toLowerCase();
+  const provider = billingSource === "shopify" ? (payments.shopify || {}) : (payments.stripe || {});
 
-  // Datos de trial (usados en varios lugares)
-  const trialEndDate = toDate(data.trial_end);
+  // 🔄 FALLBACK: Si payments está vacío, intentar leer del formato viejo (raíz del documento)
+  const isActive = !!payments.active || !!data.active;
+  const currentPlan = String(provider.plan || data.plan || "free").toLowerCase();
+  
+  console.log('🔍 [PLANS DEBUG] Datos extraídos:', {
+    isActive,
+    currentPlan,
+    billingSource,
+    provider,
+    payments,
+    dataRoot: { plan: data.plan, active: data.active, free_block_until: data.free_block_until }
+  });
+
+  // En la estructura nueva, el trial-used está por proveedor
+  // 🔄 FALLBACK: También revisar en la raíz del documento
+  const usedFreeStarter = !!provider.free_trial_starter || !!data.used_free_trial_starter;
+
+  // Trial (estructura nueva)
+  // 🔄 FALLBACK: También revisar en la raíz
+  const trialEndDate = toDate(provider.trial_end || data.trial_end);
   const inTrial = !!trialEndDate && trialEndDate.getTime() > Date.now();
 
   // ➊ Ajustar navbar según contexto del usuario
@@ -757,19 +775,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ➋ Bloqueo de plan Free
-  const freeBlockUntil = data.free_block_until;
-  const freeBlockDate = toDate(freeBlockUntil);
+  // ➋ Bloqueo de plan Free (estructura NUEVA)
+  // 🔄 FALLBACK: También revisar en la raíz del documento
+  const freeBlockDate = toDate(provider.free_block_until || data.free_block_until);
   const freeBlocked = !!freeBlockDate && freeBlockDate.getTime() > Date.now();
 
-  // Selecciona la tarjeta Free por id o por el atributo data-plan (por si falta la clase 'free')
-  // (freeCard ya declarado al inicio del scope)
-  
-  // Ocultar Free si está bloqueado O si tiene plan de pago y no está en trial
-  const shouldHideFree = freeBlocked || (isActive && currentPlan === "starter" && !inTrial);
-  
-  if (shouldHideFree && freeCard) {
-    freeCard.classList.add('hidden');
+  console.log('🔍 [FREE DEBUG] Bloqueo:', {
+    free_block_until_provider: provider.free_block_until,
+    free_block_until_root: data.free_block_until,
+    freeBlockDate,
+    freeBlocked,
+    now: Date.now(),
+    comparison: freeBlockDate ? freeBlockDate.getTime() : null,
+    currentPlan,
+    isActive
+  });
+
+  // ✅ Solo ocultar Free si tiene bloqueo Y no está en free actualmente
+  // (Si está en free, se mostrará con botón "Plan actual")
+  const shouldHideFree = freeBlocked && currentPlan !== "free";
+
+  if (freeCard) {
+    freeCard.classList.toggle('hidden', shouldHideFree);
   }
 
   // 🆕 Mostrar las cards con transición suave después de determinar cuáles ocultar
@@ -791,24 +818,46 @@ document.addEventListener("DOMContentLoaded", async () => {
       packCard.style.transition = 'opacity 0.3s ease';
     }
     
-    // Mostrar cards apropiadas
-    if (freeCard && !shouldHideFree) freeCard.style.opacity = '1';
+    // Mostrar cards apropiadas - respetar shouldHideFree
+    if (freeCard) {
+      if (shouldHideFree) {
+        freeCard.classList.add('hidden');
+        freeCard.style.opacity = '0';
+      } else {
+        freeCard.classList.remove('hidden');
+        freeCard.style.opacity = '1';
+      }
+    }
     if (starterCard) starterCard.style.opacity = '1';
     if (packCard) packCard.style.opacity = '1';
   });
 
-  // Datos de cambio pendiente - el backend los devuelve directamente en data
-  const pendingPlan = data.pending_plan_change;
-  const pendingEffectiveDate = data.pending_change_effective;
-  
-  // Verificar si hay cambio pendiente (usado globalmente)
-  const hasPendingChange = (pendingPlan || data.pending_monthly_cap_change) && pendingEffectiveDate;
+  // Pending (estructura NUEVA): payments.<provider>.pending
+  let pendingPlan = null;
+  let pendingConversations = null;
+  let pendingEffectiveDate = null;
+
+  const p = provider.pending;
+  if (p) {
+    pendingPlan = p.plan || (p.kind === "downgrade_to_free" ? "free" : null);
+    pendingConversations = (p.monthly_cap ?? null);
+    pendingEffectiveDate = (p.effective_at ?? null);
+  }
+
+  const hasPendingChange = !!(pendingEffectiveDate && (pendingPlan || pendingConversations));
 
   // ➌ Configurar botón Plan Free
   const freeBtn = document.getElementById('freeBtn');
   if (freeBtn && !shouldHideFree) {
-    // Deshabilitar si hay cambio pendiente
-    if (hasPendingChange) {
+    // Si el cambio pendiente ES a Free, lo mostramos como "Cambio programado"
+    if (pendingPlan === "free" && pendingEffectiveDate) {
+      freeBtn.disabled = true;
+      freeBtn.textContent = "Cambio programado";
+      const subtext = document.createElement('div');
+      subtext.className = 'cta-subtext';
+      subtext.textContent = formatBillingDate(pendingEffectiveDate);
+      freeBtn.appendChild(subtext);
+    } else if (hasPendingChange) {
       freeBtn.disabled = true;
       freeBtn.textContent = "Cambio pendiente en otro plan";
     } else if (isActive && currentPlan === "free") {
@@ -817,7 +866,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       freeBtn.textContent = "Plan actual";
     } else if (isActive && currentPlan === "starter") {
       // Verificar si hay cambio pendiente a Free
-      if (pendingPlan === "free" && pendingEffectiveDate && !hasPendingChange) {
+      if (pendingPlan === "free" && pendingEffectiveDate) {
         // Mostrar que el cambio está programado
         freeBtn.disabled = true;
         freeBtn.textContent = "Cambio programado";
@@ -895,10 +944,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ➎ Configurar botón Plan Starter y cambios de conversaciones
   const starterBtn = document.getElementById('starterBtn');
   
+  console.log('🔍 [STARTER DEBUG] Condición:', {
+    isActive,
+    currentPlan,
+    condition: isActive && currentPlan === "starter"
+  });
+  
   // Datos adicionales para el cambio de conversaciones - el backend los devuelve directamente
-  const pendingConversations = data.pending_monthly_cap_change;
-  const currentConversations = data.limit || 50; // El backend devuelve 'limit' con el valor actual
-  const billingPeriodEnd = data.period_end;
+  // 🔄 FALLBACK: Leer de la raíz si no está en provider
+  const currentConversations = data.limit || provider.monthly_cap || 50;
+  const billingPeriodEnd = provider.current_period_end || provider.period_end || data.period_end || null;
+
 
   // Mostrar ayuda de cambios si está activo
   const planChangeHelp = document.querySelector('.plan-change-help');
@@ -1122,7 +1178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.log('Pack debug:', { 
     isActive, 
     currentPlan, 
-    trial_end: data.trial_end, 
+    trial_end: provider.trial_end, 
     inTrial, 
     packCardExists: !!document.getElementById("packCard")
   });

@@ -311,3 +311,16 @@ export async function fetchWithAuth(path, opts = {}) {
   return res;
 }
 
+export async function fetchPublic(path, options = {}) {
+  // Si tu fetchWithAuth ya construye base URL internamente, copia esa misma lógica aquí.
+  // Versión simple: si path es relativo, lo dejamos tal cual (misma origin o rewrites).
+
+  const headers = {
+    ...(options.headers || {}),
+  };
+  return fetch(`${API_BASE}${path}`, {
+    method: options.method || 'GET',
+    ...options,
+    headers,
+  });
+}

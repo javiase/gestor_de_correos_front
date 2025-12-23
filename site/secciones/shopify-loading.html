@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesando suscripción - Respondize</title>
+    <link rel="stylesheet" href="../css/styles.css?v=%ASSET_VERSION%">
+    <link rel="stylesheet" href="../css/pages/shopify-loading.css?v=%ASSET_VERSION%">
+    <link rel="stylesheet" href="../vendor/fontawesome-6.4.0/css/all.min.css">
+</head>
+<body class="shopify-loading-page">
+    <div class="loading-container">
+        <div class="loading-content">
+            <!-- Logo o icono de Shopify + Respondize -->
+            <div class="loading-header">
+                <i class="fab fa-shopify shopify-icon"></i>
+                <div class="connection-line"></div>
+                <div class="respondize-logo">
+                    <img src="../logo-120x120.png" alt="Respondize" class="logo-img">
+                </div>
+            </div>
+
+            <!-- Spinner animado -->
+            <div class="spinner-wrapper">
+                <div class="spinner">
+                    <i class="fas fa-sync-alt spinner-icon"></i>
+                </div>
+            </div>
+
+            <!-- Mensaje principal -->
+            <h1 class="loading-title">Procesando tu suscripción</h1>
+            <p class="loading-description">
+                Estamos confirmando tu suscripción con Shopify.<br>
+                Por favor, no cierres esta ventana.
+            </p>
+
+            <!-- Indicador de progreso -->
+            <div class="progress-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+
+            <!-- Mensaje de estado (se actualiza dinámicamente) -->
+            <div class="status-message" id="statusMessage">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <span>Verificando con Shopify...</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../js/pages/shopify-loading.js?v=%ASSET_VERSION%"></script>
+</body>
+</html>
