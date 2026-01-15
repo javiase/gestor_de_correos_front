@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -15,8 +15,8 @@
     <div class="main-content">
       <div class="info-container-main">
         <div class="main-heading" id="mainHeading">
-          <h1>Información sobre la tienda</h1>
-          <p>Completa estos bloques. Puedes marcar campos como <em>No aplicable (N/A)</em>. Guardaremos el texto listo para usar y también la configuración para que puedas editarla después.</p>
+          <h1 data-i18n="info.pageTitle">Información sobre la tienda</h1>
+          <p data-i18n="info.pageSubtitle">Completa estos bloques. Puedes marcar campos como <em>No aplicable (N/A)</em>. Guardaremos el texto listo para usar y también la configuración para que puedas editarla después.</p>
         </div>
 
         <div class="info-container" id="infoContainer">
@@ -30,16 +30,16 @@
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </div>
-              <h2>Política de Devoluciones</h2>
+              <h2 data-i18n="info.returnsPolicy">Política de Devoluciones</h2>
 
               <div class="expand-content">
                 <div class="pf-announcement">
-                    <strong>ℹ️ Importante:</strong> este formulario recoge la <em>información mínima</em> para que el bot funcione bien.
-                    Si tu política ya incluye estos datos, puedes marcar los campos como <em>“No aplicable (N/A)”</em>. Si falta alguno de estos datos en tu política,
-                    complétalos aquí.
+                    <strong data-i18n="info.important">ℹ️ Importante:</strong> <span data-i18n="info.formDescription">este formulario recoge la <em>información mínima</em> para que el bot funcione bien.
+                    Si tu política ya incluye estos datos, puedes marcar los campos como <em>"No aplicable (N/A)"</em>. Si falta alguno de estos datos en tu política,
+                    complétalos aquí.</span>
                     <br>
                     <br>
-                    Debes pegar tu política completa al final del formulario, para que el bot pueda usarla.
+                    <span data-i18n="info.pastePolicyInstructions">Debes pegar tu política completa al final del formulario, para que el bot pueda usarla.</span>
                 </div>
 
                 <form class="policy-form" data-form-type="returns" data-policy-form novalidate>
@@ -49,18 +49,18 @@
                         <div class="pf-field pf-col-2" data-key="dias_devolucion">
                           <div class="pf-label-row">
                               <div class="pf-label-row2">
-                                <label>🗓️ Los clientes disponen de</label>
+                                <label data-i18n="info.returnsDays">🗓️ Los clientes disponen de</label>
                                 <input class="inline-number" type="number" min="0" name="dias_devolucion" placeholder="30">
-                                <label> días </label>
+                                <label data-i18n="info.days"> días </label>
                                 <p class="inline-sentence">
                                     <span class="chip-group" data-chip-group data-single data-name="tipo_dias">
-                                    <button type="button" class="chip" data-value="naturales">naturales</button>
-                                    <button type="button" class="chip" data-value="laborales">laborales</button>
+                                    <button type="button" class="chip" data-value="naturales" data-i18n="info.naturalDays">naturales</button>
+                                    <button type="button" class="chip" data-value="laborales" data-i18n="info.businessDays">laborales</button>
                                     </span>
                                 </p>
-                                <label> para devolver un producto</label>
+                                <label data-i18n="info.toReturnProduct"> para devolver un producto</label>
                               </div> 
-                              <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                              <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                           </div>
                         
                         <input type="hidden" name="tipo_dias">
@@ -69,16 +69,16 @@
                         <!-- ESTADO DEL ARTÍCULO -->
                         <div class="pf-field pf-col-2" data-key="estado_producto">
                         <div class="pf-label-row">
-                            <label>📦 Estado en el que debe estar el artículo para ser aceptado como devolución</label>
-                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                            <label data-i18n="info.productState">📦 Estado en el que debe estar el artículo para ser aceptado como devolución</label>
+                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                         </div>
                         <div class="chip-group" data-chip-group data-multi data-name="estado_producto" data-allow-custom>
-                            <button type="button" class="chip" data-value="Sin usar">Sin usar</button>
-                            <button type="button" class="chip" data-value="Con etiqueta">Con etiqueta</button>
-                            <button type="button" class="chip" data-value="Embalaje original">Embalaje original</button>
-                            <button type="button" class="chip" data-value="Precintado">Precintado</button>
-                            <button type="button" class="chip chip-other" data-other>Otro +</button>
-                            <input class="chip-other-input" type="text" placeholder="Especifica ‘Otro’…" />
+                            <button type="button" class="chip" data-value="Sin usar" data-i18n="info.unused">Sin usar</button>
+                            <button type="button" class="chip" data-value="Con etiqueta" data-i18n="info.withTag">Con etiqueta</button>
+                            <button type="button" class="chip" data-value="Embalaje original" data-i18n="info.originalPackaging">Embalaje original</button>
+                            <button type="button" class="chip" data-value="Precintado" data-i18n="info.sealed">Precintado</button>
+                            <button type="button" class="chip chip-other" data-other><span data-i18n="info.other">Otro +</span></button>
+                            <input class="chip-other-input" type="text" data-i18n-placeholder="info.specifyOther" placeholder="Especifica \'Otro\'…" />
                         </div>
                         <input type="hidden" name="estado_producto">
                         </div>
@@ -86,12 +86,12 @@
                         <!-- COSTE DE DEVOLUCIÓN -->
                         <div class="pf-field" data-key="coste_devolucion">
                         <div class="pf-label-row">
-                            <label>💸 Coste de devolución</label>
-                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                            <label data-i18n="info.returnCost">💸 Coste de devolución</label>
+                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                         </div>
                         <div class="chip-group" data-chip-group data-single data-name="coste_devolucion">
-                            <button type="button" class="chip" data-value="cliente">A cargo del cliente</button>
-                            <button type="button" class="chip" data-value="tienda">Gratis (lo asume la tienda)</button>
+                            <button type="button" class="chip" data-value="cliente" data-i18n="info.customerPays">A cargo del cliente</button>
+                            <button type="button" class="chip" data-value="tienda" data-i18n="info.storePays">Gratis (lo asume la tienda)</button>
                         </div>
                         <input type="hidden" name="coste_devolucion">
                         </div>
@@ -99,14 +99,14 @@
                         <!-- MÉTODO DE REEMBOLSO -->
                         <div class="pf-field pf-col-2" data-key="metodo_reembolso">
                         <div class="pf-label-row">
-                            <label>↩️ Método de reembolso</label>
-                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                            <label data-i18n="info.refundMethod">↩️ Método de reembolso</label>
+                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                         </div>
                         <div class="chip-group" data-chip-group data-multi data-name="metodo_reembolso" data-allow-custom>
-                            <button type="button" class="chip" data-value="Mismo medio de pago">Mismo medio de pago</button>
-                            <button type="button" class="chip" data-value="Vale de tienda">Vale de tienda</button>
-                            <button type="button" class="chip" data-value="Cambio por otro producto">Cambio por otro producto</button>
-                            <button type="button" class="chip chip-other" data-other>Otro +</button>
+                            <button type="button" class="chip" data-value="Mismo medio de pago" data-i18n="info.samePaymentMethod">Mismo medio de pago</button>
+                            <button type="button" class="chip" data-value="Vale de tienda" data-i18n="info.storeCredit">Vale de tienda</button>
+                            <button type="button" class="chip" data-value="Cambio por otro producto" data-i18n="info.exchangeProduct">Cambio por otro producto</button>
+                            <button type="button" class="chip chip-other" data-other data-i18n="info.other">Otro +</button>
                             <input class="chip-other-input" type="text" placeholder="Especifica ‘Otro’…" />
                         </div>
                         <input type="hidden" name="metodo_reembolso">
@@ -115,25 +115,25 @@
                         <!-- PLAZO DE REEMBOLSO -->
                         <div class="pf-field" data-key="reembolso_dias">
                         <div class="pf-label-row">
-                            <label>⏱️ Plazo de reembolso</label>
-                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                            <label data-i18n="info.refundTimeframe">⏱️ Plazo de reembolso</label>
+                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                         </div>
                         <p class="inline-sentence">
-                            Reembolsamos el dinero aproximadamente en
-                            <input class="inline-number" type="number" min="0" name="reembolso_dias" placeholder="7"> días.
+                            <span data-i18n="info.refundTimeText">Reembolsamos el dinero aproximadamente en</span>
+                            <input class="inline-number" type="number" min="0" name="reembolso_dias" placeholder="7"> <span data-i18n="info.days">días</span>.
                         </p>
                         </div>
 
                         <!-- CANCELACIÓN DE PEDIDO -->
                         <div class="pf-field pf-col-2" data-key="cancelacion_condiciones">
                         <div class="pf-label-row">
-                            <label>🛑 Cuando se puede cancelar un pedido</label>
-                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                            <label data-i18n="info.orderCancellation">🛑 Cuando se puede cancelar un pedido</label>
+                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                         </div>
                         <div class="chip-group" data-chip-group data-multi data-name="cancelacion_opciones" data-allow-custom>
-                            <button type="button" class="chip" data-value="Si no ha salido del almacén">Si no ha salido del almacén</button>
-                            <button type="button" class="chip" data-value="Dentro de X horas">Dentro de las primeras 24 horas</button>
-                            <button type="button" class="chip chip-other" data-other>Otro +</button>
+                            <button type="button" class="chip" data-value="Si no ha salido del almacén" data-i18n="info.notLeftWarehouse">Si no ha salido del almacén</button>
+                            <button type="button" class="chip" data-value="Dentro de X horas" data-i18n="info.withinHours">Dentro de las primeras 24 horas</button>
+                            <button type="button" class="chip chip-other" data-other data-i18n="info.other">Otro +</button>
                             <input class="chip-other-input" type="text" placeholder="Especifica ‘Otro’…" />
                         </div>
                         </div>
@@ -141,10 +141,10 @@
                         <!-- LINK A POLÍTICA -->
                         <div class="pf-field" data-key="url_devoluciones">
                         <div class="pf-label-row">
-                            <label>🔗 Enlace a la política de devoluciones</label>
-                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                            <label data-i18n="info.returnsPolicyLink">🔗 Enlace a la política de devoluciones</label>
+                            <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                         </div>
-                        <input type="url" name="url_devoluciones" placeholder="https://tutienda.com/devoluciones (opcional)">
+                        <input type="url" name="url_devoluciones" data-i18n-placeholder="info.returnsPolicyLinkPlaceholder" placeholder="https://tutienda.com/devoluciones (opcional)">
                         </div>
                     </div>
 
@@ -154,22 +154,22 @@
                         <div class="policy-na-list" data-na-list></div>
                     </div>
                     <div class="user-policy-box">
-                        <h3 class="user-policy-title">📄 Tu política completa de devoluciones</h3>
-                        <p class="policy-note">Pega aquí <strong>únicamente el texto de tu política</strong>. No añadas instrucciones de comportamiento para el bot, serán ignoradas.</p>
-                        <textarea name="policy_pasted" maxlength="6000" placeholder="Pega aquí tu política completa de devoluciones…" class="user-policy-textarea"></textarea>
+                        <h3 class="user-policy-title" data-i18n="info.yourCompleteReturnsPolicy">📄 Tu política completa de devoluciones</h3>
+                        <p class="policy-note" data-i18n="info.policyNote">Pega aquí <strong>únicamente el texto de tu política</strong>. No añadas instrucciones de comportamiento para el bot, serán ignoradas.</p>
+                        <textarea name="policy_pasted" maxlength="6000" data-i18n-placeholder="info.pasteReturnsPolicyPlaceholder" placeholder="Pega aquí tu política completa de devoluciones…" class="user-policy-textarea"></textarea>
                     </div>
                     
 
-                  <button type="submit" class="send-button pf-submit">Guardar</button>
+                  <button type="submit" class="send-button pf-submit" data-i18n="info.save">Guardar</button>
                   <div class="loading-spinner hidden">
                     <div class="loader">
-                      <p>Estamos</p>
+                      <p data-i18n="info.weAre">Estamos</p>
                       <div class="words">
-                        <span class="word">guardando tu información...</span>
-                        <span class="word">validando campos...</span>
-                        <span class="word">actualizando la base de datos...</span>
-                        <span class="word">preparando confirmación...</span>
-                        <span class="word">guardando tu información...</span>
+                        <span class="word" data-i18n="info.savingYourInfo">guardando tu información...</span>
+                        <span class="word" data-i18n="info.validatingFields">validando campos...</span>
+                        <span class="word" data-i18n="info.updatingDatabase">actualizando la base de datos...</span>
+                        <span class="word" data-i18n="info.preparingConfirmation">preparando confirmación...</span>
+                        <span class="word" data-i18n="info.savingYourInfo">guardando tu información...</span>
                       </div>
                     </div>
                   </div>
@@ -186,16 +186,16 @@
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </div>
-              <h2>Política de Envíos</h2>
+              <h2 data-i18n="info.shippingPolicy">Política de Envíos</h2>
 
               <div class="expand-content">
                 <div class="pf-announcement">
-                  <strong>ℹ️ Importante:</strong> este formulario recoge la <em>información mínima</em> para que el bot funcione bien.
-                  Si tu política ya incluye estos datos, puedes marcar los campos como <em>“No aplicable (N/A)”</em>. Si falta alguno de estos datos en tu política,
-                  complétalos aquí.
+                  <strong data-i18n="info.important">ℹ️ Importante:</strong> <span data-i18n="info.formDescription">este formulario recoge la <em>información mínima</em> para que el bot funcione bien.
+                  Si tu política ya incluye estos datos, puedes marcar los campos como <em>"No aplicable (N/A)"</em>. Si falta alguno de estos datos en tu política,
+                  complétalos aquí.</span>
                   <br>
                   <br>
-                    Debes pegar tu política completa al final del formulario, para que el bot pueda usarla.
+                    <span data-i18n="info.pastePolicyInstructions">Debes pegar tu política completa al final del formulario, para que el bot pueda usarla.</span>
                 </div>
 
                 <form class="policy-form" data-form-type="shipping" data-policy-form novalidate>
@@ -204,16 +204,16 @@
                     <!-- TARIFAS -->
                     <div class="pf-field pf-col-2" data-key="tarifas">
                       <div class="pf-label-row">
-                        <label>💶 Tarifas</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.rates">💶 Tarifas</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
 
                       <div class="rate-table" data-rate-table>
                         <div class="rate-head">
-                          <span>Zona</span><span>Precio</span><span>Tiempo</span><span>Notas</span><span></span>
+                          <span data-i18n="info.zone">Zona</span><span data-i18n="info.price">Precio</span><span data-i18n="info.time">Tiempo</span><span data-i18n="info.notes">Notas</span><span></span>
                         </div>
                         <div class="rate-body" data-rate-body></div>
-                        <button type="button" class="chip" data-add-row>+ Añadir fila</button>
+                        <button type="button" class="chip" data-add-row data-i18n="info.addRow">+ Añadir fila</button>
                       </div>
                       <input type="hidden" name="tarifas_json">
                     </div>
@@ -221,15 +221,15 @@
                     <!-- ZONAS DE ENVÍO -->
                     <div class="pf-field pf-col-2" data-key="zonas_envio">
                       <div class="pf-label-row">
-                        <label>🗺️ Zonas de envío</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.shippingZones">🗺️ Zonas de envío</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
                       <div class="chip-group" data-chip-group data-multi data-name="zonas_envio" data-allow-custom>
-                        <button type="button" class="chip" data-value="Nacional (España)">Nacional (España)</button>
-                        <button type="button" class="chip" data-value="UE">UE</button>
-                        <button type="button" class="chip" data-value="Internacional">Internacional</button>
-                        <button type="button" class="chip chip-other" data-other>País/es concretos +</button>
-                        <input class="chip-other-input" type="text" placeholder="Especifica país/es…" />
+                        <button type="button" class="chip" data-value="Nacional (España)" data-i18n="info.national">Nacional (España)</button>
+                        <button type="button" class="chip" data-value="UE" data-i18n="info.eu">UE</button>
+                        <button type="button" class="chip" data-value="Internacional" data-i18n="info.international">Internacional</button>
+                        <button type="button" class="chip chip-other" data-other data-i18n="info.specificCountries">País/es concretos +</button>
+                        <input class="chip-other-input" type="text" data-i18n-placeholder="info.specifyCountries" placeholder="Especifica país/es…" />
                       </div>
                       <input type="hidden" name="zonas_envio">
                     </div>
@@ -237,14 +237,14 @@
                     <!-- TIEMPO ESTIMADO GLOBAL -->
                     <div class="pf-field" data-key="tiempo_entrega">
                       <div class="pf-label-row">
-                        <label>⏱️ Tiempo estimado global</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.globalEstimatedTime">⏱️ Tiempo estimado global</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
                       <div class="chip-group" data-chip-group data-single data-name="tiempo_entrega" data-allow-custom>
                         <button type="button" class="chip" data-value="24–48h">24–48h</button>
                         <button type="button" class="chip" data-value="48–72h">48–72h</button>
                         <button type="button" class="chip" data-value="3–5 días">3–5 días</button>
-                        <button type="button" class="chip chip-other" data-other>Otro +</button>
+                        <button type="button" class="chip chip-other" data-other data-i18n="info.other">Otro +</button>
                         <input class="chip-other-input" type="text" placeholder="Ej. 7–10 días" />
                       </div>
                       <input type="hidden" name="tiempo_entrega">
@@ -253,50 +253,50 @@
                     <!-- IDS: TRACKING / ORDEN -->
                     <div class="pf-field pf-col-2" data-key="ids_envio">
                       <div class="pf-label-row">
-                        <label>📬 Identificadores de pedido</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.orderIds">📬 Identificadores de pedido</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
 
                       <p class="inline-sentence">
-                        ¿Se proporciona número de seguimiento?
+                        <span data-i18n="info.trackingProvided">¿Se proporciona número de seguimiento?</span>
                         <span class="chip-group" data-chip-group data-single data-name="tiene_tracking">
-                          <button type="button" class="chip" data-value="sí">Sí</button>
-                          <button type="button" class="chip" data-value="no">No</button>
+                          <button type="button" class="chip" data-value="sí" data-i18n="info.yes">Sí</button>
+                          <button type="button" class="chip" data-value="no" data-i18n="info.no">No</button>
                         </span>
                         <input type="hidden" name="tiene_tracking">
                       </p>
 
                       <!-- Campo dependiente -->
                       <div class="pf-dependent" data-show-when="tiene_tracking=sí">
-                        <label>🕒 ¿Cuándo se envía el seguimiento?</label>
-                        <input type="text" name="tracking_cuando" placeholder="Ej. al despachar el pedido / 24h después">
+                        <label data-i18n="info.whenTrackingSent">🕒 ¿Cuándo se envía el seguimiento?</label>
+                        <input type="text" name="tracking_cuando" data-i18n-placeholder="info.whenTrackingSentPlaceholder" placeholder="Ej. al despachar el pedido / 24h después">
                       </div>
                     </div>
 
                     <!-- CÓMO SE HACE EL SEGUIMIENTO -->
                     <div class="pf-field pf-col-2" data-key="como_seguimiento">
                       <div class="pf-label-row">
-                        <label>🔎 Seguimiento del envío</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.shipmentTracking">🔎 Seguimiento del envío</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
                       <div class="chip-group" data-chip-group data-single data-name="seguimiento_via" data-allow-custom>
-                        <button type="button" class="chip" data-value="Email con enlace">Email con enlace</button>
-                        <button type="button" class="chip" data-value="Cuenta de cliente">En nuestra página web</button>
-                        <button type="button" class="chip" data-value="Enlace del transportista">Enlace del transportista</button>
-                        <button type="button" class="chip chip-other" data-other>Otro +</button>
+                        <button type="button" class="chip" data-value="Email con enlace" data-i18n="info.emailWithLink">Email con enlace</button>
+                        <button type="button" class="chip" data-value="Cuenta de cliente" data-i18n="info.onWebsite">En nuestra página web</button>
+                        <button type="button" class="chip" data-value="Enlace del transportista" data-i18n="info.carrierLink">Enlace del transportista</button>
+                        <button type="button" class="chip chip-other" data-other data-i18n="info.other">Otro +</button>
                         <input class="chip-other-input" type="text" placeholder="Especifica ‘Otro’…" />
                       </div>
                       <input type="hidden" name="seguimiento_via">
-                      <input type="url" name="tracking_url" placeholder="URL de seguimiento (opcional)">
+                      <input type="url" name="tracking_url" data-i18n-placeholder="info.trackingUrlPlaceholder" placeholder="URL de seguimiento (opcional)">
                     </div>
 
                     <!-- LINK A POLÍTICA -->
                     <div class="pf-field" data-key="url_envios">
                       <div class="pf-label-row">
-                        <label>🔗 Link a política de envíos</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.shippingPolicyLink">🔗 Link a política de envíos</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
-                      <input type="url" name="url_envios" placeholder="https://tutienda.com/envios (opcional)">
+                      <input type="url" name="url_envios" data-i18n-placeholder="info.shippingPolicyLinkPlaceholder" placeholder="https://tutienda.com/envios (opcional)">
                     </div>
 
                   </div>
@@ -306,21 +306,21 @@
                     <div class="policy-na-list" data-na-list></div>
                   </div>
                   <div class="user-policy-box">
-                    <h3 class="user-policy-title">📄 Tu política completa de envíos</h3>
-                    <p class="policy-note">Pega aquí <strong>únicamente el texto de tu política</strong>. No añadas instrucciones de comportamiento para el bot, serán ignoradas.</p>
-                    <textarea name="policy_pasted" maxlength="6000" placeholder="Pega aquí tu política completa de envíos…" class="user-policy-textarea"></textarea>
+                    <h3 class="user-policy-title" data-i18n="info.yourCompleteShippingPolicy">📄 Tu política completa de envíos</h3>
+                    <p class="policy-note" data-i18n="info.policyNote">Pega aquí <strong>únicamente el texto de tu política</strong>. No añadas instrucciones de comportamiento para el bot, serán ignoradas.</p>
+                    <textarea name="policy_pasted" maxlength="6000" data-i18n-placeholder="info.pasteShippingPolicyPlaceholder" placeholder="Pega aquí tu política completa de envíos…" class="user-policy-textarea"></textarea>
                   </div>
 
-                  <button type="submit" class="send-button pf-submit">Guardar</button>
+                  <button type="submit" class="send-button pf-submit" data-i18n="info.save">Guardar</button>
                   <div class="loading-spinner hidden">
                     <div class="loader">
-                      <p>Estamos</p>
+                      <p data-i18n="info.weAre">Estamos</p>
                       <div class="words">
-                        <span class="word">guardando tu información...</span>
-                        <span class="word">validando campos...</span>
-                        <span class="word">actualizando la base de datos...</span>
-                        <span class="word">preparando confirmación...</span>
-                        <span class="word">guardando tu información...</span>
+                        <span class="word" data-i18n="info.savingYourInfo">guardando tu información...</span>
+                        <span class="word" data-i18n="info.validatingFields">validando campos...</span>
+                        <span class="word" data-i18n="info.updatingDatabase">actualizando la base de datos...</span>
+                        <span class="word" data-i18n="info.preparingConfirmation">preparando confirmación...</span>
+                        <span class="word" data-i18n="info.savingYourInfo">guardando tu información...</span>
                       </div>
                     </div>
                   </div>
@@ -336,10 +336,10 @@
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </div>
-              <h2>Información general de la tienda</h2>
+              <h2 data-i18n="info.generalInfo">Información general de la tienda</h2>
 
               <div class="expand-content">
-                <p class="policy-tip">🧾 Métodos de pago, ubicación, garantías…</p>
+                <p class="policy-tip" data-i18n="info.generalInfoTip">🧾 Métodos de pago, ubicación, garantías…</p>
 
                 <form class="policy-form" data-form-type="storeinfo" data-policy-form novalidate>
                   <div class="policy-active pf-grid" data-active-list>
@@ -347,19 +347,19 @@
                     <!-- MÉTODOS DE PAGO -->
                     <div class="pf-field pf-col-2" data-key="metodos_pago">
                       <div class="pf-label-row">
-                        <label>💳 Métodos de pago aceptados</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.paymentMethods">💳 Métodos de pago aceptados</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
                       <div class="chip-group" data-chip-group data-multi data-name="metodos_pago" data-allow-custom>
-                        <button type="button" class="chip" data-value="Visa">Visa</button>
-                        <button type="button" class="chip" data-value="Mastercard">Mastercard</button>
-                        <button type="button" class="chip" data-value="PayPal">PayPal</button>
-                        <button type="button" class="chip" data-value="Bizum">Bizum</button>
-                        <button type="button" class="chip" data-value="Transferencia">Transferencia</button>
-                        <button type="button" class="chip" data-value="Contra reembolso">Contra reembolso</button>
-                        <button type="button" class="chip" data-value="Apple Pay">Apple Pay</button>
-                        <button type="button" class="chip" data-value="Google Pay">Google Pay</button>
-                        <button type="button" class="chip chip-other" data-other>Otro +</button>
+                        <button type="button" class="chip" data-value="Visa" data-i18n="info.visa">Visa</button>
+                        <button type="button" class="chip" data-value="Mastercard" data-i18n="info.mastercard">Mastercard</button>
+                        <button type="button" class="chip" data-value="PayPal" data-i18n="info.paypal">PayPal</button>
+                        <button type="button" class="chip" data-value="Bizum" data-i18n="info.bizum">Bizum</button>
+                        <button type="button" class="chip" data-value="Transferencia" data-i18n="info.bankTransfer">Transferencia</button>
+                        <button type="button" class="chip" data-value="Contra reembolso" data-i18n="info.cashOnDelivery">Contra reembolso</button>
+                        <button type="button" class="chip" data-value="Apple Pay" data-i18n="info.applePay">Apple Pay</button>
+                        <button type="button" class="chip" data-value="Google Pay" data-i18n="info.googlePay">Google Pay</button>
+                        <button type="button" class="chip chip-other" data-other data-i18n="info.other">Otro +</button>
                         <input class="chip-other-input" type="text" placeholder="Especifica ‘Otro’…" />
                       </div>
                       <input type="hidden" name="metodos_pago">
@@ -368,63 +368,63 @@
                     <!-- UBICACIÓN -->
                     <div class="pf-field" data-key="ubicacion">
                       <div class="pf-label-row">
-                        <label>📍 Ubicación</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.location">📍 Ubicación</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
                       <div class="chip-group" data-chip-group data-single data-name="ubicacion_tipo">
-                        <button type="button" class="chip" data-value="Online">Online</button>
-                        <button type="button" class="chip" data-value="Física">Física</button>
+                        <button type="button" class="chip" data-value="Online" data-i18n="info.online">Online</button>
+                        <button type="button" class="chip" data-value="Física" data-i18n="info.physical">Física</button>
                       </div>
                       <input type="hidden" name="ubicacion_tipo">
                       <div class="pf-dependent" data-show-when="ubicacion_tipo=Física">
-                        <input type="text" name="direccion_tienda" placeholder="Dirección de la tienda">
+                        <input type="text" name="direccion_tienda" data-i18n-placeholder="info.storeAddress" placeholder="Dirección de la tienda">
                       </div>
                     </div>
 
                     <!-- CAMBIO DE DIRECCIÓN -->
                     <div class="pf-field" data-key="cambio_direccion">
                       <div class="pf-label-row">
-                        <label>🚚 Cambio de dirección tras pedido</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.addressChange">🚚 Cambio de dirección tras pedido</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
                       <p class="inline-sentence">
-                        ¿Bajo qué condiciones el cliente puede cambiar la dirección de envío?¿Y qué plazo tiene para ello?
+                        <span data-i18n="info.addressChangeConditions">¿Bajo qué condiciones el cliente puede cambiar la dirección de envío?¿Y qué plazo tiene para ello?</span>
                       </p>
-                      <textarea name="cambio_direccion_condiciones" rows="3" placeholder="Condiciones / plazo"></textarea>
+                      <textarea name="cambio_direccion_condiciones" rows="3" data-i18n-placeholder="info.addressChangePlaceholder" placeholder="Condiciones / plazo"></textarea>
                     </div>
 
                     <!-- TABLA DE TALLAS -->
                     <div class="pf-field" data-key="tabla_tallas">
                       <div class="pf-label-row">
-                        <label>📏 Tabla de tallas</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.sizeChart">📏 Tabla de tallas</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
                       <div class="chip-group" data-chip-group data-single data-name="tiene_tabla_tallas">
-                        <button type="button" class="chip" data-value="sí">Sí</button>
-                        <button type="button" class="chip" data-value="no">No</button>
+                        <button type="button" class="chip" data-value="sí" data-i18n="info.yes">Sí</button>
+                        <button type="button" class="chip" data-value="no" data-i18n="info.no">No</button>
                       </div>
                       <input type="hidden" name="tiene_tabla_tallas">
                       <div class="pf-dependent" data-show-when="tiene_tabla_tallas=sí">
-                        <input type="url" name="tabla_tallas_url" placeholder="Dónde se encuentra?">
+                        <input type="url" name="tabla_tallas_url" data-i18n-placeholder="info.sizeChartLocation" placeholder="Dónde se encuentra?">
                       </div>
                     </div>
 
                     <!-- GARANTÍA -->
                     <div class="pf-field" data-key="garantia">
                       <div class="pf-label-row">
-                        <label>🛡️ Garantía</label>
-                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false">(N/A)</button>
+                        <label data-i18n="info.warranty">🛡️ Garantía</label>
+                        <button type="button" class="na-faq-btn" data-na-toggle aria-pressed="false"><span data-i18n="info.notApplicable">(N/A)</span></button>
                       </div>
                       <div class="chip-group" data-chip-group data-single data-name="garantia_tipo">
-                        <button type="button" class="chip" data-value="Sin garantía">Sin garantía</button>
-                        <button type="button" class="chip" data-value="Días">Días</button>
-                        <button type="button" class="chip" data-value="Meses">Meses</button>
-                        <button type="button" class="chip" data-value="Años">Años</button>
+                        <button type="button" class="chip" data-value="Sin garantía" data-i18n="info.noWarranty">Sin garantía</button>
+                        <button type="button" class="chip" data-value="Días" data-i18n="info.warrantyDays">Días</button>
+                        <button type="button" class="chip" data-value="Meses" data-i18n="info.warrantyMonths">Meses</button>
+                        <button type="button" class="chip" data-value="Años" data-i18n="info.warrantyYears">Años</button>
                       </div>
                       <input type="hidden" name="garantia_tipo">
                       <div class="pf-dependent" data-show-when="garantia_tipo=Meses;garantia_tipo=Años">
                         <p class="inline-sentence">
-                          Duración:
+                          <span data-i18n="info.duration">Duración:</span>
                           <input class="inline-number" type="number" min="0" name="garantia_valor" placeholder="24">
                         </p>
                       </div>
@@ -437,16 +437,16 @@
                     <div class="policy-na-list" data-na-list></div>
                   </div>
 
-                  <button type="submit" class="send-button pf-submit">Guardar</button>
+                  <button type="submit" class="send-button pf-submit" data-i18n="info.save">Guardar</button>
                   <div class="loading-spinner hidden">
                     <div class="loader">
-                      <p>Estamos</p>
+                      <p data-i18n="info.weAre">Estamos</p>
                       <div class="words">
-                        <span class="word">guardando tu información...</span>
-                        <span class="word">validando campos...</span>
-                        <span class="word">actualizando la base de datos...</span>
-                        <span class="word">preparando confirmación...</span>
-                        <span class="word">guardando tu información...</span>
+                        <span class="word" data-i18n="info.savingYourInfo">guardando tu información...</span>
+                        <span class="word" data-i18n="info.validatingFields">validando campos...</span>
+                        <span class="word" data-i18n="info.updatingDatabase">actualizando la base de datos...</span>
+                        <span class="word" data-i18n="info.preparingConfirmation">preparando confirmación...</span>
+                        <span class="word" data-i18n="info.savingYourInfo">guardando tu información...</span>
                       </div>
                     </div>
                   </div>
@@ -455,39 +455,39 @@
             </div>
 
             <!-- FAQ -->
-            <div class="card" data-policy-type="Preguntas Frecuentes">
+            <div class="card" data-policy-type="faq">
               <div class="arrow-collapse">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                   <line x1="19" y1="12" x2="5" y2="12"></line>
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </div>
-              <h2>Preguntas Frecuentes</h2>
+              <h2 data-i18n="info.faq">Preguntas Frecuentes</h2>
 
               <div class="expand-content">
                 <p class="policy-tip">
-                  ❓ Aquí configuras tus Preguntas Frecuentes. Escribe la <strong>pregunta de forma literal</strong> y una <strong>respuesta exacta</strong> tal y como quieres que la vea el cliente.
+                  <span data-i18n="info.faqTip">❓ Aquí configuras tus Preguntas Frecuentes. Escribe la <strong>pregunta de forma literal</strong> y una <strong>respuesta exacta</strong> tal y como quieres que la vea el cliente.</span>
                 </p>
 
                 <div id="faqContainer">
                   <div id="faqBlocks"></div>
                   <div id="faqNASection" class="hidden">
-                    <h4 style="font-weight:600; color:#9CA3AF; margin-bottom:1.5vh;">No aplican</h4>
+                    <h4 style="font-weight:600; color:#9CA3AF; margin-bottom:1.5vh;" data-i18n="info.notApply">No aplican</h4>
                     <div id="faqBlocksNA"></div>
                   </div>
                   <button type="button" class="chip" id="faqAdd">+ Añadir pregunta</button>
                 </div>
 
-                <button class="send-button" id="faqSend">Guardar</button>
+                <button class="send-button" id="faqSend" data-i18n="info.save">Guardar</button>
                 <div class="loading-spinner hidden">
                   <div class="loader">
-                    <p>Estamos</p>
+                    <p data-i18n="info.weAre">Estamos</p>
                     <div class="words">
-                      <span class="word">guardando tu información...</span>
-                      <span class="word">validando campos...</span>
-                      <span class="word">actualizando la base de datos...</span>
-                      <span class="word">preparando confirmación...</span>
-                      <span class="word">guardando tu información...</span>
+                      <span class="word" data-i18n="info.savingYourInfo">guardando tu información...</span>
+                      <span class="word" data-i18n="info.validatingFields">validando campos...</span>
+                      <span class="word" data-i18n="info.updatingDatabase">actualizando la base de datos...</span>
+                      <span class="word" data-i18n="info.preparingConfirmation">preparando confirmación...</span>
+                      <span class="word" data-i18n="info.savingYourInfo">guardando tu información...</span>
                     </div>
                   </div>
                 </div>
@@ -500,11 +500,11 @@
       </div>
       <!-- 🔹 Barra lateral de info faltante a la derecha -->
       <aside class="info-sidebar is-popup is-collapsed" aria-label="Bandeja de entrada">
-        <button class="info-tab" aria-expanded="false" aria-label="Mostrar panel">
+        <button class="info-tab" aria-expanded="false" data-i18n-aria-label="info.showPanel" aria-label="Mostrar panel">
           Info
         </button>
         <div class="info-sidebar-header">
-          <h3>Propuestas de información a añadir</h3>
+          <h3 data-i18n="info.sidebarTitle">Propuestas de información a añadir</h3>
         </div>
 
         <div class="info-scroll">
@@ -525,3 +525,7 @@
     <script type="module" src="/js/pages/info.js?v=%ASSET_VERSION%"></script>
   </body>
 </html>
+
+
+
+

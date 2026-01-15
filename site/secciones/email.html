@@ -19,16 +19,16 @@
                 <div id="historyContainer" style="visibility: hidden; opacity: 0;"></div>
                 <div class="grid-container" style="visibility: hidden; opacity: 0;">
                     <div class="mail-container client actual">
-                        <h2>Ultimo mensaje recibido</h2>
+                        <h2 data-i18n="email.lastReceivedMessage">Ultimo mensaje recibido</h2>
 
                         <!-- PANEL RECIBIDO -->
                         <div class="panel">
                             <div class="panel-header">
                                 <div class="panel-header-content" style="justify-content: space-between;">
-                                    <p id="emailFrom">De: ---</p>
+                                    <p id="emailFrom"><span data-i18n="email.from">De</span>: ---</p>
                                     <span id="emailDate">--:--</span>
                                 </div>
-                                <p class="panel-subject" id="emailSubject">Asunto: ---</p>
+                                <p class="panel-subject" id="emailSubject"><span data-i18n="email.subject">Asunto</span>: ---</p>
                             </div>
                             <div class="panel-scroll">
                                 <div class="panel-content" id="receivedContent"></div>
@@ -37,17 +37,18 @@
                         </div>
                     </div>
                     <div class="mail-container bot actual">
-                        <h2>Respuesta del bot</h2>
+                        <h2 data-i18n="email.botResponse">Respuesta del bot</h2>
                         <!-- PANEL RESPUESTA -->
                         <div class="panel ">
                             <div class="panel-header">
                                 <div class="panel-header-content">
-                                    <strong>Asunto:&nbsp;&nbsp;</strong>
+                                    <strong><span data-i18n="email.subject">Asunto</span>:&nbsp;&nbsp;</strong>
                                     <!-- aquí podrá editarse el asunto -->
                                     <div
                                         id="responseSubject"
                                         class="panel-subject response-subject"
                                         contenteditable="true"
+                                        data-i18n-placeholder="email.writeSubject"
                                         data-placeholder="Escribe el asunto…"
                                     ></div>
                                 </div>
@@ -58,22 +59,23 @@
                                     class="panel-content response-body"
                                     id="responseContent"
                                     contenteditable="true"
+                                    data-i18n-placeholder="email.writeResponse"
                                     data-placeholder="Escribe tu respuesta…"
                                 ></div>
                             </div>
                             <div id="replyFilesPreview" class="attachments-grid"></div>
                             <div class="panel-footer">
                                 <div class="left-actions">
-                                    <button id="sendReply" class="send-button">Enviar</button>
+                                    <button id="sendReply" class="send-button" data-i18n="email.send">Enviar</button>
                                     <!-- 🆕 Checkbox para cerrar conversación -->
-                                    <label class="close-conversation-label" title="Marca esta opción si esta respuesta cierra la conversación con el cliente">
+                                    <label class="close-conversation-label" data-i18n-title="email.closeConversationTooltip" title="Marca esta opción si esta respuesta cierra la conversación con el cliente">
                                         <input type="checkbox" id="closeConversationCheck">
-                                        <span>Cerrar Conversacion/Ticket</span>
+                                        <span data-i18n="email.closeConversation">Cerrar Conversacion/Ticket</span>
                                     </label>
                                 </div>
 
                                 <div class="right-actions">
-                                    <button id="attachBtn" class="icon-button attach-button" type="button" aria-label="Adjuntar">
+                                    <button id="attachBtn" class="icon-button attach-button" type="button" data-i18n-title="email.attach" aria-label="Adjuntar">
                                     <!-- icono paperclip -->
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -104,16 +106,16 @@
             <div class="pagination">
                 <!-- Navegación -->
                 <button id="prevEmail" class="pagination-btn prev-btn">
-                    <i class="fas fa-chevron-left"></i>&nbsp;&nbsp;&nbsp;&nbsp;Anterior
+                    <i class="fas fa-chevron-left"></i>&nbsp;&nbsp;&nbsp;&nbsp;<span data-i18n="common.previous">Anterior</span>
                 </button>
                 <button id="nextEmail" class="pagination-btn next-btn">
-                    Siguiente&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-chevron-right"></i>
+                    <span data-i18n="common.next">Siguiente</span>&nbsp;&nbsp;&nbsp;&nbsp;<i class="fas fa-chevron-right"></i>
                 </button>
             </div>
         </div>
         
         <!-- 🆕 BOTÓN DE TOGGLE DEL SIDEBAR (FUERA DEL SIDEBAR PARA QUE SIEMPRE SEA VISIBLE) -->
-        <button class="sidebar-toggle-right" id="toggleRightSidebar" title="Mostrar/Ocultar panel de información" style="visibility: hidden; opacity: 0;">
+        <button class="sidebar-toggle-right" id="toggleRightSidebar" data-i18n-title="email.toggleSidebarInfo" title="Mostrar/Ocultar panel de información" style="visibility: hidden; opacity: 0;">
             <i class="fas fa-chevron-left"></i>
         </button>
         
@@ -136,19 +138,19 @@
                 <div id="actionBar" class="action-bar">
                     <button class="action-btn" id="actionReembolso" disabled data-tooltip="No disponible">
                         <i class="fas fa-undo"></i>
-                        <span>Reembolso</span>
+                        <span data-i18n="email.refund">Reembolso</span>
                     </button>
                     <button class="action-btn" id="actionCancelar" disabled data-tooltip="No disponible">
                         <i class="fas fa-edit"></i>
-                        <span>Modificar</span>
+                        <span data-i18n="email.modify">Modificar</span>
                     </button>
                     <button class="action-btn" id="actionTracking" disabled data-tooltip="No disponible">
                         <i class="fas fa-shipping-fast"></i>
-                        <span>Tracking</span>
+                        <span data-i18n="email.trackingAction">Tracking</span>
                     </button>
                     <button class="action-btn" id="actionDescuento" disabled data-tooltip="No disponible">
                         <i class="fas fa-percent"></i>
-                        <span>Descuento</span>
+                        <span data-i18n="email.discount">Descuento</span>
                     </button>
                 </div>
             </div>
@@ -160,7 +162,7 @@
     <div class="refund-modal-overlay"></div>
     <div class="refund-modal-content">
       <div class="refund-modal-header">
-        <h2>Crear Reembolso</h2>
+        <h2 data-i18n="email.createRefund">Crear Reembolso</h2>
         <button class="refund-modal-close" id="closeRefundModal">
           <i class="fas fa-times"></i>
         </button>
@@ -173,7 +175,7 @@
             <div class="refund-card">
               <div class="refund-card-header">
                 <span class="refund-badge refund-badge-warning">
-                  <i class="fas fa-box-open"></i> Unfulfilled
+                  <i class="fas fa-box-open"></i> <span data-i18n="email.unfulfilled">Unfulfilled</span>
                 </span>
                 <span class="refund-shop-location"></span>
               </div>
@@ -181,14 +183,14 @@
                 <div id="refundItemsList" class="refund-items-list">
                   <!-- Los items se renderizan aquí -->
                 </div>
-                <p class="refund-help-text">Refunded items will be removed from the order</p>
+                <p class="refund-help-text" data-i18n="email.refundItems">Refunded items will be removed from the order</p>
               </div>
             </div>
 
             <!-- SECCIÓN: REFUND SHIPPING (condicional) -->
             <div id="refundShippingSection" class="refund-card" style="display: none;">
               <div class="refund-card-body">
-                <h3 class="refund-section-title">Refund shipping</h3>
+                <h3 class="refund-section-title" data-i18n="email.refundShipping">Refund shipping</h3>
                 <div class="refund-shipping-row">
                   <label class="refund-checkbox-label">
                     <input type="checkbox" id="refundShippingCheck" class="refund-checkbox">
@@ -209,8 +211,8 @@
                     >
                   </div>
                 </div>
-                <div id="refundShippingError" class="refund-error-message" style="display: none;">
-                  El monto excede el máximo disponible
+                <div id="refundShippingError" class="refund-error-message" style="display: none;" data-i18n="email.refundExceedsAvailable">
+                  El monto excede el disponible para reembolso
                 </div>
               </div>
             </div>
@@ -218,11 +220,12 @@
             <!-- SECCIÓN: REASON FOR REFUND -->
             <div class="refund-card">
               <div class="refund-card-body">
-                <h3 class="refund-section-title">Reason for refund</h3>
+                <h3 class="refund-section-title" data-i18n="email.refundReason">Reason for refund</h3>
                 <input 
                   type="text" 
                   id="refundReason" 
                   class="refund-input refund-input-full" 
+                  data-i18n-placeholder="email.refundReasonPlaceholder"
                   placeholder=""
                 >
                 <p class="refund-help-text">Only you and other staff can see this reason</p>
@@ -234,7 +237,7 @@
           <div class="refund-sidebar">
             <div class="refund-card refund-summary">
               <div class="refund-card-body">
-                <h3 class="refund-summary-title">Summary</h3>
+                <h3 class="refund-summary-title" data-i18n="email.refundSummary">Summary</h3>
                 
                 <!-- Subtotal de items -->
                 <div class="refund-summary-row">
@@ -244,7 +247,7 @@
 
                 <!-- Shipping -->
                 <div id="refundSummaryShippingRow" class="refund-summary-row" style="display: none;">
-                  <span>Shipping</span>
+                  <span data-i18n="email.refundShippingAmount">Shipping</span>
                   <span id="refundSummaryShippingAmount" class="refund-summary-value">$0.00</span>
                 </div>
 
@@ -252,7 +255,7 @@
 
                 <!-- Total del refund -->
                 <div class="refund-summary-row refund-summary-total">
-                  <span>Refund total</span>
+                  <span data-i18n="email.refundTotal">Refund total</span>
                   <span id="refundSummaryTotal" class="refund-summary-value">$0.00</span>
                 </div>
 
@@ -260,19 +263,19 @@
 
                 <!-- Refund method -->
                 <div class="refund-summary-section">
-                  <h4 class="refund-summary-subtitle">Refund method</h4>
+                  <h4 class="refund-summary-subtitle" data-i18n="email.refundMethod">Refund method</h4>
                   <select id="refundMethod" class="refund-select">
-                    <option value="ORIGINAL_PAYMENT_METHODS">Original payment</option>
-                    <option value="STORE_CREDIT">Store credit</option>
-                    <option value="ORIGINAL_AND_STORE_CREDIT">Original payment and store credit</option>
+                    <option value="ORIGINAL_PAYMENT_METHODS" data-i18n="email.refundMethodOriginal">Original payment</option>
+                    <option value="STORE_CREDIT" data-i18n="email.refundMethodCredit">Store credit</option>
+                    <option value="ORIGINAL_AND_STORE_CREDIT" data-i18n="email.refundMethodMixed">Original payment and store credit</option>
                   </select>
                 </div>
 
                 <!-- Refund amount -->
                 <div class="refund-summary-section">
-                  <h4 class="refund-summary-subtitle">Refund amount</h4>
+                  <h4 class="refund-summary-subtitle" data-i18n="email.refundAmount">Refund amount</h4>
                   <div class="refund-summary-manual">
-                    <span class="refund-text-small">Manual</span>
+                    <span class="refund-text-small" data-i18n="email.refundManual">Manual</span>
                     <div class="refund-input-wrapper">
                       <input 
                         type="text" 
@@ -284,7 +287,7 @@
                     </div>
                     <span id="refundAvailableAmount" class="refund-text-small refund-text-muted">$0.00 available for refund</span>
                   </div>
-                  <div id="refundManualError" class="refund-error-message" style="display: none;">
+                  <div id="refundManualError" class="refund-error-message" style="display: none;" data-i18n="email.refundExceedsAvailable">
                     El monto excede el disponible para reembolso
                   </div>
                 </div>
@@ -306,7 +309,7 @@
     <div class="refund-modal-overlay"></div>
     <div class="refund-modal-content discount-modal-content">
       <div class="refund-modal-header">
-        <h2>Crear código de descuento</h2>
+        <h2 data-i18n="email.createDiscount">Crear código de descuento</h2>
         <button class="refund-modal-close" id="closeDiscountModal">
           <i class="fas fa-times"></i>
         </button>
@@ -317,23 +320,24 @@
         <div class="discount-main">
           <div class="refund-card">
             <div class="refund-card-body">
-              <h3 class="refund-section-title">Datos del descuento</h3>
+              <h3 class="refund-section-title" data-i18n="email.discountData">Datos del descuento</h3>
 
-              <label class="refund-input-label" for="discountCodeInput">Código de descuento</label>
+              <label class="refund-input-label" for="discountCodeInput" data-i18n="email.discountCode">Código de descuento</label>
               <input
                 id="discountCodeInput"
                 class="refund-input refund-input-full"
                 type="text"
                 autocomplete="off"
+                data-i18n-placeholder="email.discountCodePlaceholder"
                 placeholder="Ej. GRACIAS10"
               />
 
-              <p id="discountCodeHelp" class="refund-help-text">
+              <p id="discountCodeHelp" class="refund-help-text" data-i18n="email.discountCodeHelp">
                 Código de 1 solo uso para este cliente.
               </p>
 
               <div class="discount-type-group">
-                <span class="refund-section-title">Tipo de descuento</span>
+                <span class="refund-section-title" data-i18n="email.discountType">Tipo de descuento</span>
                 <div class="discount-type-options">
                   <label class="refund-checkbox-label">
                     <input
@@ -343,7 +347,7 @@
                       value="PERCENT"
                       checked
                     />
-                    <span class="refund-checkbox-text">Porcentaje</span>
+                    <span class="refund-checkbox-text" data-i18n="email.discountTypePercent">Porcentaje</span>
                   </label>
                   <label class="refund-checkbox-label">
                     <input
@@ -352,12 +356,12 @@
                       name="discountType"
                       value="AMOUNT"
                     />
-                    <span class="refund-checkbox-text">Cantidad fija</span>
+                    <span class="refund-checkbox-text" data-i18n="email.discountTypeAmount">Cantidad fija</span>
                   </label>
                 </div>
               </div>
 
-              <label class="refund-input-label" for="discountValueInput">Valor</label>
+              <label class="refund-input-label" for="discountValueInput" data-i18n="email.discountValue">Valor</label>
               <div class="refund-input-wrapper">
                 <input
                   id="discountValueInput"
@@ -369,7 +373,7 @@
                 />
                 <span class="refund-input-suffix" id="discountValueSuffix">%</span>
               </div>
-              <p class="refund-help-text" id="discountValueHelp">
+              <p class="refund-help-text" id="discountValueHelp" data-i18n="email.discountValueHelp">
                 Para porcentaje, usa valores entre 0 y 100.
               </p>
             </div>
@@ -380,10 +384,10 @@
         <div class="discount-sidebar">
           <div class="refund-card refund-summary">
             <div class="refund-card-body">
-              <h3 class="refund-summary-title">Resumen</h3>
+              <h3 class="refund-summary-title" data-i18n="email.discountSummaryTitle">Resumen</h3>
 
               <div class="refund-summary-row">
-                <span>Cliente</span>
+                <span data-i18n="email.discountCustomer">Cliente</span>
                 <span id="discountCustomerLabel" class="refund-summary-value">
                   —
                 </span>
@@ -392,13 +396,13 @@
               <div class="refund-summary-divider"></div>
 
               <div class="refund-summary-row">
-                <span>Descuento</span>
-                <span id="discountSummaryMain" class="refund-summary-value">
+                <span data-i18n="email.discount">Descuento</span>
+                <span id="discountSummaryMain" class="refund-summary-value" data-i18n="email.discountSummaryMain">
                   Define el importe del descuento
                 </span>
               </div>
 
-              <p id="discountSummaryDetails" class="refund-help-text">
+              <p id="discountSummaryDetails" class="refund-help-text" data-i18n="email.discountSummaryDetails">
                 1 uso · sin mínimo de compra · sin combinaciones · activo al crearse.
               </p>
 
@@ -410,7 +414,7 @@
                 disabled
               >
                 <i class="fas fa-percent"></i>
-                Crear código
+                <span data-i18n="email.createDiscountButton">Crear código</span>
               </button>
 
               <button
@@ -419,7 +423,7 @@
                 type="button"
               >
                 <i class="fas fa-external-link-alt"></i>
-                Abrir descuentos avanzados en Shopify
+                <span data-i18n="email.openAdvancedDiscounts">Abrir descuentos avanzados en Shopify</span>
               </button>
             </div>
           </div>

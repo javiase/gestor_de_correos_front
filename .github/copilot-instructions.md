@@ -38,15 +38,16 @@ Page Controller → api.js (fetchWithAuth) → FastAPI Backend
 - Text: `#ffffff` (primary), `#d1d5db` (secondary), `#9ca3af` (muted)
 - Accent: `#e879f9` (primary purple), `#32ff7a` (success green)
 
-### Badge Colors (Email Classification):
+### Badge Colors (Email Classification) - Custom Harmonious Palette:
+**Soft, cohesive tones designed for visual harmony on dark backgrounds**
 ```css
-.badge-postventa   → rgba(239, 68, 68,  .28)   /* red */
-.badge-envios      → rgba(249,115, 22,  .28)   /* orange */
-.badge-producto    → rgba(234,179,  8,  .24)   /* yellow */
-.badge-tienda      → rgba( 59,130,246, .24)   /* blue */
-.badge-shopify     → rgba( 34,197, 94,  .24)   /* green */
-.badge-comerciales → rgba(236, 72,153, .24)   /* pink */
-.badge-otros       → rgba(148,163,184, .20)   /* gray */
+.badge-postventa   → rgba(250,173,165, .20) color:#faada5  /* salmon pink  */
+.badge-envios      → rgba(255,207,161, .20) color:#ffcfa1  /* peach        */
+.badge-producto    → rgba(161,196,252, .20) color:#a1c4fc  /* light blue   */
+.badge-tienda      → rgba(188,174,161, .20) color:#bcaea1  /* beige earth  */
+.badge-shopify     → rgba(182,238,167, .20) color:#b6eea7  /* mint green   */
+.badge-comerciales → rgba(255,246,153, .20) color:#fff699  /* pale yellow  */
+.badge-otros       → rgba(200,210,220, .16) color:#d4dce5  /* lavender gray*/
 ```
 
 ## 🔐 Authentication & Flow Control

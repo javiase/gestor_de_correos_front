@@ -1,6 +1,10 @@
 // /js/pages/forgot-password.js
 import { API_BASE } from '/js/utils/api.js';
 import { notify } from '/js/utils/notify.js';
+import { t, initI18n } from '/js/utils/i18n.js';
+
+// Inicializar i18n
+initI18n();
 
 // Elementos del formulario
 const forgotPasswordForm = document.getElementById('forgotPasswordForm');

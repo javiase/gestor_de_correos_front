@@ -27,8 +27,8 @@
 .date-header { color: #888; font-size: 14px; font-weight: 500; margin-bottom: 16px; padding-top: 16px;}
 .email-group { display: flex; flex-direction: column; gap: 1px;}
 /* Email Item */
-.email-item { display: grid; grid-template-columns: 200px 1fr auto auto; align-items: center; padding: 12px 16px; background: transparent; border-radius: 8px;
-    cursor: pointer; transition: all 0.2s ease; gap: 16px; min-height: 60px;}
+.email-item { display: grid; grid-template-columns: 12.5rem 1fr 9rem 7rem; align-items: center; padding: 0.75rem 1rem; background: transparent; border-radius: 0.5rem;
+    cursor: pointer; transition: all 0.2s ease; gap: 1rem; min-height: 3.75rem;}
 .email-item:hover { background: rgba(255, 255, 255, 0.05);}
 .email-item.unread { background: rgba(255, 255, 255, 0.1);}
 .email-item.read { background: rgba(0, 0, 0, 0.3);}
@@ -56,7 +56,7 @@
 .email-avatar.large { width: 40px; height: 24px;}
 .email-avatar.small { width: 24px; height: 16px;}
 /* Special styling for emails with avatars */
-.email-item.has-avatar { grid-template-columns: auto 200px 1fr auto auto; padding-left: 8px;}
+.email-item.has-avatar { grid-template-columns: auto 12.5rem 1fr 9rem 7rem; padding-left: 0.5rem;}
 .email-item.has-avatar .email-sender { margin-left: 0;}
 
 /* Loading state */
@@ -99,18 +99,19 @@ html { scroll-behavior: smooth;}
 .email-item:focus { outline: 2px solid #3b82f6; outline-offset: 2px;}
 
 /* clases de los correos */
-.email-meta { display: flex; align-items: center; gap: .5rem; }
+.email-meta { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; }
 .feature-badge{ display:inline-flex; align-items:center; gap:.4rem; padding:.2rem .5rem; border-radius:9999px; font:600 .75rem/1 Inter, system-ui, sans-serif; 
   letter-spacing:.01em; border:1px solid transparent;}
-.email-badges{ display:flex; gap:.35rem; }
+.email-badges{ display:flex; flex-direction: column; align-items: center; gap:.35rem; justify-content: center; }
 .email-badge{ display:inline-flex; align-items:center; gap:.4rem; padding:.18rem .50rem; border-radius:9999px; border:1px solid transparent; 
- font:600 .72rem/1.1 Inter, system-ui, sans-serif; letter-spacing:.01em; white-space:nowrap;}
-/* Inbox: badges (solo colores por tipo) */
-.badge-postventa   { background: rgba(239, 68, 68,  .28); border-color: rgba(239, 68, 68,  .55); color:#ff4747; } /* rojo suave   */
-.badge-envios      { background: rgba(249,115, 22,  .28); border-color: rgba(249,115, 22,  .52); color:#ffa034; } /* naranja      */
-.badge-producto    { background: rgba(234,179,  8,  .24); border-color: rgba(234,179,  8,  .48); color:#ffe62c; } /* amarillo     */
-.badge-tienda      { background: rgba( 59,130,246, .24); border-color: rgba( 59,130,246, .50); color:#348fff; } /* azul         */
-.badge-shopify     { background: rgba( 34,197, 94,  .24); border-color: rgba( 34,197, 94,  .50); color:#32ff7a; } /* verde        */
-.badge-comerciales { background: rgba(236, 72,153, .24); border-color: rgba(236, 72,153, .50); color:#ff47af; } /* rosa         */
-.badge-otros       { background: rgba(148,163,184, .20); border-color: rgba(148,163,184, .45); color:#e2e8f0; } /* gris claro   */
+ font:600 .72rem/1.1 Inter, system-ui, sans-serif; letter-spacing:.01em; white-space:nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);}
+
+/* Inbox: badges - Paleta personalizada más saturada y viva */
+.badge-postventa   { background: rgba(255, 150, 140, .50); border-color: rgba(255, 120, 110, .80); color: #ffffff; } /* rosa salmón intenso */
+.badge-envios      { background: rgba(255, 190, 130, .50); border-color: rgba(255, 170, 100, .80); color: #ffffff; } /* naranja vibrante    */
+.badge-producto    { background: rgba(130, 180, 255, .50); border-color: rgba(100, 160, 255, .80); color: #ffffff; } /* azul brillante      */
+.badge-tienda      { background: rgba(210, 190, 170, .50); border-color: rgba(200, 175, 155, .80); color: #ffffff; } /* beige cálido        */
+.badge-shopify     { background: rgba(150, 240, 130, .50); border-color: rgba(120, 230, 100, .80); color: #ffffff; } /* verde vivo          */
+.badge-comerciales { background: rgba(255, 240, 100, .50); border-color: rgba(255, 230, 70, .80);  color: #ffffff; } /* amarillo brillante  */
+.badge-otros       { background: rgba(200, 210, 220, .28); border-color: rgba(170, 185, 200, .50); color: #ffffff; } /* gris lavanda        */
 

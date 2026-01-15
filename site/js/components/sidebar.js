@@ -1,5 +1,6 @@
 
 import { isProfileComplete, getStoreCached, isOnboardingComplete, seedOnboardingFromServer} from '/js/utils/flow-gate.js';
+import { initI18n } from '/js/utils/i18n.js';
 
 // Módulo sidebar.js
 export function initSidebar(containerSelector, opts={}) {
@@ -14,6 +15,8 @@ export function initSidebar(containerSelector, opts={}) {
       container.innerHTML = html;
       // 👇 Señal universal: esta página tiene sidebar
       document.body.classList.add('has-sidebar');
+      // Inicializar i18n después de cargar el HTML del sidebar
+      initI18n();
       initEmailSidebar(opts);
     })
     .catch(console.error);
@@ -200,6 +203,7 @@ class EmailSidebar {
       perfil: "/secciones/perfil.html",
       info: "/secciones/info.html",
       integrations: "/secciones/integrations.html",
+      feedback: "/secciones/feedback.html",
     };
     const url = map[section];
     if (url) window.location.href = url;

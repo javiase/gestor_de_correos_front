@@ -34,6 +34,41 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Brand Logo */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  height: 3.75rem;
+}
+
+.logo-image {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.brand-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 0;
+  max-width: 0;
+  opacity: 0;
+  transition: width 0.3s ease, opacity 0.3s ease, max-width 0.3s ease;
+}
+
+.sidebar:hover .brand-name {
+  width: auto;
+  max-width: 10rem;
+  opacity: 1;
+}
+
 .menu-item.is-disabled .menu-link,
 .create-email.is-disabled {
   pointer-events: none;

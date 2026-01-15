@@ -4,6 +4,7 @@ import { fetchWithAuth, logout, getToken } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js'; 
 import { isProfileComplete, enforceFlowGate, markCompletionInBackend } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
+import { t, getCurrentLocale, setLocale, initI18n } from '/js/utils/i18n.js';
 
 // Helper para refrescar cache del store desde el servidor
 async function fetchStoreFresh() {
@@ -42,13 +43,13 @@ const PHONE_RULES = {
 const DEFAULT_NSN_MIN = 8, DEFAULT_NSN_MAX = 15;
 
 const DAY_LABELS = {
-  monday: 'Lunes',
-  tuesday: 'Martes',
-  wednesday: 'Miércoles',
-  thursday: 'Jueves',
-  friday: 'Viernes',
-  saturday: 'Sábado',
-  sunday: 'Domingo'
+  monday: 'profile.monday',
+  tuesday: 'profile.tuesday',
+  wednesday: 'profile.wednesday',
+  thursday: 'profile.thursday',
+  friday: 'profile.friday',
+  saturday: 'profile.saturday',
+  sunday: 'profile.sunday'
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -156,6 +157,9 @@ class UserProfile {
         }
     }
     async init() {
+        // Inicializar sistema i18n
+        initI18n();
+        
         await this.loadInitialData();
 
         const params = new URLSearchParams(window.location.search);
@@ -168,6 +172,7 @@ class UserProfile {
 
         this.bindEvents();
         this.initSignatureEditor();
+        this.initLanguageSelector();
         
         // Cargar la firma DESPUÉS de inicializar el editor
         this.setSignatureHTML(this.currentData?.signature_html || '');
@@ -282,7 +287,7 @@ class UserProfile {
         this._setValue('personalEmail', this.currentData.personalEmail || '');
         this._setValue('personalPhone', this.currentData.personalPhone);
         document.getElementById('timezone').value = this.currentData.timezone || 'UTC+1';
-        document.getElementById('language').value = this.currentData.language || 'es';
+        document.getElementById('preferredLanguage').value = this.currentData.language || 'es';
 
         // Maestro de horarios (off por defecto si no viene del backend)
         const masterEl   = document.getElementById('hasOpeningHours');
@@ -314,17 +319,16 @@ class UserProfile {
         const avatar = document.getElementById('userAvatar');
         if (this.currentData.picture_url) {
             avatar.src = this.currentData.picture_url;
+            avatar.onload = () => avatar.classList.add('loaded');
+        } else {
+            // si no viene picture_url, pon el placeholder
+            avatar.src = '/assets/icons/image.png';
         }
         avatar.onerror = () => {
             // si falla la carga, pon una imagen genérica
             avatar.src = '/assets/icons/image.png';
-            };
-            if (this.currentData.picture_url) {
-                avatar.src = this.currentData.picture_url;
-            } else {
-                // si no viene picture_url, también pon el placeholder
-                avatar.src = '/assets/icons/image.png';
-        }
+        };
+        
         // Si el backend trae businessCategory
         if (this.currentData.businessCategory) {
             document.getElementById('businessCategory').value = this.currentData.businessCategory;
@@ -494,6 +498,24 @@ class UserProfile {
                 this.cancelChanges();
             }
             }
+        });
+    }
+
+    initLanguageSelector() {
+        const languageSelect = document.getElementById('preferredLanguage');
+        if (!languageSelect) return;
+        
+        // Establecer el idioma actual en el selector
+        const currentLocale = getCurrentLocale();
+        languageSelect.value = currentLocale;
+        
+        // Escuchar cambios en el selector (solo marca como cambio pendiente)
+        languageSelect.addEventListener('change', (e) => {
+            const newLocale = e.target.value;
+            // Aplicar el cambio de idioma inmediatamente en la UI
+            setLocale(newLocale);
+            // Marcar que hay cambios pendientes
+            this.markAsChanged();
         });
     }
 
@@ -1330,7 +1352,7 @@ class UserProfile {
             personalEmail: document.getElementById('personalEmail').value,
             personalPhone: document.getElementById('personalPhone').value,
             timezone: document.getElementById('timezone').value,
-            language: document.getElementById('language').value,
+            language: document.getElementById('preferredLanguage').value,
             
             // Notifications (con validación para evitar null)
             emailNotifications: document.getElementById('emailNotifications')?.checked || false,
@@ -1523,6 +1545,11 @@ class UserProfile {
             return;
         }
         
+        // Verificar si el idioma ha cambiado
+        const currentLanguage = this.originalData.language || 'es';
+        const newLanguage = document.getElementById('preferredLanguage').value;
+        const languageChanged = currentLanguage !== newLanguage;
+        
         // Show loading state
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         saveBtn.disabled = true;
@@ -1597,6 +1624,14 @@ class UserProfile {
             saveBtn.style.background = '#8b5cf6';
             document.getElementById('cancelBtn').style.display = 'none';
             notify.success('Perfil actualizado!');
+            
+            // Si el idioma cambió, recargar la página después de un momento
+            if (languageChanged) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                return; // No continuar con el resto del código
+            }
             
             // Si ya está completo, avisa al resto (sidebar) y marca en backend
             console.log('🔍 [perfil] Verificando si perfil está completo...', { updated });

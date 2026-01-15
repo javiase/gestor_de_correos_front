@@ -37,7 +37,7 @@
                             </span>
                         </div>
                         <span class="user-status">Active</span>
-                        <button id="logoutBtn" class="logout-btn">Cerrar sesión</button>
+                        <button id="logoutBtn" class="logout-btn" data-i18n="navbar.logout">Cerrar sesión</button>
                     </div>
                 </div>
                 <div class="header-actions-left">
@@ -46,39 +46,39 @@
                             <div class="stat-icon"><i class="fas fa-clock"></i></div>
                             <div class="stat-info">
                             <div class="stat-value" id="reservedConversations">0</div>
-                            <div class="stat-label">En curso</div>
+                            <div class="stat-label" data-i18n="profile.inProgress">En curso</div>
                             </div>
                         </div>
                         <div class="stat-card stat-confirmed">
                             <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
                             <div class="stat-info">
                             <div class="stat-value" id="confirmedConversations">0</div>
-                            <div class="stat-label">Confirmadas</div>
+                            <div class="stat-label" data-i18n="profile.confirmed">Confirmadas</div>
                             </div>
                         </div>
                         <div class="stat-card stat-extra">
                             <div class="stat-icon"><i class="fas fa-bolt"></i></div>
                             <div class="stat-info">
                             <div class="stat-value" id="extraCredits">0</div>
-                            <div class="stat-label">Extra</div>
+                            <div class="stat-label" data-i18n="profile.extra">Extra</div>
                             </div>
                         </div>
                         <div class="stat-card stat-total">
                             <div class="stat-icon"><i class="fas fa-infinity"></i></div>
                             <div class="stat-info">
                             <div class="stat-value" id="totalLimit">0</div>
-                            <div class="stat-label">Límite</div>
+                            <div class="stat-label" data-i18n="profile.limit">Límite</div>
                             </div>
                         </div>
                     </div>
                     <a href="plans.html" class="btn-manage-plan" id="managePlanBtn" data-requires-complete="true">
-                        <i class="fas fa-cogs"></i> Gestionar plan
+                        <i class="fas fa-cogs"></i> <span data-i18n="profile.managePlan">Gestionar plan</span>
                     </a>
                 </div>
                 <div class="header-actions-right">
                     <div class="header-actions">
-                        <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-                        <button class="btn btn-primary" id="saveBtn">Guardar Cambios</button>
+                        <button class="btn btn-secondary" id="cancelBtn" data-i18n="common.cancel">Cancelar</button>
+                        <button class="btn btn-primary" id="saveBtn" data-i18n="profile.saveChanges">Guardar Cambios</button>
                     </div>
                     <!-- <div class="profile-progress" id="profileProgress">
                         <div class="profile-progress-bar" id="profileProgressBar" style="width:0%"></div>
@@ -89,8 +89,8 @@
             <div id="profileGateNotice" class="profile-lock-banner hidden" role="alert" aria-live="polite">
                 <i class="fas fa-info-circle"></i>
                 <div>
-                    <strong>Tu perfil está incompleto.</strong>
-                    <span id="profileGateText">
+                    <strong data-i18n="profile.incompleteProfile">Tu perfil está incompleto.</strong>
+                    <span id="profileGateText" data-i18n="profile.incompleteProfileText">
                         Rellena los campos obligatorios marcados con * para desbloquear todas las funciones.
                     </span>
                 </div>
@@ -101,47 +101,47 @@
                 <!-- Store Information Section -->
                 <div class="profile-section">
                     <div class="section-header-profile">
-                        <h2>Información de la Tienda</h2>
-                        <p>Gestiona los detalles y configuraciones de tu tienda</p>
+                        <h2 data-i18n="profile.storeInfo">Información de la Tienda</h2>
+                        <p data-i18n="profile.storeInfoDescription">Gestiona los detalles y configuraciones de tu tienda</p>
                     </div>
                     
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="storeName">Nombre de la Tienda *</label>
+                            <label for="storeName" data-i18n="profile.storeName">Nombre de la Tienda *</label>
                             <input type="text" id="storeName" class="form-input" required>
-                            <span class="form-hint">Así es como aparecerá tu tienda para los clientes</span>
+                            <span class="form-hint" data-i18n="profile.storeNameHint">Así es como aparecerá tu tienda para los clientes</span>
                         </div>
                         
                         <div class="form-group">
-                            <label for="storeUrl">URL de la Tienda</label>
+                            <label for="storeUrl" data-i18n="profile.storeUrl">URL de la Tienda</label>
                             <div class="input-group">
                                 <span class="input-prefix">https://</span>
                                 <input type="text" id="storeUrl" class="form-input" placeholder="mystore.com">
                             </div>
-                            <span class="form-hint">URL del sitio web de tu tienda</span>
+                            <span class="form-hint" data-i18n="profile.storeUrlHint">URL del sitio web de tu tienda</span>
                         </div>
                         
                         <div class="form-group">
-                            <label for="storeDescription">Descripción de la Tienda</label>
-                            <textarea id="storeDescription" class="form-textarea" rows="3" placeholder="Cuéntale a los clientes sobre tu tienda..."></textarea>
-                            <span class="form-hint">Descripción breve de tu tienda (opcional)</span>
+                            <label for="storeDescription" data-i18n="profile.storeDescription">Descripción de la Tienda</label>
+                            <textarea id="storeDescription" class="form-textarea" rows="3" data-i18n-placeholder="profile.storeDescriptionPlaceholder" placeholder="Cuéntale a los clientes sobre tu tienda..."></textarea>
+                            <span class="form-hint" data-i18n="profile.storeDescriptionHint">Descripción breve de tu tienda (opcional)</span>
                         </div>
 
                         <div class="form-group">
-                            <label for="businessCategory">Categoría del Negocio</label>
+                            <label for="businessCategory" data-i18n="profile.businessCategory">Categoría del Negocio</label>
                             <select id="businessCategory" class="form-select">
-                                <option value="" disabled selected>Selecciona una categoría</option>
+                                <option value="" disabled selected data-i18n="profile.businessCategoryPlaceholder">Selecciona una categoría</option>
                                 <option value="fashion">Moda</option>
                                 <option value="electronics">Electrónica</option>
                                 <option value="books">Libros</option>
                                 <option value="home">Hogar</option>
                                 <option value="other">Otro</option>
                             </select>
-                            <span class="form-hint">¿En qué sector opera tu tienda?</span>
+                            <span class="form-hint" data-i18n="profile.businessCategoryHint">¿En qué sector opera tu tienda?</span>
                         </div>
                         <div class="form-group hidden" id="businessCategoryOtherContainer">
-                            <label for="businessCategoryOther">Otra categoría</label>
-                            <input type="text" id="businessCategoryOther" class="form-input" placeholder="Escribe tu categoría">
+                            <label for="businessCategoryOther" data-i18n="profile.businessCategoryOther">Otra categoría</label>
+                            <input type="text" id="businessCategoryOther" class="form-input" data-i18n-placeholder="profile.businessCategoryOtherPlaceholder" placeholder="Escribe tu categoría">
                         </div>
                     </div>
                 </div>
@@ -149,42 +149,42 @@
                 <!-- Physical Location Section -->
                 <div class="profile-section">
                     <div class="section-header-profile">
-                        <h2>Ubicación Física</h2>
-                        <p>Configura la presencia física de tu tienda</p>
+                        <h2 data-i18n="profile.physicalLocation">Ubicación Física</h2>
+                        <p data-i18n="profile.physicalLocationDescription">Configura la presencia física de tu tienda</p>
                     </div>
                     
                     <div class="location-toggle">
                         <label class="checkbox-label">
                             <input type="checkbox" id="hasPhysicalLocation">
                             <span class="checkbox-custom"></span>
-                            <span class="checkbox-text">Mi tienda tiene una ubicación física</span>
+                            <span class="checkbox-text" data-i18n="profile.hasPhysicalLocation">Mi tienda tiene una ubicación física</span>
                         </label>
                     </div>
                     
                     <div class="location-fields" id="locationFields">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="storeAddress">Dirección *</label>
+                                <label for="storeAddress" data-i18n="profile.address">Dirección *</label>
                                 <input type="text" id="storeAddress" class="form-input" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="storeCity">Ciudad *</label>
+                                <label for="storeCity" data-i18n="profile.city">Ciudad *</label>
                                 <input type="text" id="storeCity" class="form-input" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="storeState">Provincia *</label>
+                                <label for="storeState" data-i18n="profile.state">Provincia *</label>
                                 <input type="text" id="storeState" class="form-input" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="storeZip">Código Postal</label>
+                                <label for="storeZip" data-i18n="profile.zip">Código Postal</label>
                                 <input type="text" id="storeZip" class="form-input" >
                             </div>
                             
                             <div class="form-group">
-                                <label for="storeCountry">País *</label>
+                                <label for="storeCountry" data-i18n="profile.country">País *</label>
                                 <select id="storeCountry" class="form-select" required>
                                     <option value="US" selected>Estados Unidos</option>
                                     <option value="CA">Canadá</option>
@@ -200,9 +200,9 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="storePhone">Número de Teléfono</label>
+                                <label for="storePhone" data-i18n="profile.phone">Número de Teléfono</label>
                                 <input type="tel" id="storePhone" class="form-input" placeholder="+34 612345678">
-                                <span class="form-hint">+[código país][número]</span>
+                                <span class="form-hint" data-i18n="profile.phoneHint">+[código país][número]</span>
                             </div>
                         </div>
                     </div>
@@ -211,19 +211,19 @@
                 <!-- Store Hours Section -->
                 <div class="profile-section">
                     <div class="section-header-profile">
-                        <h2>Horario de Apertura</h2>
-                        <p>Establece el horario de funcionamiento de tu tienda</p>
+                        <h2 data-i18n="profile.openingHours">Horario de Apertura</h2>
+                        <p data-i18n="profile.openingHoursDescription">Establece el horario de funcionamiento de tu tienda</p>
                     </div>
                     <div class="location-toggle">
                     <label class="checkbox-label">
                         <input type="checkbox" id="hasOpeningHours">
                         <span class="checkbox-custom"></span>
-                        <span class="checkbox-text">Tengo horario de apertura</span>
+                        <span class="checkbox-text" data-i18n="profile.hasOpeningHours">Tengo horario de apertura</span>
                     </label>
                     </div>
                     <div class="hours-container" id="openingHoursFields">
                         <div class="hours-day" data-day="monday">
-                            <div class="day-label">Lunes</div>
+                            <div class="day-label" data-i18n="profile.monday">Lunes</div>
                             <div class="day-controls">
                                 <label class="toggle-switch">
                                     <input type="checkbox" class="day-toggle" checked>
@@ -234,13 +234,13 @@
                                 <div class="slots" data-day-slots></div>
 
                                 <button type="button" class="btn add-slot" data-action="add-slot">
-                                    <i class="fas fa-plus"></i> Añadir tramo
+                                    <i class="fas fa-plus"></i> <span data-i18n="profile.addSlot">Añadir tramo</span>
                                 </button>
                             </div>
                         </div>
                         
                         <div class="hours-day" data-day="tuesday">
-                            <div class="day-label">Martes</div>
+                            <div class="day-label" data-i18n="profile.tuesday">Martes</div>
                             <div class="day-controls">
                                 <label class="toggle-switch">
                                     <input type="checkbox" class="day-toggle" checked>
@@ -251,13 +251,13 @@
                                 <div class="slots" data-day-slots></div>
 
                                 <button type="button" class="btn add-slot" data-action="add-slot">
-                                    <i class="fas fa-plus"></i> Añadir tramo
+                                    <i class="fas fa-plus"></i> <span data-i18n="profile.addSlot">Añadir tramo</span>
                                 </button>
                             </div>
                         </div>
                         
                         <div class="hours-day" data-day="wednesday">
-                            <div class="day-label">Miércoles</div>
+                            <div class="day-label" data-i18n="profile.wednesday">Miércoles</div>
                             <div class="day-controls">
                                 <label class="toggle-switch">
                                     <input type="checkbox" class="day-toggle" checked>
@@ -268,13 +268,13 @@
                                 <div class="slots" data-day-slots></div>
 
                                 <button type="button" class="btn add-slot" data-action="add-slot">
-                                    <i class="fas fa-plus"></i> Añadir tramo
+                                    <i class="fas fa-plus"></i> <span data-i18n="profile.addSlot">Añadir tramo</span>
                                 </button>
                             </div>
                         </div>
                         
                         <div class="hours-day" data-day="thursday">
-                            <div class="day-label">Jueves</div>
+                            <div class="day-label" data-i18n="profile.thursday">Jueves</div>
                             <div class="day-controls">
                                 <label class="toggle-switch">
                                     <input type="checkbox" class="day-toggle" checked>
@@ -285,13 +285,13 @@
                                 <div class="slots" data-day-slots></div>
 
                                 <button type="button" class="btn add-slot" data-action="add-slot">
-                                    <i class="fas fa-plus"></i> Añadir tramo
+                                    <i class="fas fa-plus"></i> <span data-i18n="profile.addSlot">Añadir tramo</span>
                                 </button>
                             </div>
                         </div>
                         
                         <div class="hours-day" data-day="friday">
-                            <div class="day-label">Viernes</div>
+                            <div class="day-label" data-i18n="profile.friday">Viernes</div>
                             <div class="day-controls">
                                 <label class="toggle-switch">
                                     <input type="checkbox" class="day-toggle" checked>
@@ -302,13 +302,13 @@
                                 <div class="slots" data-day-slots></div>
 
                                 <button type="button" class="btn add-slot" data-action="add-slot">
-                                    <i class="fas fa-plus"></i> Añadir tramo
+                                    <i class="fas fa-plus"></i> <span data-i18n="profile.addSlot">Añadir tramo</span>
                                 </button>
                             </div>
                         </div>
                         
                         <div class="hours-day" data-day="saturday">
-                            <div class="day-label">Sábado</div>
+                            <div class="day-label" data-i18n="profile.saturday">Sábado</div>
                             <div class="day-controls">
                                 <label class="toggle-switch">
                                     <input type="checkbox" class="day-toggle" checked>
@@ -319,13 +319,13 @@
                                 <div class="slots" data-day-slots></div>
 
                                 <button type="button" class="btn add-slot" data-action="add-slot">
-                                    <i class="fas fa-plus"></i> Añadir tramo
+                                    <i class="fas fa-plus"></i> <span data-i18n="profile.addSlot">Añadir tramo</span>
                                 </button>
                             </div>
                         </div>
                         
                         <div class="hours-day" data-day="sunday">
-                            <div class="day-label">Domingo</div>
+                            <div class="day-label" data-i18n="profile.sunday">Domingo</div>
                             <div class="day-controls">
                                 <label class="toggle-switch">
                                     <input type="checkbox" class="day-toggle" checked>
@@ -336,7 +336,7 @@
                                 <div class="slots" data-day-slots></div>
 
                                 <button type="button" class="btn add-slot" data-action="add-slot">
-                                    <i class="fas fa-plus"></i> Añadir tramo
+                                    <i class="fas fa-plus"></i> <span data-i18n="profile.addSlot">Añadir tramo</span>
                                 </button>
                             </div>
                         </div>
@@ -346,35 +346,35 @@
                 <!-- Personal Information Section -->
                 <div class="profile-section">
                     <div class="section-header-profile">
-                        <h2>Información Personal</h2>
-                        <p>Los detalles de su cuenta personal</p>
+                        <h2 data-i18n="profile.personalInfo">Información Personal</h2>
+                        <p data-i18n="profile.personalInfoDescription">Los detalles de su cuenta personal</p>
                     </div>
                     
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="firstName">Nombre *</label>
+                            <label for="firstName" data-i18n="profile.firstName">Nombre *</label>
                             <input type="text" id="firstName" class="form-input" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="lastName">Apellido *</label>
+                            <label for="lastName" data-i18n="profile.lastName">Apellido *</label>
                             <input type="text" id="lastName" class="form-input" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="personalEmail">Correo Electrónico *</label>
                             <input type="email" id="personalEmail" class="form-input" required>
-                            <small class="form-hint">Este es el correo al que quieres que te lleguen las notificaciones de uso de correos y avisos importantes.</small>
+                            <small class="form-hint" data-i18n="profile.emailNotifications">Este es el correo al que quieres que te lleguen las notificaciones de uso de correos y avisos importantes.</small>
                         </div>
                         
                         <div class="form-group">
-                            <label for="personalPhone">Número de Teléfono</label>
+                            <label for="personalPhone" data-i18n="profile.phone">Número de Teléfono</label>
                             <input type="tel" id="personalPhone" class="form-input" placeholder="+34 612345678">
-                            <span class="form-hint">+[código país][número]</span>
+                            <span class="form-hint" data-i18n="profile.phoneHint">+[código país][número]</span>
                         </div>
                         
                         <div class="form-group">
-                            <label for="timezone">Zona Horaria</label>
+                            <label for="timezone" data-i18n="profile.timezone">Zona Horaria</label>
                             <select id="timezone" class="form-select">
                                 <option value="UTC-8">Los Ángeles (UTC-8)</option>
                                 <option value="UTC-7">Denver (UTC-7)</option>
@@ -386,14 +386,10 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="language">Idioma Preferido</label>
-                            <select id="language" class="form-select">
-                                <option value="en" selected>English</option>
+                            <label for="preferredLanguage" data-i18n="profile.language">Idioma</label>
+                            <select id="preferredLanguage" class="form-select">
                                 <option value="es">Español</option>
-                                <option value="fr">Français</option>
-                                <option value="de">Deutsch</option>
-                                <option value="it">Italiano</option>
-                                <option value="pt">Português</option>
+                                <option value="en">English</option>
                             </select>
                         </div>
                     </div>
@@ -401,23 +397,23 @@
                 <!-- Email Signature Section -->
                 <div class="profile-section" id="emailSignatureSection">
                     <div class="section-header-profile">
-                        <h2>Firma de correo</h2>
-                        <p>Personaliza la firma que el bot añadirá al final de los mensajes</p>
+                        <h2 data-i18n="profile.emailSignature">Firma de correo</h2>
+                        <p data-i18n="profile.emailSignatureDescription">Personaliza la firma que el bot añadirá al final de los mensajes</p>
                     </div>
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="emailSignatureEditor">Tu firma</label>
+                            <label for="emailSignatureEditor" data-i18n="profile.emailSignatureLabel">Tu firma</label>
 
                             <!-- Contenedor relativo para posicionar el popover -->
                             <div class="rte-container">
                                 <!-- Barra de herramientas -->
                                 <div class="rte-toolbar" aria-label="Editor toolbar">
-                                    <button type="button" class="rte-btn" data-cmd="bold" title="Negrita (Ctrl+B)"><i class="fas fa-bold"></i></button>
-                                    <button type="button" class="rte-btn" data-cmd="italic" title="Cursiva (Ctrl+I)"><i class="fas fa-italic"></i></button>
-                                    <button type="button" class="rte-btn" data-cmd="underline" title="Subrayado (Ctrl+U)"><i class="fas fa-underline"></i></button>
-                                    <button type="button" class="rte-btn" data-cmd="link" title="Insertar enlace" id="rteLinkBtn"><i class="fas fa-link"></i></button>
-                                    <button type="button" class="rte-btn" data-cmd="removeFormat" title="Quitar formato"><i class="fas fa-eraser"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="bold" data-i18n-title="profile.emailSignatureBold" title="Negrita (Ctrl+B)"><i class="fas fa-bold"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="italic" data-i18n-title="profile.emailSignatureItalic" title="Cursiva (Ctrl+I)"><i class="fas fa-italic"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="underline" data-i18n-title="profile.emailSignatureUnderline" title="Subrayado (Ctrl+U)"><i class="fas fa-underline"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="link" data-i18n-title="profile.emailSignatureLink" title="Insertar enlace" id="rteLinkBtn"><i class="fas fa-link"></i></button>
+                                    <button type="button" class="rte-btn" data-cmd="removeFormat" data-i18n-title="profile.emailSignatureRemoveFormat" title="Quitar formato"><i class="fas fa-eraser"></i></button>
                                 </div>
 
                                 <!-- Editor -->
@@ -432,11 +428,11 @@
                                 <!-- Popover de enlace -->
                                 <div id="rteLinkPopover" class="rte-link-popover hidden" aria-hidden="true">
                                     <div class="rte-link-row">
-                                        <input type="url" id="rteLinkInput" class="form-input" placeholder="https://… o mailto:…">
+                                        <input type="url" id="rteLinkInput" class="form-input" data-i18n-placeholder="profile.emailSignatureLinkPlaceholder" placeholder="https://… o mailto:…">
                                     </div>
                                     <div class="rte-link-actions">
-                                        <button type="button" id="rteLinkInsertBtn" class="btn btn-primary">Insertar</button>
-                                        <button type="button" id="rteLinkCancelBtn" class="btn btn-secondary">Cancelar</button>
+                                        <button type="button" id="rteLinkInsertBtn" class="btn btn-primary" data-i18n="profile.emailSignatureInsert">Insertar</button>
+                                        <button type="button" id="rteLinkCancelBtn" class="btn btn-secondary" data-i18n="profile.emailSignatureCancel">Cancelar</button>
                                     </div>
                                 </div>
                             </div>

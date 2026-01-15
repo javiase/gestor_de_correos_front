@@ -185,14 +185,13 @@ body::-webkit-scrollbar-thumb:hover,
 
 .price,
 .price-base {
-  font-size: 2.5rem; /* Reducido de 3rem */
+  font-size: 1.75rem;
   font-weight: 700;
   color: #f8fafc;
-  text-shadow: 0 0 1rem rgba(255, 255, 255, 0.3);
 }
 
 .period {
-  font-size: 1rem; /* Reducido de 1.125rem */
+  font-size: 0.875rem;
   color: #cbd5e1;
 }
 
@@ -385,11 +384,12 @@ body::-webkit-scrollbar-thumb:hover,
 /* Total Price */
 .total-price {
   margin: 1.5rem 0;
-  padding: 1rem;
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.25) 0%, rgba(118, 75, 162, 0.25) 100%);
   border-radius: 0.75rem;
-  border: 1px solid rgba(79, 70, 229, 0.3);
+  border: 1px solid rgba(79, 70, 229, 0.4);
   text-align: center;
+  box-shadow: 0 0.25rem 1rem rgba(79, 70, 229, 0.15);
 }
 
 .total-price-label {
@@ -397,28 +397,24 @@ body::-webkit-scrollbar-thumb:hover,
   color: #94a3b8;
   margin-bottom: 0.5rem;
   display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
 }
 
 .total-amount {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.75rem;
+  font-weight: 800;
   color: #ffffff;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  text-shadow: 
+    0 0 0.3rem rgba(255, 255, 255, 0.5),
+    0 0 0.6rem rgba(255, 255, 255, 0.3);
+  letter-spacing: -0.025rem;
 }
 
 /* Features List */
 .features {
   flex: 1;
   margin: 1.5rem 0;
-  color: white;
-}
-
-.total-amount {
-  font-size: 2rem; /* Reducido de 1.75rem */
-  font-weight: 700;
   color: white;
 }
 
@@ -677,11 +673,11 @@ body::-webkit-scrollbar-thumb:hover,
 
   .price,
   .price-base {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 
   .total-amount {
-    font-size: 1.25rem;
+    font-size: 2.25rem;
   }
 
   .pricing-card {

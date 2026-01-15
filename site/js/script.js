@@ -1,4 +1,23 @@
 import { API_BASE } from '/js/utils/api.js';
+import { getCurrentLocale, setLocale, initI18n } from '/js/utils/i18n.js';
+
+// Inicializar i18n en la landing page
+initI18n();
+
+// Configurar selector de idioma
+const languageSelector = document.getElementById('languageSelector');
+if (languageSelector) {
+  // Establecer el idioma actual
+  languageSelector.value = getCurrentLocale();
+  
+  // Escuchar cambios
+  languageSelector.addEventListener('change', (e) => {
+    const newLocale = e.target.value;
+    setLocale(newLocale);
+    // Recargar para aplicar traducciones
+    window.location.reload();
+  });
+}
 
 // ============ GRADIENTE ANIMADO CON SCROLL ============
 let scrollListener = null;

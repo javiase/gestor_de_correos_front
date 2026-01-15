@@ -2,22 +2,20 @@
 <nav class="sidebar" id="sidebar">
   <!-- Top Actions -->
   <div class="sidebar-top">
-    <div class="action-item create-email">
-      <div class="action-icon">
-        <i class="fas fa-edit"></i>
-      </div>
-      <span class="action-text">Redactar Mail</span>
+    <div class="brand-logo">
+      <img src="/logo-1200x1200.png" alt="Respondize" class="logo-image">
+      <span class="brand-name">Respondize</span>
     </div>
   </div>
 
   <!-- Your Inbox Section -->
   <div class="sidebar-section">
-    <div class="section-header">Bandeja de Entrada</div>
+    <div class="section-header" data-i18n="sidebar.inboxHeader">Bandeja de Entrada</div>
     <ul class="sidebar-menu">
       <li class="menu-item" data-section="inbox">
         <a href="#" class="menu-link">
           <i class="fas fa-inbox"></i>
-          <span class="menu-text">Bandeja de Entrada</span>
+          <span class="menu-text" data-i18n="sidebar.inbox">Bandeja de Entrada</span>
         </a>
       </li>
     </ul>
@@ -51,20 +49,20 @@
   <!-- Settings Section -->
   <div class="sidebar-section settings-section">
     <div class="section-header expandable" id="settingsHeader">
-      <span>Configuración</span>
+      <span data-i18n="sidebar.settingsHeader">Configuración</span>
     </div>
     <ul class="sidebar-menu" id="settingsMenu">
       <li class="menu-item" data-section="info">
         <a href="#" class="menu-link">
           <i class="fas fa-list"></i>
-          <span class="menu-text">Datos y Reglas</span>
+          <span class="menu-text" data-i18n="sidebar.info">Datos y Reglas</span>
           <span class="notif-dot" aria-hidden="true"></span>
         </a>
       </li>
       <li class="menu-item" data-section="integrations">
         <a href="#" class="menu-link">
           <i class="fas fa-plug"></i>
-          <span class="menu-text">Integraciones</span>
+          <span class="menu-text" data-i18n="sidebar.integrations">Integraciones</span>
         </a>
       </li>
       <!-- <li class="menu-item" data-section="categories">
@@ -83,9 +81,9 @@
   </div>
   <ul class="sidebar-menu sidebar-bottom-control">
     <li class="menu-item" data-section="feedback">
-      <a href="#" class="menu-link" id="feedback">
+      <a href="/secciones/feedback.html" class="menu-link">
         <i class="fas fa-comment-dots"></i>
-        <span class="menu-text">Feedback</span>
+        <span class="menu-text" data-i18n="sidebar.feedback">Feedback</span>
       </a>
     </li>
   </ul>

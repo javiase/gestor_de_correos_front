@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="feedback.pageTitle">Feedback - Gestor de Correos</title>
+  <link rel="stylesheet" href="/css/base.css?v=%ASSET_VERSION%" />
+  <link rel="stylesheet" href="/css/layout.css?v=%ASSET_VERSION%" />
+  <link rel="stylesheet" href="/css/components.css?v=%ASSET_VERSION%" />
+  <link rel="stylesheet" href="/css/components/sidebar.css?v=%ASSET_VERSION%" />
+  <link rel="stylesheet" href="/css/pages/feedback.css?v=%ASSET_VERSION%" />
+  <link rel="stylesheet" href="/vendor/fontawesome-6.4.0/css/all.min.css?v=%ASSET_VERSION%">
+</head>
+<body>
+  <div id="sidebarContainer"></div>
+  <div class="main-content" id="mainContent">
+    <div class="feedback-container">
+      <!-- Header Section -->
+      <div class="feedback-header">
+        <div class="feedback-header-content">
+          <i class="fas fa-lightbulb feedback-icon"></i>
+          <div class="feedback-header-text">
+            <h1 data-i18n="feedback.title">Comparte tu Opinión</h1>
+            <p data-i18n="feedback.subtitle">Tu feedback nos ayuda a mejorar. Cuéntanos qué necesitas o qué podríamos hacer mejor.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Form Section -->
+      <div class="feedback-form-wrapper">
+        <form id="feedbackForm" class="feedback-form">
+          
+          <!-- Form Grid: Message on left, Options on right -->
+          <div class="feedback-grid">
+            
+            <!-- Left Column: Message -->
+            <div class="feedback-message-section">
+              <label for="feedbackMessage" class="form-label">
+                <i class="fas fa-comment-dots"></i>
+                <span data-i18n="feedback.messageLabel">Tu mensaje</span>
+                <span class="required">*</span>
+              </label>
+              <textarea 
+                id="feedbackMessage" 
+                name="message" 
+                class="form-textarea" 
+                rows="12"
+                data-i18n-placeholder="feedback.messagePlaceholder"
+                placeholder="Describe tu sugerencia, problema o idea con el mayor detalle posible..."
+                required
+              ></textarea>
+              <div class="character-count">
+                <span id="charCount">0</span> / 1000
+              </div>
+            </div>
+
+            <!-- Right Column: Options -->
+            <div class="feedback-options-section">
+              
+              <!-- Feedback Type -->
+              <div class="form-group">
+                <label for="feedbackType" class="form-label">
+                  <i class="fas fa-tag"></i>
+                  <span data-i18n="feedback.typeLabel">Tipo de feedback</span>
+                  <span class="required">*</span>
+                </label>
+                <select id="feedbackType" name="type" class="form-select" required>
+                  <option value="" data-i18n="feedback.typeSelectPlaceholder">Selecciona una opción</option>
+                  <option value="bug" data-i18n="feedback.typeBug">🐛 Error / Bug</option>
+                  <option value="feature" data-i18n="feedback.typeFeature">✨ Nueva funcionalidad</option>
+                  <option value="improvement" data-i18n="feedback.typeImprovement">🚀 Mejora existente</option>
+                  <option value="ui" data-i18n="feedback.typeUI">🎨 Interfaz / Diseño</option>
+                  <option value="performance" data-i18n="feedback.typePerformance">⚡ Rendimiento</option>
+                  <option value="other" data-i18n="feedback.typeOther">💬 Otro</option>
+                </select>
+              </div>
+
+              <!-- Priority Level -->
+              <div class="form-group">
+                <label for="feedbackPriority" class="form-label">
+                  <i class="fas fa-flag"></i>
+                  <span data-i18n="feedback.priorityLabel">Prioridad</span>
+                  <span class="required">*</span>
+                </label>
+                <select id="feedbackPriority" name="priority" class="form-select" required>
+                  <option value="" data-i18n="feedback.prioritySelectPlaceholder">¿Qué tan urgente es?</option>
+                  <option value="low" data-i18n="feedback.priorityLow">🟢 Baja - Cuando sea posible</option>
+                  <option value="medium" data-i18n="feedback.priorityMedium">🟡 Media - Sería útil pronto</option>
+                  <option value="high" data-i18n="feedback.priorityHigh">🟠 Alta - Lo necesito pronto</option>
+                  <option value="critical" data-i18n="feedback.priorityCritical">🔴 Crítica - Bloquea mi trabajo</option>
+                </select>
+              </div>
+
+              <!-- Affected Area -->
+              <div class="form-group">
+                <label for="feedbackArea" class="form-label">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span data-i18n="feedback.areaLabel">Área afectada</span>
+                </label>
+                <select id="feedbackArea" name="area" class="form-select">
+                  <option value="" data-i18n="feedback.areaSelectPlaceholder">¿Dónde ocurre?</option>
+                  <option value="inbox" data-i18n="feedback.areaInbox">📬 Inbox</option>
+                  <option value="email" data-i18n="feedback.areaEmail">📧 Lectura de correos</option>
+                  <option value="compose" data-i18n="feedback.areaCompose">✍️ Redactar correos</option>
+                  <option value="shopify" data-i18n="feedback.areaShopify">🛍️ Integración Shopify</option>
+                  <option value="profile" data-i18n="feedback.areaProfile">👤 Perfil</option>
+                  <option value="integrations" data-i18n="feedback.areaIntegrations">🔌 Integraciones</option>
+                  <option value="general" data-i18n="feedback.areaGeneral">🌐 General</option>
+                </select>
+              </div>
+
+              <!-- Contact Email (optional) -->
+              <div class="form-group">
+                <label for="feedbackEmail" class="form-label">
+                  <i class="fas fa-envelope"></i>
+                  <span data-i18n="feedback.emailLabel">Tu email (opcional)</span>
+                </label>
+                <input 
+                  type="email" 
+                  id="feedbackEmail" 
+                  name="email" 
+                  class="form-input"
+                  data-i18n-placeholder="feedback.emailPlaceholder"
+                  placeholder="Para recibir actualizaciones..."
+                />
+                <small class="form-hint" data-i18n="feedback.emailHint">
+                  Si quieres que te informemos cuando implementemos tu sugerencia
+                </small>
+              </div>
+
+              <!-- Attachment (future feature - placeholder) -->
+              <div class="form-group">
+                <label for="feedbackAttachment" class="form-label">
+                  <i class="fas fa-paperclip"></i>
+                  <span data-i18n="feedback.attachmentLabel">Adjuntar captura (opcional)</span>
+                </label>
+                <div class="file-upload-area" id="fileUploadArea">
+                  <input 
+                    type="file" 
+                    id="feedbackAttachment" 
+                    name="attachment" 
+                    class="file-input"
+                    accept="image/*,.pdf"
+                    disabled
+                  />
+                  <div class="file-upload-placeholder">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p data-i18n="feedback.attachmentPlaceholder">Próximamente disponible</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="feedback-submit-section">
+            <button type="submit" class="btn-submit" id="submitFeedbackBtn">
+              <i class="fas fa-paper-plane"></i>
+              <span data-i18n="feedback.submitButton">Enviar Feedback</span>
+            </button>
+            <p class="submit-note" data-i18n="feedback.submitNote">
+              Responderemos lo antes posible. ¡Gracias por ayudarnos a mejorar!
+            </p>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Success Message (hidden by default) -->
+      <div class="feedback-success" id="feedbackSuccess" style="display: none;">
+        <div class="success-content">
+          <i class="fas fa-check-circle success-icon"></i>
+          <h2 data-i18n="feedback.successTitle">¡Gracias por tu feedback!</h2>
+          <p data-i18n="feedback.successMessage">Hemos recibido tu mensaje. Lo revisaremos y te responderemos pronto.</p>
+          <button class="btn-secondary" id="sendAnotherBtn">
+            <i class="fas fa-plus"></i>
+            <span data-i18n="feedback.sendAnother">Enviar otro feedback</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="/js/config.js?v=%ASSET_VERSION%"></script>
+  <script type="module" src="/js/components/sidebar.js?v=%ASSET_VERSION%"></script>
+  <script type="module" src="/js/pages/feedback.js?v=%ASSET_VERSION%"></script>
+</body>
+</html>

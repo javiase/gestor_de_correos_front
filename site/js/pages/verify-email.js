@@ -1,5 +1,9 @@
 // /js/pages/verify-email.js
 import { API_BASE, setToken } from '/js/utils/api.js';
+import { t, initI18n } from '/js/utils/i18n.js';
+
+// Inicializar i18n
+initI18n();
 
 // Obtener parámetros de URL
 const urlParams = new URLSearchParams(window.location.search);

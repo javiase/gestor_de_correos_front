@@ -6,8 +6,10 @@ import { seedOnboardingFromServer, markOnboardingStep, isOnboardingComplete, enf
 import { notify } from '/js/utils/notify.js';
 import { renderHtmlEmail } from '/js/utils/render-email.js';
 import { LIMITS } from '/js/config.js';
+import { t, initI18n } from '/js/utils/i18n.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initI18n();
 
   await enforceFlowGate({
     allowOnboarding: ['/secciones/info.html', '/secciones/perfil.html']
@@ -23,6 +25,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* ──────────────────────────────────────────────────────────────
  * Helpers de UI
  * ────────────────────────────────────────────────────────────── */
+
+// Mapeo de data-policy-type a nombres de políticas en ESPAÑOL (para guardar/buscar en DB)
+const POLICY_TYPE_TO_SPANISH = {
+  'devoluciones': 'Política de Devoluciones',
+  'envios': 'Política de Envíos',
+  'info': 'Información General de la Tienda',
+  'faq': 'Preguntas Frecuentes'
+};
 
 const POLICY_CACHE = new Map();         // key: título normalizado → {state, ts}
 const FAQ_CACHE = { items: null, ts: 0 };
@@ -128,7 +138,7 @@ function attachCounter(el, max) {
 
   const update = () => {
     const val = (el.value || '').length;
-    counter.textContent = `${val}/${max} caracteres`;
+    counter.textContent = `${val}/${max} ${t('info.characters')}`;
     if (val > max) counter.classList.add('over'); else counter.classList.remove('over');
   };
 
@@ -155,7 +165,7 @@ function attachCounterForContentEditable(el, max) {
 
   const update = () => {
     const val = (el.textContent || '').length;
-    counter.textContent = `${val}/${max} caracteres`;
+    counter.textContent = `${val}/${max} ${t('info.characters')}`;
     if (val > max) counter.classList.add('over'); else counter.classList.remove('over');
   };
 
@@ -210,9 +220,10 @@ function resetPolicyView(card) {
  * ────────────────────────────────────────────────────────────── */
 
 async function initCard(card) {
-  const title = card.querySelector('h2')?.textContent?.trim() || '';
+  const policyType = card.dataset.policyType; // Usar data-policy-type en lugar del título traducido
+  
   // FAQ
-  if (title === 'Preguntas Frecuentes') {
+  if (policyType === 'faq') {
     initFAQ(card);
     await prefillFAQ(card);
     return;
@@ -225,7 +236,7 @@ async function initCard(card) {
   initDependents(form);
   initRateTable(form);
   initNAToggles(form);
-  initPolicySubmit(card, form, title);
+  initPolicySubmit(card, form, policyType); // Pasar policyType en lugar de title
   initCharCounters(card);
 }
 
@@ -498,10 +509,13 @@ function collectRateTableJSON(form) {
  * Submit de políticas (devoluciones, envíos, info)
  * ────────────────────────────────────────────────────────────── */
 
-function initPolicySubmit(card, form, policyTitle) {
+function initPolicySubmit(card, form, policyType) {
   const sendBtn = form.querySelector('.pf-submit');
   const spinner = form.querySelector('.loading-spinner');
   const arrow   = card.querySelector('.arrow-collapse');
+  
+  // Convertir policyType a nombre en español para guardar en DB
+  const policyName = POLICY_TYPE_TO_SPANISH[policyType] || policyType;
 
   // contenedor de feedback
   let result = card.querySelector('.result-container');
@@ -532,7 +546,7 @@ function initPolicySubmit(card, form, policyTitle) {
     const pastedEl = form.querySelector('textarea[name="policy_pasted"]');
     const pastedPolicy = (pastedEl?.value || '').trim();
     if (pastedPolicy.length > 6000) {
-      notify.error('La política pegada supera el máximo de 6000 caracteres.');
+      notify.error(t('info.policyExceedsLimit'));
       pastedEl?.focus();
       return;
     }
@@ -543,7 +557,7 @@ function initPolicySubmit(card, form, policyTitle) {
     // Se permite guardar aunque el texto compuesto esté vacío si el usuario
     // aporta su política pegada. Pero al menos una de las dos debe existir.
     if (!text && !pastedPolicy) {
-      notify.error('Añade información en el formulario o pega tu política.');
+      notify.error(t('info.addInfoOrPastePolicy'));
       return;
     }
 
@@ -569,7 +583,7 @@ function initPolicySubmit(card, form, policyTitle) {
       const resp = await fetchWithAuth('/policies/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ policy_type: policyTitle, content: JSON.stringify(envelope) })
+        body: JSON.stringify({ policy_type: policyName, content: JSON.stringify(envelope) })
       });
 
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -578,14 +592,14 @@ function initPolicySubmit(card, form, policyTitle) {
       console.log('Policy save response:', payload);
       if (Array.isArray(ignored) && ignored.length) {
         console.warn('Ignored info:', ignored);
-        notify.warning('Se ha detectado una instrucción al bot en la información subida y se ha ignorado ese tramo.');
+        notify.warning(t('info.botInstructionDetected'));
       }
 
       if (payload?.status === 'complete') {
         // 💾 refresca caché de esta política para próximas aperturas
-        const k = normKey(policyTitle);
+        const k = normKey(policyName);
         POLICY_CACHE.set(k, { state: envelope, ts: Date.now() });
-        const stepKey = resolveStepKey(policyTitle);
+        const stepKey = resolveStepKey(policyName);
         if (stepKey) markOnboardingStep(stepKey, true);
 
         // 🆕 Verificar si se completó todo el onboarding y marcar en backend
@@ -609,7 +623,7 @@ function initPolicySubmit(card, form, policyTitle) {
         result.innerHTML = '';
 
         const p = document.createElement('p');
-        p.textContent = '¡Felicidades, ya se ha guardado tu información! 🎉';
+        p.textContent = t('info.congratulations');
         p.style.textAlign = 'center';
         p.style.fontWeight = 'bold';
         p.style.fontSize = '2rem';
@@ -618,11 +632,11 @@ function initPolicySubmit(card, form, policyTitle) {
         // Llevar el mensaje a la vista
         setTimeout(() => { result.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 0);
       } else {
-        notify.error('Se ha guardado la política parcialmente, algunas reglas se han obviado.');
+        notify.error(t('info.policySavedPartially'));
       }
     } catch (err) {
       console.error(err);
-      notify.error('Error al guardar la política.');
+      notify.error(t('info.errorSavingPolicy'));
       disableForm(form, false);
      } finally {
       spinner?.classList.add('hidden');
@@ -748,6 +762,13 @@ function initFAQ(card) {
     }
   });
 
+  // Traducir botón manualmente (no usar data-i18n en elementos con event listeners)
+  const updateAddButtonText = () => {
+    if (addBtn) addBtn.textContent = t('info.addQuestion');
+  };
+  updateAddButtonText();
+  window.addEventListener('locale-changed', updateAddButtonText);
+
   // Añadir bloque (vacío y con foco en la pregunta)
   addBtn?.addEventListener('click', () => {
     const block = createFAQBlock({ question: '', answer: '' });
@@ -773,12 +794,12 @@ function initFAQ(card) {
       const q = (qEl?.textContent || '').trim();
       const a = (aEl?.value || '').trim();
 
-      if (!q) { notify.warning(`Falta la pregunta en el bloque #${i + 1}`); qEl?.focus(); return; }
-      if (!a) { notify.warning(`Falta la respuesta en el bloque #${i + 1}`); aEl?.focus(); return; }
+      if (!q) { notify.warning(t('info.missingQuestion').replace('{number}', i + 1)); qEl?.focus(); return; }
+      if (!a) { notify.warning(t('info.missingAnswer').replace('{number}', i + 1)); aEl?.focus(); return; }
 
       faqs.push({ question: q, answer: a });
     }
-    if (!faqs.length) { notify.error('Añade al menos una pregunta.'); return; }
+    if (!faqs.length) { notify.error(t('info.addAtLeastOneQuestion')); return; }
 
     let wasSuccess = false;
     try {
@@ -796,7 +817,7 @@ function initFAQ(card) {
       const data = await resp.json();
       const ignored = data?.ignored_info || data?.ignoredInfo; // soporte snake/camel
       if (Array.isArray(ignored) && ignored.length) {
-        notify.warning('Se ha detectado una instrucción al bot en alguna respuesta y se ha ignorado ese tramo.');
+        notify.warning(t('info.botInstructionInAnswer'));
       }
 
       if (data?.status === 'complete') {
@@ -808,17 +829,17 @@ function initFAQ(card) {
 
         result.innerHTML = '';
         const p = document.createElement('p');
-        p.textContent = '¡Felicidades, ya se ha guardado tu información! 🎉';
+        p.textContent = t('info.congratulations');
         p.style.textAlign = 'center';
         p.style.fontWeight = 'bold';
         p.style.fontSize = '2rem';
         result.appendChild(p);
       } else {
-        notify.error('Respuesta inesperada al guardar FAQs.');
+        notify.error(t('info.unexpectedResponseSavingFAQ'));
       }
     } catch (err) {
       console.error(err);
-      notify.error('Error al guardar FAQs.');
+      notify.error(t('info.errorSavingFAQ'));
     } finally {
       spinner?.classList.add('hidden');
       arrow?.classList.remove('hidden');
@@ -962,9 +983,11 @@ function collectNAKeys(form) {
 }
 
 async function maybeLoadPolicyFromDB(card) {
-  const title = card.querySelector('h2')?.textContent?.trim() || '';
+  const policyType = card.dataset.policyType;
+  const policyName = POLICY_TYPE_TO_SPANISH[policyType]; // Convertir a nombre en español
+  
   // FAQ: recarga siempre para reflejar cambios
-  if (title === 'Preguntas Frecuentes') {
+  if (policyType === 'faq') {
     await prefillFAQ(card);
     return;
   }
@@ -974,13 +997,13 @@ async function maybeLoadPolicyFromDB(card) {
 
   try {
     // ➊ mira caché
-    const k = normKey(title);
+    const k = normKey(policyName);
     let state = null;
     const cached = POLICY_CACHE.get(k);
     if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
       state = cached.state;
     } else {
-      const res = await fetchWithAuth(`/policies/get?policy_name=${encodeURIComponent(title)}`, { method: 'GET' });
+      const res = await fetchWithAuth(`/policies/get?policy_name=${encodeURIComponent(policyName)}`, { method: 'GET' });
       const data = await res.json();
       if (!data?.found) return;
       const raw = data.content;
@@ -1274,7 +1297,7 @@ async function loadPastEmailsSidebar() {
 
   // skeleton simple
   const sk = document.createElement('div');
-  sk.textContent = 'Cargando mensajes…';
+  sk.textContent = t('info.loadingMessages');
   sk.style.color = '#a1a1aa';
   list.appendChild(sk);
 
@@ -1291,7 +1314,7 @@ async function loadPastEmailsSidebar() {
 
     if (!items.length) {
       const empty = document.createElement('p');
-      empty.textContent = 'No hay correos procesados todavía.';
+      empty.textContent = t('info.noEmailsProcessed');
       empty.style.color = '#a1a1aa';
       empty.style.textAlign = 'center';
       list.appendChild(empty);
@@ -1356,11 +1379,11 @@ async function loadPastEmailsSidebar() {
         // Solo miramos remaining para saber si apagar el flag
         if ((r?.remaining ?? 0) === 0) reflectPendingIdeasUI(false);
         removeIdeaFromSidebar(emailId, idea);
-        notify.success('Idea eliminada de pendientes');
+        notify.success(t('info.ideaDeleted'));
         // fetchWithAuth ya dispara el ping del badge, así que el puntito se refresca solo
       } catch (err) {
         console.error(err);
-        notify.error('No se pudo eliminar la idea');
+        notify.error(t('info.couldNotDeleteIdea'));
       }
       return; // ⬅️ no seguir (no abrir modal)
     }
@@ -1694,7 +1717,7 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
 
     // Si el back decidió ignorarlo (p. ej. porque todo era “inválido” tras el saneado)
     if (j?.status === 'ignored') {
-      notify.warning('La entrada de FAQ se descartó (contenido inválido/filtrado).');
+      notify.warning(t('info.faqEntryDiscarded'));
       if (Array.isArray(j?.ignored_info) && j.ignored_info.length) {
         console.warn('FAQ ignored_info:', j.ignored_info);
       }
@@ -1708,7 +1731,7 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
     // Aviso si hubo trozos filtrados
     const ignored = j?.ignored_info || j?.ignoredInfo;
     if (Array.isArray(ignored) && ignored.length) {
-      notify.warning('Se ignoraron partes potencialmente inválidas de la respuesta.');
+      notify.warning(t('info.invalidPartsIgnored'));
       console.warn('FAQ ignored_info:', ignored);
     }
 
@@ -1721,22 +1744,22 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
     const answer = (answerEl.value || '').trim();
 
     if (!newQuestion){
-      notify.warning('La pregunta no puede estar vacía');
+      notify.warning(t('info.questionCannotBeEmpty'));
       enterEdit(); // ayuda a que el usuario la edite
       return;
     }
     if (!answer){
-      notify.warning('Añade una respuesta');
+      notify.warning(t('info.addAnswer'));
       answerEl.focus();
       return;
     }
     if (newQuestion.length > LIMITS.faq_q){
-      notify.warning(`La pregunta supera el máximo de ${LIMITS.faq_q} caracteres.`);
+      notify.warning(t('info.questionExceedsLimit').replace('{limit}', LIMITS.faq_q));
       enterEdit();
       return;
     }
     if (answer.length > LIMITS.faq_a){
-      notify.warning(`La respuesta supera el máximo de ${LIMITS.faq_a} caracteres.`);
+      notify.warning(t('info.answerExceedsLimit').replace('{limit}', LIMITS.faq_a));
       answerEl.focus();
       return;
     }
@@ -1748,7 +1771,7 @@ function openIdeaModal({ emailId, idea, subject, sender, date, bodyHtml }) {
       // Solo miramos remaining para saber si apagar el flag
       if ((r?.remaining ?? 0) === 0) reflectPendingIdeasUI(false);
       removeIdeaFromSidebar(emailId_, origIdea);
-      notify.success('Pregunta guardada en FAQ');
+      notify.success(t('info.questionSaved'));
       closeIdeaModal();
     }catch(e){
       console.error(e);

@@ -1,5 +1,14 @@
 // /js/pages/register.js
 import { API_BASE, setToken } from '/js/utils/api.js';
+import { t, initI18n } from '/js/utils/i18n.js';
+
+// Inicializar i18n
+initI18n();
+
+// Escuchar cambios de idioma para actualizar la fortaleza de la contraseña
+window.addEventListener('locale-changed', () => {
+  updatePasswordStrength();
+});
 
 // Elementos del formulario
 const registerForm = document.getElementById('registerForm');
@@ -117,7 +126,7 @@ function isValidWebsite(url) {
 
 // Calcular fuerza de contraseña
 function calculatePasswordStrength(password) {
-  if (!password) return { strength: 'none', text: 'Ingresa tu contraseña' };
+  if (!password) return { strength: 'none', text: t('auth.enterYourPassword') };
   
   let score = 0;
   
@@ -132,10 +141,10 @@ function calculatePasswordStrength(password) {
   if (/[^A-Za-z0-9]/.test(password)) score++; // caracteres especiales
   
   // Determinar nivel
-  if (score <= 2) return { strength: 'weak', text: 'Contraseña débil' };
-  if (score <= 4) return { strength: 'fair', text: 'Contraseña aceptable' };
-  if (score <= 5) return { strength: 'good', text: 'Contraseña buena' };
-  return { strength: 'strong', text: '¡Contraseña fuerte!' };
+  if (score <= 2) return { strength: 'weak', text: t('auth.passwordStrengthWeak') };
+  if (score <= 4) return { strength: 'fair', text: t('auth.passwordStrengthFair') };
+  if (score <= 5) return { strength: 'good', text: t('auth.passwordStrengthGood') };
+  return { strength: 'strong', text: t('auth.passwordStrengthStrong') };
 }
 
 // Actualizar indicador de seguridad
