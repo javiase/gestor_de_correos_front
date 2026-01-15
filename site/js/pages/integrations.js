@@ -250,10 +250,11 @@ function updateShopifyCardUI(connected) {
       card.appendChild(connectedBadge);
     }
     
-    // Cambiar botón a "Desconectar"
-    btn.className = 'integration-btn disconnect-btn';
-    btn.innerHTML = `<i class="fas fa-unlink"></i> <span data-i18n="integrations.disconnect">${t('integrations.disconnect')}</span>`;
-    btn.onclick = disconnectShopify;
+    // Deshabilitar botón y mostrar que la integración está activa
+    btn.className = 'integration-btn disabled';
+    btn.innerHTML = `<i class="fas fa-check"></i> <span data-i18n="integrations.activeIntegration">${t('integrations.activeIntegration')}</span>`;
+    btn.disabled = true;
+    btn.onclick = null;
     
   } else {
     // Estado: Desconectado
@@ -269,6 +270,7 @@ function updateShopifyCardUI(connected) {
     // Cambiar botón a "Conectar"
     btn.className = 'integration-btn primary';
     btn.innerHTML = `<i class="fas fa-plug"></i> <span data-i18n="integrations.connectShopify">${t('integrations.connectShopify')}</span>`;
+    btn.disabled = false;
     btn.onclick = initiateShopifyOAuth;
   }
 }
