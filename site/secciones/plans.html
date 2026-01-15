@@ -16,13 +16,12 @@
     <div class="navbar-content">
       <a href="/" class="logo-text" aria-label="Ir al inicio">Respondize</a>
       <div class="navbar-center" id="navbarLinks">
-        <a href="/#features" class="landing-link">Características</a>
-        <a href="/#how-it-works" class="landing-link">Cómo funciona</a>
-        <a href="/#faq" class="landing-link">FAQ</a>
-        <a href="/secciones/login.html" class="mobile-login-btn landing-link">Iniciar sesión</a>
+        <a href="/#features" class="landing-link" data-i18n="navbar.features">Características</a>
+        <a href="/#how-it-works" class="landing-link" data-i18n="navbar.howItWorks">Cómo funciona</a>
+        <a href="/#faq" class="landing-link" data-i18n="navbar.faq">FAQ</a>
       </div>
       <div class="navbar-right">
-        <a href="/secciones/login.html" id="logoutBtn" class="cta-btn">Iniciar sesión</a>
+        <a href="https://www.shopify.com" target="_blank" class="cta-btn" data-i18n="navbar.joinFree">Únete gratis</a>
       </div>
       <button class="mobile-menu-btn">
         <span></span>
@@ -37,29 +36,29 @@
   <!-- Pricing Section -->
   <section id="pricing" class="pricing-section">
     <div class="container">
-      <h2 class="section-title">Elige tu plan</h2>
-      <p class="section-subtitle">Selecciona el plan que mejor se adapte a tus necesidades</p>
+      <h2 class="section-title" data-i18n="plans.title">Elige tu plan</h2>
+      <p class="section-subtitle" data-i18n="plans.subtitle">Selecciona el plan que mejor se adapte a tus necesidades</p>
       
       <!-- Loading spinner -->
     <div id="plans-loading" class="loading-container hidden">
       <div class="spinner"></div>
-      <p>Cargando planes...</p>
+      <p data-i18n="plans.loadingPlans">Cargando planes...</p>
     </div>
 
       <!-- Ayuda sobre cambios de conversaciones -->
       <div class="plan-change-help hidden">
         <button id="planHelpBtn" class="info-chip" type="button" aria-haspopup="dialog" aria-expanded="false">
           <i class="fa fa-info-circle" aria-hidden="true"></i>
-          Cómo funcionan los cambios de conversaciones
+          <span data-i18n="plans.conversationChangesHelp">Cómo funcionan los cambios de conversaciones</span>
         </button>
 
         <div id="planHelpPopover" class="plan-popover" role="dialog" aria-modal="false" aria-labelledby="planHelpTitle" hidden>
-          <h4 id="planHelpTitle">Cambios de conversaciones: resumen</h4>
+          <h4 id="planHelpTitle" data-i18n="plans.conversationChangesTitle">Cambios de conversaciones: resumen</h4>
           <ul>
-            <li><strong>Aumentar conversaciones</strong>: el cambio se aplica <strong>al final del ciclo</strong> <span data-billing-date></span>.</li>
-            <li><strong>Reducir conversaciones</strong>: el cambio también se aplica <strong>al final del ciclo</strong> <span data-billing-date></span>.</li>
-            <li>Verás el cambio programado y podrás <strong>cancelarlo</strong> en cualquier momento antes de que se aplique.</li>
-            <li>Puedes comprar <strong>packs adicionales</strong> si necesitas más conversaciones de forma inmediata en el ciclo actual.</li>
+            <li><strong data-i18n="plans.increaseConversations">Aumentar conversaciones</strong>: <span data-i18n="plans.conversationIncreaseInfo">el cambio se aplica al final del ciclo</span> <span data-billing-date></span>.</li>
+            <li><strong data-i18n="plans.reduceConversations">Reducir conversaciones</strong>: <span data-i18n="plans.conversationDecreaseInfo">el cambio también se aplica al final del ciclo</span> <span data-billing-date></span>.</li>
+            <li data-i18n="plans.conversationChangeCancelInfo">Verás el cambio programado y podrás cancelarlo en cualquier momento antes de que se aplique.</li>
+            <li data-i18n="plans.additionalPacksInfo">Puedes comprar packs adicionales si necesitas más conversaciones de forma inmediata en el ciclo actual.</li>
           </ul>
         </div>
       </div>
@@ -68,54 +67,54 @@
         <!-- Plan Free -->
         <div id="freeCard" class="pricing-card preload-hidden" data-plan="free">
           <div class="card-header">
-            <h3 class="plan-name">Free</h3>
+            <h3 class="plan-name" data-i18n="plans.freePlan">Free</h3>
             <div class="price-wrapper">
               <span class="price">0€</span>
-              <span class="period">/mes</span>
+              <span class="period" data-i18n="plans.perMonth">/mes</span>
             </div>
-            <p class="no-card-required">No requiere tarjeta de crédito</p>
+            <p class="no-card-required" data-i18n="plans.noCreditCardRequired">No requiere tarjeta de crédito</p>
           </div>
           
           <ul class="features-list">
             <li class="has-tooltip">
-                <i class="fas fa-check"></i> 🆓 30 conversaciones mensuales
+                <i class="fas fa-check"></i> 🆓 <span>30 <span data-i18n="plans.monthlyConversations">conversaciones mensuales</span></span>
                 <span class="tooltip">Ideal para probar Respondize y gestionar un volumen bajo de correos.</span>
             </li>
             <li class="has-tooltip">
-                <i class="fas fa-check"></i> 🤖 Borradores inteligentes con IA
-                <span class="tooltip">Nuestro motor de IA genera respuestas automáticas personalizadas para tus clientes. Revisa, ajusta y envía en segundos.</span>
+                <i class="fas fa-check"></i> 🤖 <span data-i18n="plans.intelligentDrafts">Borradores inteligentes con IA</span>
+                <span class="tooltip" data-i18n="plans.intelligentDraftsDesc">Nuestro motor de IA genera respuestas automáticas personalizadas para tus clientes. Revisa, ajusta y envía en segundos.</span>
             </li>
             <li class="has-tooltip">
-                <i class="fas fa-check"></i> 📥 Buzón unificado de atención
-                <span class="tooltip">Reúne todos tus correos en un solo lugar y obtén una clasificación por tipo de ticket al instante.</span>
+                <i class="fas fa-check"></i> 📥 <span data-i18n="plans.unifiedInbox">Buzón unificado de atención</span>
+                <span class="tooltip" data-i18n="plans.unifiedInboxDesc">Reúne todos tus correos en un solo lugar y obtén una clasificación por tipo de ticket al instante.</span>
             </li>
             <li class="has-tooltip">
-                <i class="fas fa-check"></i> 👥 Acceso para un miembro del equipo
-                <span class="tooltip">Incluye una plaza de usuario. Los planes superiores amplían el número de miembros.</span>
+                <i class="fas fa-check"></i> 👥 <span data-i18n="plans.teamAccess">Acceso para un miembro del equipo</span>
+                <span class="tooltip" data-i18n="plans.teamAccessDesc">Incluye una plaza de usuario. Los planes superiores amplían el número de miembros.</span>
             </li>
         </ul>
 
-          <button id="freeBtn" class="cta-button primary">Crea una cuenta para seleccionar un plan</button>
+          <button id="freeBtn" class="cta-button primary" data-i18n="plans.createAccountToSelect">Crea una cuenta para seleccionar un plan</button>
         </div>
 
         <!-- Plan Starter (de pago) -->
         <div id="starterCard" class="pricing-card starter featured preload-hidden" data-plan="starter">
-          <div class="badge">Recomendado</div>
+          <div class="badge" data-i18n="plans.recommended">Recomendado</div>
           <div class="card-header">
-            <h3 class="plan-name">Starter</h3>
+            <h3 class="plan-name" data-i18n="plans.starterPlan">Starter</h3>
             <div class="price-wrapper">
               <span class="price-base">9€</span>
-              <span class="period">/mes</span>
+              <span class="period" data-i18n="plans.perMonth">/mes</span>
             </div>
-            <p class="price-detail">+ 0.40€ por conversación</p>
+            <p class="price-detail">+ 0.40€ <span data-i18n="plans.conversations">por conversación</span></p>
           </div>
           
           <div class="conversations-selector">
             <label for="conversationsSelect">
-              Conversaciones / tickets
+              <span data-i18n="plans.conversationsIndicator">Conversaciones / tickets</span>
               <span class="info-icon-wrapper">
                 <i class="fas fa-info-circle info-icon"></i>
-                <span class="info-tooltip">Una conversación/ticket es un problema completo resuelto de principio a fin. Solo cuenta cuando la conversación se cierra (el problema queda resuelto), no por cada correo individual. De media, una conversación suele incluir unos 3 correos intercambiados.</span>
+                <span class="info-tooltip" data-i18n="plans.conversationTooltip">Una conversación/ticket es un problema completo resuelto de principio a fin. Solo cuenta cuando la conversación se cierra (el problema queda resuelto), no por cada correo individual. De media, una conversación suele incluir unos 3 correos intercambiados.</span>
               </span>
             </label>
             <div class="conversations-dropdown-wrapper">
@@ -147,30 +146,30 @@
           </div>
 
           <div class="total-price">
-            <span class="total-price-label">Total mensual:</span>
+            <span class="total-price-label" data-i18n="plans.totalMonthly">Total mensual:</span>
             <span id="totalPrice" class="total-amount">29€</span>
           </div>
           
           <ul class="features-list">
             <li class="has-tooltip">
-                <i class="fas fa-check"></i> 🤖 Borradores inteligentes con IA
-                <span class="tooltip">Nuestro motor de IA genera respuestas automáticas personalizadas para tus clientes. Revisa, ajusta y envía en segundos.</span>
+                <i class="fas fa-check"></i> 🤖 <span data-i18n="plans.intelligentDrafts">Borradores inteligentes con IA</span>
+                <span class="tooltip" data-i18n="plans.intelligentDraftsDesc">Nuestro motor de IA genera respuestas automáticas personalizadas para tus clientes. Revisa, ajusta y envía en segundos.</span>
             </li>
             <li class="has-tooltip">
-                <i class="fas fa-check"></i> 🛍️ Conecta tu tienda Shopify
-                <span class="tooltip">Sincroniza pedidos con el bot y gestiona devoluciones o descuentos sin salir de Respondize.</span>
+                <i class="fas fa-check"></i> 🛍️ <span data-i18n="plans.connectShopify">Conecta tu tienda Shopify</span>
+                <span class="tooltip" data-i18n="plans.connectShopifyDesc">Sincroniza pedidos con el bot y gestiona devoluciones o descuentos sin salir de Respondize.</span>
             </li>
             <li class="has-tooltip">
-                <i class="fas fa-check"></i> 📥 Buzón unificado de atención
-                <span class="tooltip">Reúne todos tus correos en un solo lugar y obtén una clasificación por tipo de ticket al instante.</span>
+                <i class="fas fa-check"></i> 📥 <span data-i18n="plans.unifiedInbox">Buzón unificado de atención</span>
+                <span class="tooltip" data-i18n="plans.unifiedInboxDesc">Reúne todos tus correos en un solo lugar y obtén una clasificación por tipo de ticket al instante.</span>
             </li>
             <li class="has-tooltip">
-                <i class="fas fa-check"></i> 👥 Acceso para un miembro del equipo
-                <span class="tooltip">Incluye una plaza de usuario. Los planes superiores amplían el número de miembros.</span>
+                <i class="fas fa-check"></i> 👥 <span data-i18n="plans.teamAccess">Acceso para un miembro del equipo</span>
+                <span class="tooltip" data-i18n="plans.teamAccessDesc">Incluye una plaza de usuario. Los planes superiores amplían el número de miembros.</span>
             </li>
         </ul>
 
-          <button id="starterBtn" class="cta-button primary">Crea una cuenta para seleccionar un plan</button>
+          <button id="starterBtn" class="cta-button primary" data-i18n="plans.createAccountToSelect">Crea una cuenta para seleccionar un plan</button>
         </div>
 
         <!-- Pack adicional -->
@@ -180,7 +179,7 @@
               <h3 class="plan-name">Pack Extra</h3>
               <button class="info-icon" type="button" aria-label="Información sobre Pack Extra">
                 <i class="fas fa-info-circle" style="margin-bottom: 1rem; z-index: 1000;"></i>
-                <span class="info-tooltip">Las conversaciones compradas como extra no caducan. Si no se consumen un mes, pasan al mes siguiente. Únicamente son consumidas cuando se llega al límite mensual de conversaciones</span>
+                <span class="info-tooltip" data-i18n="plans.packExtraTooltip">Las conversaciones compradas como extra no caducan. Si no se consumen un mes, pasan al mes siguiente. Únicamente son consumidas cuando se llega al límite mensual de conversaciones</span>
               </button>
             </div>
             <div class="price-wrapper">
@@ -191,7 +190,7 @@
           </div>
           
           <div class="conversations-selector pack-selector">
-            <label for="packConversationsSelect">Conversaciones extra:</label>
+            <label for="packConversationsSelect" data-i18n="plans.extraConversations">Conversaciones extra:</label>
             <div class="conversations-dropdown-wrapper">
               <div class="fade-top"></div>
               <div id="packConversationsScroller" class="conversations-scroller">
@@ -212,16 +211,16 @@
           
           <ul class="features-list">
             <li class="has-tooltip">
-              <i class="fas fa-check"></i> 💳 Compra única
-              <span class="tooltip">Utiliza las conversaciones al instante</span>
+              <i class="fas fa-check"></i> 💳 <span data-i18n="plans.singlePurchase">Compra única</span>
+              <span class="tooltip" data-i18n="plans.singlePurchaseDesc">Utiliza las conversaciones al instante</span>
             </li>
             <li class="has-tooltip">
-              <i class="fas fa-check"></i> ⏳ Sin caducidad
-              <span class="tooltip">Si no se consumen, se transfieren al mes siguiente</span>
+              <i class="fas fa-check"></i> ⏳ <span data-i18n="plans.noExpiration">Sin caducidad</span>
+              <span class="tooltip" data-i18n="plans.noExpirationDesc">Si no se consumen, se transfieren al mes siguiente</span>
             </li>
           </ul>
           
-          <button id="buyPackBtn" class="cta-button secondary">Comprar pack</button>
+          <button id="buyPackBtn" class="cta-button secondary" data-i18n="plans.buyPack">Comprar pack</button>
         </div>
       </div>
     </div>

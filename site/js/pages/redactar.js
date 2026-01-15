@@ -3,10 +3,12 @@ import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth } from '/js/utils/api.js';
 import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
+import { t, initI18n } from '/js/utils/i18n.js';
 
 enforceFlowGate();
 
 document.addEventListener('DOMContentLoaded', () => {
+  initI18n();
   initSidebar('#sidebarContainer');
 
   const form       = document.getElementById('composeForm');

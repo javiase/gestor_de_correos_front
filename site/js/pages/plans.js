@@ -2,6 +2,7 @@
 import { fetchWithAuth, getToken, API_BASE } from '/js/utils/api.js';
 import { enforceFlowGate, getUserContext } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
+import { t, initI18n } from '/js/utils/i18n.js';
 
 // ============ MENÚ MÓVIL HAMBURGUESA ============
 function setupMobileMenu() {
@@ -200,7 +201,7 @@ function setupPublicButtons() {
 function toDate(dateLike) {
   if (!dateLike) return null;
 
-  // ➜ Soporta Mongo Extended JSON: { $date: "2025-11-24T20:21:57.000Z" }
+  // ➜ Soporta Mongo Extended JSON: { $date: "..." }
   if (typeof dateLike === 'object' && dateLike.$date) {
     return toDate(dateLike.$date);
   }
@@ -210,6 +211,28 @@ function toDate(dateLike) {
     const d = new Date(ms);
     return isNaN(d) ? null : d;
   }
+
+  // ✅ Normaliza strings tipo Python: "2026-01-22T11:33:21.269000" → "2026-01-22T11:33:21.269Z"
+  if (typeof dateLike === 'string') {
+    let s = dateLike.trim();
+
+    // Caso: microsegundos 6 dígitos y sin timezone
+    const m = s.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d{6})(Z|[+-]\d{2}:\d{2})?$/);
+    if (m) {
+      const base = m[1];
+      const ms = m[2].slice(0, 3);
+      const tz = m[3] || 'Z';
+      s = `${base}.${ms}${tz}`;
+    } else {
+      // Caso: ISO sin Z ni offset → asumimos UTC
+      const hasTz = /Z$|[+-]\d{2}:\d{2}$/.test(s);
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s) && !hasTz) s += 'Z';
+    }
+
+    const d = new Date(s);
+    return isNaN(d) ? null : d;
+  }
+
   const d = new Date(dateLike);
   return isNaN(d) ? null : d;
 }
@@ -468,7 +491,7 @@ function updateTotalPrice(isPendingChange = false, pendingConvs = null) {
   
   // Cambiar el label si hay cambio pendiente
   if (totalPriceLabelEl) {
-    totalPriceLabelEl.textContent = isPendingChange ? 'Total mensual previsto:' : 'Total mensual:';
+    totalPriceLabelEl.textContent = isPendingChange ? t('plans.totalMonthlyExpected') : t('plans.totalMonthly');
   }
 }
 
@@ -485,7 +508,7 @@ function updatePackPrice() {
   packPriceEl.textContent = `${total.toFixed(2)}€`;
   
   if (packPricePerConvEl) {
-    packPricePerConvEl.textContent = `${pricePerConversation.toFixed(2)}€ por conversación`;
+    packPricePerConvEl.textContent = `${pricePerConversation.toFixed(2)}€ ${t('plans.conversations')}`;
   }
 }
 
@@ -529,6 +552,23 @@ function updateCenteredOption(scrollerId = 'conversationsScroller', isPackSelect
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Inicializar i18n
+  initI18n();
+  
+  // Traducir las opciones del scroller dinámicamente
+  function translateConversationOptions() {
+    document.querySelectorAll('.conversation-option').forEach(option => {
+      const value = option.getAttribute('data-value');
+      option.textContent = `${value} ${t('plans.conversationsCount')}`;
+    });
+  }
+  
+  // Traducir inicialmente
+  translateConversationOptions();
+  
+  // Re-traducir cuando cambie el idioma
+  window.addEventListener('locale-changed', translateConversationOptions);
+  
   // 🆕 Referencias a las cards - declaradas una sola vez al principio
   const freeCard = document.getElementById('freeCard');
   const starterCard = document.getElementById('starterCard');
@@ -641,7 +681,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Navbar para usuarios sin sesión
     if (logoutBtn) {
-      logoutBtn.textContent = 'Iniciar sesión';
+      logoutBtn.textContent = t('navbar.login');
       logoutBtn.addEventListener('click', (e) => {
         e.preventDefault();
         // Si tiene la clase disabled-link, no navegar
@@ -702,20 +742,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   // 7) Extraer datos del usuario (ESTRUCTURA NUEVA: payments.*)
-  const payments = data.payments || {};
-  const billingSource = String(payments.billing_source || "stripe").toLowerCase();
-  const provider = billingSource === "shopify" ? (payments.shopify || {}) : (payments.stripe || {});
+  const billingSource = String(data.billing_source || "stripe").toLowerCase();
+  const provider = billingSource === "shopify" ? (data.shopify || {}) : (data.stripe || {});
 
   // 🔄 FALLBACK: Si payments está vacío, intentar leer del formato viejo (raíz del documento)
-  const isActive = !!payments.active || !!data.active;
-  const currentPlan = String(provider.plan || data.plan || "free").toLowerCase();
+  const isActive = !!data.active;
+  const currentPlan = String(provider.plan || data.plan || "None").toLowerCase();
   
   console.log('🔍 [PLANS DEBUG] Datos extraídos:', {
     isActive,
     currentPlan,
     billingSource,
     provider,
-    payments,
     dataRoot: { plan: data.plan, active: data.active, free_block_until: data.free_block_until }
   });
 
@@ -737,7 +775,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     switch (userContext) {
       case 'guest':
         // Usuario sin sesión
-        logoutBtn.textContent = 'Iniciar sesión';
+        logoutBtn.textContent = t('navbar.login');
         logoutBtn.addEventListener('click', (e) => {
           e.preventDefault();
           if (!logoutBtn.classList.contains('disabled-link')) {
@@ -748,7 +786,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         
       case 'inactive':
         // Usuario registrado pero sin plan activo
-        logoutBtn.textContent = 'Volver al inicio';
+        logoutBtn.textContent = t('navbar.backToHome');
         logoutBtn.addEventListener('click', () => {
           window.location.href = '/index.html';
         });
@@ -756,7 +794,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         
       case 'active':
         // Usuario con plan activo
-        logoutBtn.textContent = 'Volver al perfil';
+        logoutBtn.textContent = t('navbar.backToProfile');
         logoutBtn.addEventListener('click', () => {
           window.location.href = '/secciones/perfil.html';
         });
@@ -912,10 +950,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } else {
       // Usuario nuevo sin plan activo
-      freeBtn.textContent = "Comenzar gratis";
+      freeBtn.textContent = t('plans.startFree');
       freeBtn.addEventListener('click', async () => {
         freeBtn.disabled = true;
-        freeBtn.textContent = "Procesando...";
+        freeBtn.textContent = t('plans.processing');
 
         try {
           const res = await fetchWithAuth("/billing/select-free-plan", { method: "POST" });
@@ -935,7 +973,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.error(error);
           notify.error("Error al seleccionar el plan gratuito");
           freeBtn.disabled = false;
-          freeBtn.textContent = "Comenzar gratis";
+          freeBtn.textContent = t('plans.startFree');
         }
       });
     }
@@ -1140,13 +1178,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Deshabilitar si hay cambio pendiente
       if (hasPendingChange) {
         starterBtn.disabled = true;
-        starterBtn.textContent = "Cambio pendiente en otro plan";
+        starterBtn.textContent = t('plans.pendingChange');
       } else {
-        starterBtn.textContent = hasUsedTrial ? "Contratar plan" : "Prueba gratuita";
+        starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
 
         starterBtn.addEventListener('click', async () => {
           starterBtn.disabled = true;
-          starterBtn.textContent = "Procesando...";
+          starterBtn.textContent = t('plans.processing');
 
           try {
             const conversations = selectedConversations;
@@ -1167,7 +1205,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.error(error);
             notify.error("Error al procesar el plan");
             starterBtn.disabled = false;
-            starterBtn.textContent = hasUsedTrial ? "Contratar plan" : "Prueba gratuita";
+            starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
           }
         });
       }

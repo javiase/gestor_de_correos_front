@@ -3,6 +3,7 @@ import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, getToken } from '/js/utils/api.js';
 import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
+import { t, initI18n } from '/js/utils/i18n.js';
 
 enforceFlowGate();
 
@@ -78,24 +79,30 @@ function isRenderableEmail(email) {
   return !!(email && typeof email.return_mail === 'string' && email.return_mail.trim());
 }
 
-// === Badges (solo render, sin fallback) ===
-const BADGE_LABEL = {
-  postventa: 'Postventa',
-  envios: 'Envios',
-  producto: 'Producto',
-  tienda: 'Tienda',
-  shopify: 'Shopify',
-  comerciales: 'Comerciales',
-  otros: 'Otros',
-  OTROS: 'Otros'
-};
+// === Badges con traducciones ===
+function getBadgeLabel(key) {
+  const keyLower = String(key || '').toLowerCase();
+  const badgeKeys = {
+    postventa: 'inbox.badgePostventa',
+    envios: 'inbox.badgeEnvios',
+    producto: 'inbox.badgeProducto',
+    tienda: 'inbox.badgeTienda',
+    shopify: 'inbox.badgeShopify',
+    comerciales: 'inbox.badgeComerciales',
+    otros: 'inbox.badgeOtros',
+  };
+  
+  return badgeKeys[keyLower] 
+    ? t(badgeKeys[keyLower]) 
+    : (keyLower.charAt(0).toUpperCase() + keyLower.slice(1));
+}
 
 function renderBadges(email) {
   const arr = Array.isArray(email.badges) ? email.badges.slice(0, 2) : [];
   if (!arr.length) return '';
   const pills = arr.map(k => {
     const key = String(k || '').toLowerCase();
-    const label = BADGE_LABEL[key] || (key.charAt(0).toUpperCase() + key.slice(1));
+    const label = getBadgeLabel(key);
     // usa tus clases EXACTAS: email-badge + badge-<key>
     // si quieres el estilo de “planes”, añade también feature-badge
     return `<span class="email-badge feature-badge badge-${key}" data-badge="${key}">${label}</span>`;
@@ -155,6 +162,15 @@ class EmailInbox {
     this.bindEvents();
     this.updatePagination();
     this.renderEmails();
+    
+    // Escuchar cambios de idioma para re-renderizar
+    window.addEventListener('locale-changed', () => {
+      this.renderEmails();
+      this.updatePagination();
+      // Actualizar label de ordenación
+      const sortLabel = document.getElementById('sortLabel');
+      if (sortLabel) sortLabel.textContent = this.sortOrder === 'desc' ? t('inbox.newest') : t('inbox.oldest');
+    });
   }
   showSpinner() {
   this.spinner.style.display = 'flex';
@@ -209,10 +225,18 @@ class EmailInbox {
       ayer.getMonth() === emailDate.getMonth() &&
       ayer.getFullYear() === emailDate.getFullYear()
     ) {
-      return `Ayer, ${hh}:${mm}`;
+      return `${t('inbox.yesterday')}, ${hh}:${mm}`;
     }
     if (diffDays < 7) {
-      const diasSemana = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
+      const diasSemana = [
+        t('inbox.sunday'),
+        t('inbox.monday'),
+        t('inbox.tuesday'),
+        t('inbox.wednesday'),
+        t('inbox.thursday'),
+        t('inbox.friday'),
+        t('inbox.saturday')
+      ];
       return `${diasSemana[emailDate.getDay()]}, ${hh}:${mm}`;
     }
     const d  = emailDate.getDate().toString().padStart(2, '0');
@@ -240,7 +264,7 @@ class EmailInbox {
       this.allLoaded      = false; 
     } catch (err) {
       console.error('Error cargando correos:', err);
-      notify.error('Error cargando correos. Inténtalo de nuevo más tarde.');
+      notify.error(t('inbox.errorLoadingEmails'));
       // opcionalmente mostrar un mensaje de error al usuario
     }finally{
       this.hideSpinner();
@@ -259,7 +283,7 @@ class EmailInbox {
     const sortLabel = document.getElementById('sortLabel');
     if (sortBtn) {
       // estado inicial de UI
-      if (sortLabel) sortLabel.textContent = this.sortOrder === 'desc' ? 'Recientes' : 'Antiguos';
+      if (sortLabel) sortLabel.textContent = this.sortOrder === 'desc' ? t('inbox.newest') : t('inbox.oldest');
       const icon = sortBtn.querySelector('i');
       if (icon) icon.className = this.sortOrder === 'desc' ? 'fas fa-sort-amount-down' : 'fas fa-sort-amount-up';
 
@@ -275,7 +299,7 @@ class EmailInbox {
         this.renderEmails();
 
         // actualiza UI
-        if (sortLabel) sortLabel.textContent = this.sortOrder === 'desc' ? 'Recientes' : 'Antiguos';
+        if (sortLabel) sortLabel.textContent = this.sortOrder === 'desc' ? t('inbox.newest') : t('inbox.oldest');
         const icon = sortBtn.querySelector('i');
         if (icon) icon.className = this.sortOrder === 'desc' ? 'fas fa-sort-amount-down' : 'fas fa-sort-amount-up';
       });
@@ -350,8 +374,8 @@ class EmailInbox {
       listContainer.innerHTML = `
         <div class="empty-state">
           <i class="fas fa-inbox"></i>
-          <h3>No se han encontrado correos</h3>
-          <p>Intenta ajustar tus términos de búsqueda</p>
+          <h3>${t('inbox.noEmailsFound')}</h3>
+          <p>${t('inbox.adjustSearchTerms')}</p>
         </div>`;
       return;
     }
@@ -369,7 +393,7 @@ class EmailInbox {
     console.log('|'+email.subject+'|')
     
     // 🆕 Extraer el nombre del display_sender (antes del <...>)
-    let senderName = email.display_sender || email.sender || 'Desconocido';
+    let senderName = email.display_sender || email.sender || t('inbox.unknownSender');
     const match = senderName.match(/^(.+?)\s*<.+>$/);
     if (match) {
       senderName = match[1].trim(); // Toma solo la parte antes del <...>
@@ -384,7 +408,7 @@ class EmailInbox {
           !email.subject ||
           !email.subject.trim() ||
           email.subject.trim() === '<no subject>'
-            ? '(sin asunto)'
+            ? t('inbox.noSubject')
             : email.subject
         }
       </div>
@@ -394,7 +418,7 @@ class EmailInbox {
       <div class="email-meta">
         ${renderBadges(email)}
         ${email.hasAttachment ? '<i class="fas fa-paperclip"></i>' : ''}
-        ${email.isDraft      ? '<span class="draft-badge">Draft</span>' : ''}
+        ${email.isDraft      ? `<span class="draft-badge">${t('inbox.draftBadge')}</span>` : ''}
       </div>
       <div class="email-time">${this.formatEmailDate(email.date)}</div>
     `;
@@ -436,7 +460,8 @@ class EmailInbox {
   updatePagination() {
       const totalPages = this.searchTerm
       ? Math.ceil(this.filteredEmails.length / this.emailsPerPage) || 1
-      : (this.totalPages || 1);    document.getElementById('pageInfo').textContent   = `${this.currentPage} of ${totalPages}`;
+      : (this.totalPages || 1);    
+    document.getElementById('pageInfo').textContent   = `${this.currentPage} ${t('inbox.ofPage')} ${totalPages}`;
     document.getElementById('prevBtn').disabled       = this.currentPage <= 1;
     document.getElementById('nextBtn').disabled       = this.currentPage >= totalPages;
   }
@@ -477,7 +502,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const msg = urlParams.get('msg');
   
   if (msg === 'shopify_connected') {
-    notify.success('¡Shopify conectado correctamente! Ya puedes sincronizar pedidos y clientes.');
+    notify.success(t('inbox.shopifyConnectedSuccess'));
     // Limpiar URL
     window.history.replaceState({}, document.title, '/secciones/inbox.html');
   }
@@ -503,6 +528,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.appUserPromise) {
     try { await window.appUserPromise; } catch(_) {}
   }
+
+  // Inicializar i18n
+  initI18n();
 
   new EmailInbox();
 });

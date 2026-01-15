@@ -3,6 +3,7 @@ import { API_BASE, fetchWithAuth } from '/js/utils/api.js';
 import { enforceFlowGate } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 import { initSidebar } from '/js/components/sidebar.js';
+import { t, initI18n } from '/js/utils/i18n.js';
 
 // Estado de conexión de Gmail y Shopify
 let gmailConnected = false;
@@ -54,13 +55,13 @@ function updateGmailCardUI(connected) {
     if (!connectedBadge) {
       connectedBadge = document.createElement('div');
       connectedBadge.className = 'connected-badge';
-      connectedBadge.innerHTML = '<i class="fas fa-check-circle"></i> Conectado';
+      connectedBadge.innerHTML = `<i class="fas fa-check-circle"></i> <span data-i18n="integrations.connected">${t('integrations.connected')}</span>`;
       card.appendChild(connectedBadge);
     }
     
     // Cambiar botón a "Desconectar"
     btn.className = 'integration-btn disconnect-btn';
-    btn.innerHTML = '<i class="fas fa-unlink"></i> Desconectar';
+    btn.innerHTML = `<i class="fas fa-unlink"></i> <span data-i18n="integrations.disconnect">${t('integrations.disconnect')}</span>`;
     btn.onclick = disconnectGmail;
     
   } else {
@@ -76,7 +77,7 @@ function updateGmailCardUI(connected) {
     
     // Cambiar botón a "Conectar"
     btn.className = 'integration-btn primary';
-    btn.innerHTML = '<i class="fas fa-plug"></i> Conectar Gmail';
+    btn.innerHTML = `<i class="fas fa-plug"></i> <span data-i18n="integrations.connectGmail">${t('integrations.connectGmail')}</span>`;
     btn.onclick = initiateGmailOAuth;
   }
 }
@@ -87,7 +88,7 @@ async function initiateGmailOAuth() {
   
   try {
     gmailBtn.disabled = true;
-    gmailBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
+    gmailBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span data-i18n="integrations.connecting">${t('integrations.connecting')}</span>`;
     
     // Solicitar URL de OAuth al backend
     const response = await fetchWithAuth(`/google/gmail/connect`, {
@@ -114,7 +115,7 @@ async function initiateGmailOAuth() {
     
   } catch (error) {
     console.error('Error al conectar Gmail:', error);
-    notify.error('Error al conectar con Gmail. Por favor, inténtalo de nuevo.');
+    notify.error(t('integrations.errorConnectingGmail'));
     
     // Restaurar botón
     gmailBtn.disabled = false;
@@ -161,7 +162,7 @@ async function executeDisconnect() {
   
   try {
     gmailBtn.disabled = true;
-    gmailBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Desconectando...';
+    gmailBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span data-i18n="integrations.disconnecting">${t('integrations.disconnecting')}</span>`;
     
     const response = await fetchWithAuth(`/google/gmail/disconnect`, {
       method: 'POST',
@@ -172,7 +173,7 @@ async function executeDisconnect() {
     
     // Si el endpoint no existe (404), mostrar mensaje
     if (response.status === 404) {
-      notify.warning('Funcionalidad de desconexión aún no disponible en el servidor');
+      notify.warning(t('integrations.comingSoon'));
       updateGmailCardUI(true);
       gmailBtn.disabled = false;
       return;
@@ -182,12 +183,12 @@ async function executeDisconnect() {
       throw new Error('Error al desconectar Gmail');
     }
     
-    notify.success('Gmail desconectado correctamente');
+    notify.success(t('integrations.gmailDisconnected'));
     updateGmailCardUI(false);
     
   } catch (error) {
     console.error('Error al desconectar Gmail:', error);
-    notify.error('Error al desconectar Gmail. Por favor, inténtalo de nuevo.');
+    notify.error(t('integrations.errorDisconnectingGmail'));
     
     // Restaurar estado anterior
     updateGmailCardUI(true);
@@ -245,13 +246,13 @@ function updateShopifyCardUI(connected) {
     if (!connectedBadge) {
       connectedBadge = document.createElement('div');
       connectedBadge.className = 'connected-badge';
-      connectedBadge.innerHTML = '<i class="fas fa-check-circle"></i> Conectado';
+      connectedBadge.innerHTML = `<i class="fas fa-check-circle"></i> <span data-i18n="integrations.connected">${t('integrations.connected')}</span>`;
       card.appendChild(connectedBadge);
     }
     
     // Cambiar botón a "Desconectar"
     btn.className = 'integration-btn disconnect-btn';
-    btn.innerHTML = '<i class="fas fa-unlink"></i> Desconectar';
+    btn.innerHTML = `<i class="fas fa-unlink"></i> <span data-i18n="integrations.disconnect">${t('integrations.disconnect')}</span>`;
     btn.onclick = disconnectShopify;
     
   } else {
@@ -267,7 +268,7 @@ function updateShopifyCardUI(connected) {
     
     // Cambiar botón a "Conectar"
     btn.className = 'integration-btn primary';
-    btn.innerHTML = '<i class="fas fa-plug"></i> Conectar Shopify';
+    btn.innerHTML = `<i class="fas fa-plug"></i> <span data-i18n="integrations.connectShopify">${t('integrations.connectShopify')}</span>`;
     btn.onclick = initiateShopifyOAuth;
   }
 }
@@ -298,7 +299,7 @@ function initiateShopifyOAuth() {
     const shopDomain = input.value.trim();
     
     if (!shopDomain) {
-      notify.error('Por favor ingresa el dominio de tu tienda Shopify');
+      notify.error(t('integrations.shopifyDomainRequired'));
       input.focus();
       return;
     }
@@ -325,7 +326,7 @@ async function connectShopify(shopDomain) {
   
   try {
     shopifyBtn.disabled = true;
-    shopifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
+    shopifyBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span data-i18n="integrations.connecting">${t('integrations.connecting')}</span>`;
     
     // Solicitar URL de la app (App Store) al backend
     const response = await fetchWithAuth(`/shopify/connect?shop=${encodeURIComponent(shopDomain)}`, {
@@ -352,7 +353,7 @@ async function connectShopify(shopDomain) {
     
   } catch (error) {
     console.error('Error al conectar Shopify:', error);
-    notify.error(error.message || 'Error al conectar con Shopify. Verifica el dominio e inténtalo de nuevo.');
+    notify.error(error.message || t('integrations.errorConnectingShopify'));
     
     // Restaurar botón
     shopifyBtn.disabled = false;
@@ -398,7 +399,7 @@ async function executeShopifyDisconnect() {
   
   try {
     shopifyBtn.disabled = true;
-    shopifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Desconectando...';
+    shopifyBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span data-i18n="integrations.disconnecting">${t('integrations.disconnecting')}</span>`;
     
     const response = await fetchWithAuth(`/shopify/disconnect`, {
       method: 'POST',
@@ -408,22 +409,22 @@ async function executeShopifyDisconnect() {
     });
     
     if (response.status === 404) {
-      notify.warning('Funcionalidad de desconexión aún no disponible en el servidor');
+      notify.warning(t('integrations.comingSoon'));
       updateShopifyCardUI(true);
       shopifyBtn.disabled = false;
       return;
     }
     
     if (!response.ok) {
-      throw new Error('Error al desconectar Shopify');
+      throw new Error(t('integrations.errorDisconnectingShopify'));
     }
     
-    notify.success('Shopify desconectado correctamente');
+    notify.success(t('integrations.shopifyDisconnected'));
     updateShopifyCardUI(false);
     
   } catch (error) {
     console.error('Error al desconectar Shopify:', error);
-    notify.error('Error al desconectar Shopify. Por favor, inténtalo de nuevo.');
+    notify.error(t('integrations.errorDisconnectingShopify'));
     
     // Restaurar estado anterior
     updateShopifyCardUI(true);
@@ -434,6 +435,9 @@ async function executeShopifyDisconnect() {
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', async () => {
+  // Inicializar i18n
+  initI18n();
+  
   // 1. Esperar configuración
   if (window.configReady) {
     try {
@@ -468,24 +472,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const error = urlParams.get('error');
   
   if (gmailConnected === 'success') {
-    notify.success('¡Gmail conectado correctamente! Ya puedes recibir correos.');
+    notify.success(t('integrations.gmailConnectedSuccess'));
     // Limpiar URL
     window.history.replaceState({}, document.title, '/secciones/integrations.html');
   } else if (msg === 'shopify_connected') {
-    notify.success('¡Shopify conectado correctamente! Ya puedes sincronizar pedidos y clientes.');
+    notify.success(t('integrations.shopifyConnectedSuccess'));
     // Limpiar URL
     window.history.replaceState({}, document.title, '/secciones/integrations.html');
   } else if (error) {
     // Mensajes específicos según el error
     const errorMessages = {
-      'access_denied': 'Has cancelado la conexión con la tienda.',
-      'invalid_session': 'La sesión ha expirado. Por favor, inténtalo de nuevo.',
-      'session_expired': 'La sesión ha expirado. Por favor, inténtalo de nuevo.',
-      'connection_failed': 'Ha ocurrido un error al conectar. Por favor, inténtalo de nuevo.',
-      'no_code': 'No se recibió código de autorización. Por favor, inténtalo de nuevo.'
+      'access_denied': t('integrations.errorAccessDenied'),
+      'invalid_session': t('integrations.errorInvalidSession'),
+      'session_expired': t('integrations.errorSessionExpired'),
+      'connection_failed': t('integrations.errorConnectionFailed'),
+      'no_code': t('integrations.errorNoCode')
     };
     
-    const errorMsg = errorMessages[error] || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.';
+    const errorMsg = errorMessages[error] || t('integrations.errorGeneric');
     notify.error(errorMsg);
     // Limpiar URL
     window.history.replaceState({}, document.title, '/secciones/integrations.html');
@@ -498,7 +502,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault();
       const card = btn.closest('.integration-card');
       const productName = card.querySelector('h3').textContent;
-      notify.info(`${productName} estará disponible próximamente`);
+      notify.info(t('integrations.comingSoonInfo').replace('{product}', productName));
     });
   });
 });

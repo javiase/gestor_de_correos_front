@@ -1,5 +1,9 @@
 // /js/pages/login.js
 import { API_BASE, setToken } from '/js/utils/api.js';
+import { t, initI18n } from '/js/utils/i18n.js';
+
+// Inicializar i18n
+initI18n();
 
 // Elementos del formulario
 const loginForm = document.getElementById('loginForm');

@@ -4,6 +4,7 @@ import { fetchWithAuth } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js?v=1';
 import { enforceFlowGate, getStoreCached } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
+import { t, initI18n } from '/js/utils/i18n.js';
 
 enforceFlowGate();
 
@@ -111,7 +112,7 @@ async function openAttachmentAuth(a, emailId){
     setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
   } catch (err) {
     console.error('Adjunto no accesible:', err);
-    notify?.error?.('No se pudo abrir/descargar el archivo.');
+    notify?.error?.(t('email.attachmentError'));
   }
 }
 
@@ -127,14 +128,14 @@ function ensurePreviewUI(){
     <div class="attpv-modal" role="dialog" aria-modal="true" aria-label="Vista previa">
       <div class="attpv-toolbar">
         <div class="left">
-          <button class="attpv-btn" data-action="zoom-out" title="Alejar">-</button>
-          <button class="attpv-btn" data-action="zoom-in" title="Acercar">+</button>
-          <button class="attpv-btn" data-action="zoom-reset" title="Tamaño 100%">100%</button>
-          <button class="attpv-btn" data-action="zoom-fit" title="Ajustar a ventana">Ajustar</button>
+          <button class="attpv-btn" data-action="zoom-out" data-i18n-title="email.previewZoomOut" title="Alejar">-</button>
+          <button class="attpv-btn" data-action="zoom-in" data-i18n-title="email.previewZoomIn" title="Acercar">+</button>
+          <button class="attpv-btn" data-action="zoom-reset" data-i18n-title="email.previewZoomReset" title="Tamaño 100%">100%</button>
+          <button class="attpv-btn" data-action="zoom-fit" data-i18n-title="email.previewZoomFit" data-i18n="email.previewZoomFit" title="Ajustar">Ajustar</button>
         </div>
         <div class="center"><span class="attpv-title"></span></div>
         <div class="right">
-          <button class="attpv-btn" data-action="close" title="Cerrar">✕</button>
+          <button class="attpv-btn" data-action="close" data-i18n-title="email.previewClose" title="Cerrar">✕</button>
         </div>
       </div>
       <div class="attpv-viewport">
@@ -448,12 +449,13 @@ function renderHtmlEmail(container, rawHtml, fallbackText = '', attachments = []
 
   if (isLargeEmail) {
     // Mostrar indicador de carga
+    const sizeKB = Math.round(htmlSize / 1024);
     container.innerHTML = `
       <div style="padding: 2rem; text-align: center; color: #9ca3af;">
         <div style="margin-bottom: 1rem;">
           <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
         </div>
-        <div>Cargando email grande (${Math.round(htmlSize / 1024)}KB)...</div>
+        <div>${t('email.loadingLargeEmail').replace('{size}', sizeKB)}</div>
       </div>
     `;
   }
@@ -698,7 +700,7 @@ class EmailView {
       spinner.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1rem;">
           <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: #6b7280;"></i>
-          <div style="color: #9ca3af; font-size: 1rem;">Cargando correo...</div>
+          <div style="color: #9ca3af; font-size: 1rem;" data-i18n="email.loadingEmail">Cargando correo...</div>
         </div>
       `;
       chat.appendChild(spinner);
@@ -939,13 +941,13 @@ class EmailView {
     let curr = this.pendingFiles.slice();
     for (const f of files){
       if (curr.length >= MAX_FILES) {
-        notify?.error?.('Máximo 10 adjuntos.');
+        notify?.error?.(t('email.maxAttachments'));
         break;
       }
 
       // 1) Límite por archivo
       if ((f.size || 0) > GMAIL_MAX_PER_FILE){
-        notify?.error?.(`"${f.name}" es demasiado grande (${formatBytes(f.size)}). Límite ~24 MB por archivo.`);
+        notify?.error?.(t('email.fileTooBig').replace('{fileName}', f.name).replace('{fileSize}', formatBytes(f.size)));
         continue; // no lo añadimos
       }
 
@@ -953,7 +955,7 @@ class EmailView {
       const nextTotal = curr.reduce((s, x) => s + (x.size || 0), 0) + (f.size || 0);
       if (nextTotal > GMAIL_MAX_TOTAL_BYTES){
         notify?.error?.(
-          `Superas el límite total (~24 MB). Intento con "${f.name}" → ${formatBytes(nextTotal)}`
+          t('email.totalSizeExceeded').replace('{fileName}', f.name).replace('{totalSize}', formatBytes(nextTotal))
         );
         continue; // no lo añadimos
       }
@@ -1232,16 +1234,16 @@ class EmailView {
       const note = document.createElement('div');
       note.className = 'history-note';
       note.style.textAlign = 'center';
-      note.innerHTML = '<span style="font-size:1.2em;vertical-align:middle;">&#8593;</span> Historial anterior con cliente. <span style="font-size:1.2em;vertical-align:middle;">&#8593;</span>';
+      note.innerHTML = `<span style="font-size:1.2em;vertical-align:middle;">&#8593;</span> ${t('email.previousConversationHistory')} <span style="font-size:1.2em;vertical-align:middle;">&#8593;</span>`;
       hist.appendChild(note);
     }
     // vuelca en los IDs de tu HTML
     document.getElementById('emailFrom').textContent =
-      'De: ' + ((email.return_mail || '').replace(/^<(.+)>$/, '$1') || 'Desconocido');
+      t('email.from') + ': ' + ((email.return_mail || '').replace(/^<(.+)>$/, '$1') || t('email.unknown'));
     document.getElementById('emailDate').textContent =
       this.formatEmailDate(email.date);
     document.getElementById('emailSubject').textContent =
-      'Asunto: ' + (email.subject || '(sin asunto)');
+      t('email.subject') + ': ' + (email.subject || t('email.noSubject'));
 
     // Si tenemos HTML real, lo renderizamos en un iframe aislado (como Gmail)
     const rc = document.getElementById('receivedContent');
@@ -1481,7 +1483,8 @@ class EmailView {
     // Badge de estado de conversación
     if (email.conversation_metadata?.status) {
       const status = email.conversation_metadata.status;
-      badges.push(`<span class="badge conversation"><i class="fas fa-comments"></i> ${status}</span>`);
+      const translatedStatus = this.getConversationStatusText(status);
+      badges.push(`<span class="badge conversation"><i class="fas fa-comments"></i> ${t('email.conversationStatus')}: ${translatedStatus}</span>`);
     }
     
     // Badge de match Shopify
@@ -1490,20 +1493,20 @@ class EmailView {
       
       // Mapear confidence string a valores numéricos y clases CSS
       const confidenceMap = {
-        'high': { value: 95, class: 'high-confidence', text: 'Alta' },
-        'medium': { value: 70, class: 'medium-confidence', text: 'Media' },
-        'low': { value: 40, class: 'low-confidence', text: 'Baja' }
+        'high': { value: 95, class: 'high-confidence', text: t('email.confidenceHigh') },
+        'medium': { value: 70, class: 'medium-confidence', text: t('email.confidenceMedium') },
+        'low': { value: 40, class: 'low-confidence', text: t('email.confidenceLow') }
       };
       
       const confidenceData = confidenceMap[match.confidence] || { value: 0, class: '', text: match.confidence };
-      const matchText = match.matchedBy === 'email' ? 'Pedido conectado por: Email' : 
-                        match.matchedBy === 'phone' ? 'Pedido conectado por: Teléfono' : 
-                        match.matchedBy === 'order' ? 'Pedido conectado por: Nº pedido' : 'Match';
+      const matchText = match.matchedBy === 'email' ? t('email.orderConnectedByEmail') : 
+                        match.matchedBy === 'phone' ? t('email.orderConnectedByPhone') : 
+                        match.matchedBy === 'order' ? t('email.orderConnectedByOrder') : 'Match';
       
       // Solo mostrar si hay confidence válido
       if (confidenceData.value > 0) {
         badges.push(`<span class="badge match ${confidenceData.class}">
-          <i class="fas fa-link"></i> ${matchText} (Confianza ${confidenceData.text})
+          <i class="fas fa-link"></i> ${matchText} (${t('email.confidence')} ${confidenceData.text})
         </span>`);
       }
     }
@@ -1513,7 +1516,8 @@ class EmailView {
       const classes = email.badges.slice(0, 2);
       classes.forEach(cls => {
         const badgeClass = this.getEmailClassBadgeClass(cls);
-        badges.push(`<span class="badge class ${badgeClass}"><i class="fas fa-tag"></i> ${cls}</span>`);
+        const translatedClass = this.translateEmailClass(cls);
+        badges.push(`<span class="badge class ${badgeClass}"><i class="fas fa-tag"></i> ${translatedClass}</span>`);
       });
       if (email.clases_de_email.length > 2) {
         badges.push(`<span class="badge class badge-otros">+${email.clases_de_email.length - 2}</span>`);
@@ -1541,7 +1545,7 @@ class EmailView {
       // Sin pedido vinculado
       orderCard.innerHTML = `
         <div class="no-order-banner">
-          <i class="fas fa-box-open"></i> Sin pedido vinculado
+          <i class="fas fa-box-open"></i> <span data-i18n="email.noOrderLinked">${t('email.noOrderLinked')}</span>
         </div>
         ${email.shopify_customer ? this.renderOrderSelector(email) : ''}
       `;
@@ -1554,7 +1558,7 @@ class EmailView {
       const customer = email.shopify_customer;
       customerCard.innerHTML = this.renderCustomerCard(customer);
     } else {
-      customerCard.innerHTML = '<p style="color: #71717a; font-size: 13px; text-align: center; padding: 20px 0;">No hay información del cliente disponible</p>';
+      customerCard.innerHTML = `<p style="color: #71717a; font-size: 13px; text-align: center; padding: 20px 0;" data-i18n="email.noCustomerInfo">${t('email.noCustomerInfo')}</p>`;
     }
 
     // 4️⃣ ========== PANELES SECUNDARIOS (Acordeones) ==========
@@ -1596,7 +1600,7 @@ class EmailView {
     return `
       <div class="card-title">
         <i class="fas fa-shopping-bag"></i>
-        Pedido
+        <span data-i18n="email.order">${t('email.order')}</span>
       </div>
       
       <div class="order-number-display">
@@ -1608,7 +1612,7 @@ class EmailView {
            target="_blank" 
            class="order-link">
           <i class="fas fa-external-link-alt"></i>
-          Ver en Shopify
+          <span data-i18n="email.viewInShopify">${t('email.viewInShopify')}</span>
         </a>` : ''}
       </div>
       
@@ -1624,21 +1628,21 @@ class EmailView {
         <div class="product-summary-item">
           <div class="product-summary-thumbnail">
             ${item.image ? 
-              `<img src="${item.image}" alt="${item.title || 'Producto'}" loading="lazy">` :
+              `<img src="${item.image}" alt="${item.title || t('email.product')}" loading="lazy">` :
               '<i class="fas fa-box"></i>'
             }
           </div>
           <div class="product-summary-content">
-            <div class="product-summary-title">${item.title || 'Producto'}</div>
+            <div class="product-summary-title">${item.title || t('email.product')}</div>
             <div class="product-summary-price-wrapper">
               <div class="product-summary-price">${this.formatPrice(item.price, order.currency)}</div>
               ${isFullyRefunded ? `
               <div class="refund-status fully-refunded">
-                <i class="fas fa-undo"></i> Reembolsado
+                <i class="fas fa-undo"></i> <span data-i18n="email.refunded">${t('email.refunded')}</span>
               </div>` : ''}
               ${isPartiallyRefunded ? `
               <div class="refund-status partially-refunded">
-                <i class="fas fa-undo"></i> ${refundedQty} reemb. · ${refundableQty} disp.
+                <i class="fas fa-undo"></i> <span data-i18n="email.refundedPartial">${t('email.refundedPartial').replace('{refunded}', refundedQty).replace('{available}', refundableQty)}</span>
               </div>` : ''}
             </div>
           </div>
@@ -1646,7 +1650,7 @@ class EmailView {
           `;
         }).join('')}
         
-        <div class="order-total-summary">Total: ${this.formatPrice(order.total_price, order.currency)}</div>
+        <div class="order-total-summary"><span data-i18n="email.total">${t('email.total')}</span>: ${this.formatPrice(order.total_price, order.currency)}</div>
       </div>
       
       <div class="order-details-summary">
@@ -1665,7 +1669,7 @@ class EmailView {
           <i class="fas fa-truck"></i>
           ${tracking ? 
             `<a href="${tracking.url || '#'}" target="_blank" class="tracking-link">${tracking.number || tracking.code}</a>` :
-            '<span class="value" style="color: #71717a;">Sin tracking</span>'
+            `<span class="value" style="color: #71717a;" data-i18n="email.noTracking">${t('email.noTracking')}</span>`
           }
         </div>
       </div>
@@ -1690,18 +1694,18 @@ class EmailView {
     return `
       <div class="card-title">
         <i class="fas fa-shopping-bag"></i>
-        Múltiples pedidos encontrados
+        <span data-i18n="email.multipleOrdersFound">${t('email.multipleOrdersFound')}</span>
       </div>
       
       <div class="multiple-orders-warning">
         <i class="fas fa-exclamation-triangle"></i>
-        <span>Se encontraron ${orders.length} pedidos para este cliente. Selecciona el correcto:</span>
+        <span data-i18n="email.multipleOrdersMessage">${t('email.multipleOrdersMessage').replace('{count}', orders.length)}</span>
       </div>
       
       <div class="order-selector-controls">
         <div class="custom-dropdown">
           <button class="dropdown-trigger" id="orderDropdownTrigger">
-            <span class="dropdown-label">Selecciona un pedido...</span>
+            <span class="dropdown-label" data-i18n="email.selectOrder">${t('email.selectOrder')}</span>
             <i class="fas fa-chevron-down dropdown-icon"></i>
           </button>
           <div class="dropdown-menu" id="orderDropdownMenu">
@@ -1716,7 +1720,7 @@ class EmailView {
         
         <button id="associateOrderBtn" class="btn-associate-order" disabled>
           <i class="fas fa-link"></i>
-          Asociar pedido
+          <span data-i18n="email.associateOrder">${t('email.associateOrder')}</span>
         </button>
       </div>
       
@@ -1750,10 +1754,10 @@ class EmailView {
     return `
       <div class="card-title">
         <i class="fas fa-user"></i>
-        Cliente
+        <span data-i18n="email.customer">${t('email.customer')}</span>
       </div>
       
-      <div class="customer-name-display">${customer.name || customer.email || 'Cliente sin nombre'}</div>
+      <div class="customer-name-display">${customer.name || customer.email || t('email.customerNameFallback')}</div>
       
       ${location ? `
       <div class="customer-location">
@@ -1763,11 +1767,11 @@ class EmailView {
       
       <div class="customer-metrics">
         <div class="metric-item">
-          <div class="metric-label">Pedidos</div>
+          <div class="metric-label" data-i18n="email.orders">${t('email.orders')}</div>
           <div class="metric-value">${customer.orders_count || 0}</div>
         </div>
         <div class="metric-item">
-          <div class="metric-label">Total gastado</div>
+          <div class="metric-label" data-i18n="email.totalSpent">${t('email.totalSpent')}</div>
           <div class="metric-value highlight">${this.formatPrice(customer.total_spent, 'EUR')}</div>
         </div>
       </div>
@@ -1809,7 +1813,7 @@ class EmailView {
         <div class="accordion-header">
           <div class="accordion-title">
             <i class="fas fa-list"></i>
-            Detalles del pedido
+            <span data-i18n="email.orderDetailsPanel">${t('email.orderDetailsPanel')}</span>
           </div>
           <i class="fas fa-chevron-down accordion-icon"></i>
         </div>
@@ -1827,12 +1831,12 @@ class EmailView {
             <div class="product-row">
               <div class="product-thumb">
                 ${item.image ? 
-                  `<img src="${item.image}" alt="${item.title || 'Producto'}" loading="lazy">` :
+                  `<img src="${item.image}" alt="${item.title || t('email.product')}" loading="lazy">` :
                   '<i class="fas fa-box"></i>'
                 }
               </div>
               <div class="product-info">
-                <div class="product-name">${item.title || 'Producto'}</div>
+                <div class="product-name">${item.title || t('email.product')}</div>
                 ${item.variant ? `<div class="product-variant">${item.variant}</div>` : ''}
                 ${item.sku ? `<div class="product-sku">SKU: ${item.sku}</div>` : ''}
               </div>
@@ -1842,25 +1846,25 @@ class EmailView {
                   <div class="product-price">${this.formatPrice(item.price, order.currency)}</div>
                   ${isFullyRefunded ? `
                   <div class="refund-status fully-refunded">
-                    <i class="fas fa-undo"></i> Reembolsado
+                    <i class="fas fa-undo"></i> <span data-i18n="email.refunded">${t('email.refunded')}</span>
                   </div>` : ''}
                   ${isPartiallyRefunded ? `
                   <div class="refund-status partially-refunded">
-                    <i class="fas fa-undo"></i> ${refundedQty} reembolsado${refundedQty > 1 ? 's' : ''} · ${refundableQty} disponible${refundableQty > 1 ? 's' : ''}
+                    <i class="fas fa-undo"></i> <span data-i18n="email.refundedPartial">${t('email.refundedPartial').replace('{refunded}', refundedQty).replace('{available}', refundableQty)}</span>
                   </div>` : ''}
                 </div>
               </div>
             </div>
               `;
             }).join('')}
-          </div>` : '<p style="color: #71717a; font-size: 12px;">Sin productos</p>'}
+          </div>` : `<p style="color: #71717a; font-size: 12px;" data-i18n="email.noProducts">${t('email.noProducts')}</p>`}
           
           ${order.shipping_address || order.billing_address ? `
           <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.04);">
             <div class="address-grid">
               ${order.shipping_address ? `
               <div class="address-block">
-                <div class="address-label"><i class="fas fa-shipping-fast"></i> Dirección de envío</div>
+                <div class="address-label"><i class="fas fa-shipping-fast"></i> <span data-i18n="email.shippingAddress">${t('email.shippingAddress')}</span></div>
                 <div class="address-text">
                   ${order.shipping_address.address1 || ''}<br>
                   ${order.shipping_address.address2 ? order.shipping_address.address2 + '<br>' : ''}
@@ -1871,7 +1875,7 @@ class EmailView {
               
               ${order.billing_address ? `
               <div class="address-block">
-                <div class="address-label"><i class="fas fa-file-invoice"></i> Dirección de facturación</div>
+                <div class="address-label"><i class="fas fa-file-invoice"></i> <span data-i18n="email.billingAddress">${t('email.billingAddress')}</span></div>
                 <div class="address-text">
                   ${order.billing_address.address1 || ''}<br>
                   ${order.billing_address.address2 ? order.billing_address.address2 + '<br>' : ''}
@@ -1886,7 +1890,7 @@ class EmailView {
             <div class="info-grid">
               ${order.gateway ? `
               <div class="info-item">
-                <span class="info-item-label">Método de pago</span>
+                <span class="info-item-label" data-i18n="email.paymentMethod">${t('email.paymentMethod')}</span>
                 <span class="info-item-value">${order.gateway}</span>
               </div>` : ''}
               
@@ -1894,7 +1898,7 @@ class EmailView {
               
               ${order.note ? `
               <div class="info-item">
-                <span class="info-item-label">Nota del pedido</span>
+                <span class="info-item-label" data-i18n="email.orderNote">${t('email.orderNote')}</span>
                 <span class="info-item-value">${order.note}</span>
               </div>` : ''}
             </div>
@@ -1913,7 +1917,7 @@ class EmailView {
         <div class="accordion-header">
           <div class="accordion-title">
             <i class="fas fa-user-circle"></i>
-            Detalles del cliente
+            <span data-i18n="email.customerDetailsPanel">${t('email.customerDetailsPanel')}</span>
           </div>
           <i class="fas fa-chevron-down accordion-icon"></i>
         </div>
@@ -1921,13 +1925,13 @@ class EmailView {
           <div class="info-grid">
             ${customer.shopify_id ? `
             <div class="info-item">
-              <span class="info-item-label">ID de Shopify</span>
+              <span class="info-item-label" data-i18n="email.shopifyId">${t('email.shopifyId')}</span>
               <span class="info-item-value">${customer.shopify_id}</span>
             </div>` : ''}
             
             ${customer.name ? `
             <div class="info-item">
-              <span class="info-item-label">Nombre completo</span>
+              <span class="info-item-label" data-i18n="email.fullName">${t('email.fullName')}</span>
               <span class="info-item-value">${customer.name}</span>
             </div>` : ''}
             
@@ -1939,21 +1943,21 @@ class EmailView {
             
             ${customer.phone ? `
             <div class="info-item">
-              <span class="info-item-label">Teléfono</span>
+              <span class="info-item-label" data-i18n="email.phone">${t('email.phone')}</span>
               <span class="info-item-value">${customer.phone}</span>
             </div>` : ''}
 
             
             ${customer.last_order_at ? `
             <div class="info-item">
-              <span class="info-item-label">Último pedido</span>
+              <span class="info-item-label" data-i18n="email.lastOrder">${t('email.lastOrder')}</span>
               <span class="info-item-value">${this.formatShopifyDate(customer.last_order_at)}</span>
             </div>` : ''}
             
             ${customer.tags && customer.tags.length > 0 ? `
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.04);">
               <div class="info-item-label" style="margin-bottom: 8px;">
-                <i class="fas fa-tags"></i> Etiquetas
+                <i class="fas fa-tags"></i> <span data-i18n="email.tags">${t('email.tags')}</span>
               </div>
               <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                 ${customer.tags.map(tag => `<span style="display: inline-block; padding: 4px 8px; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 4px; font-size: 11px; color: #a78bfa;">${tag}</span>`).join('')}
@@ -1963,7 +1967,7 @@ class EmailView {
             ${customer.default_address ? `
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.04);">
               <div class="address-block">
-                <div class="address-label"><i class="fas fa-home"></i> Dirección por defecto</div>
+                <div class="address-label"><i class="fas fa-home"></i> <span data-i18n="email.defaultAddress">${t('email.defaultAddress')}</span></div>
                 <div class="address-text">
                   ${customer.default_address.address1 || ''}<br>
                   ${customer.default_address.address2 ? customer.default_address.address2 + '<br>' : ''}
@@ -1988,7 +1992,7 @@ class EmailView {
         <div class="accordion-header">
           <div class="accordion-title">
             <i class="fas fa-comments"></i>
-            Detalles de la conversación
+            <span data-i18n="email.conversationDetailsPanel">${t('email.conversationDetailsPanel')}</span>
           </div>
           <i class="fas fa-chevron-down accordion-icon"></i>
         </div>
@@ -1996,42 +2000,42 @@ class EmailView {
           <div class="info-grid">
             ${conversation.status ? `
             <div class="info-item">
-              <span class="info-item-label">Estado</span>
-              <span class="info-item-value">${conversation.status}</span>
+              <span class="info-item-label" data-i18n="email.status">${t('email.status')}</span>
+              <span class="info-item-value">${this.getConversationStatusText(conversation.status)}</span>
             </div>` : ''}
             
             ${conversation.inbound_count !== undefined ? `
             <div class="info-item">
-              <span class="info-item-label">Mensajes entrantes</span>
+              <span class="info-item-label" data-i18n="email.inboundMessages">${t('email.inboundMessages')}</span>
               <span class="info-item-value">${conversation.inbound_count}</span>
             </div>` : ''}
             
             ${conversation.outbound_count !== undefined ? `
             <div class="info-item">
-              <span class="info-item-label">Mensajes salientes</span>
+              <span class="info-item-label" data-i18n="email.outboundMessages">${t('email.outboundMessages')}</span>
               <span class="info-item-value">${conversation.outbound_count}</span>
             </div>` : ''}
             
             ${conversation.last_activity_at ? `
             <div class="info-item">
-              <span class="info-item-label">Última actividad</span>
+              <span class="info-item-label" data-i18n="email.lastActivity">${t('email.lastActivity')}</span>
               <span class="info-item-value">${this.formatShopifyDate(conversation.last_activity_at)}</span>
             </div>` : ''}
             
             ${match ? `
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.04);">
               <div class="info-item">
-                <span class="info-item-label">Match por</span>
+                <span class="info-item-label" data-i18n="email.matchedBy">${t('email.matchedBy')}</span>
                 <span class="info-item-value">${match.matchedBy || 'N/A'}</span>
               </div>
               <div class="info-item">
-                <span class="info-item-label">Confianza del match</span>
+                <span class="info-item-label" data-i18n="email.matchConfidence">${t('email.matchConfidence')}</span>
                 <span class="info-item-value">${this.formatConfidenceText(match.confidence)}</span>
               </div>
               ${match.ambiguous !== undefined ? `
               <div class="info-item">
-                <span class="info-item-label">¿Ambiguo?</span>
-                <span class="info-item-value">${match.ambiguous ? 'Sí' : 'No'}</span>
+                <span class="info-item-label" data-i18n="email.ambiguous">${t('email.ambiguous')}</span>
+                <span class="info-item-value">${match.ambiguous ? t('email.yes') : t('email.no')}</span>
               </div>` : ''}
             </div>` : ''}
           </div>
@@ -2154,12 +2158,12 @@ class EmailView {
       
       try {
         newAssociateBtn.disabled = true;
-        newAssociateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Asociando...';
+        newAssociateBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('email.associating')}`;
         
         // Llamar al endpoint para asociar el order
         const conversationId = email.conversationId;
         if (!conversationId) {
-          throw new Error('No se encontró conversationId');
+          throw new Error(t('email.conversationIdNotFound'));
         }
         
         const res = await fetchWithAuth('/emails/select_order', {
@@ -2177,7 +2181,7 @@ class EmailView {
         }
         
         // Éxito: actualizar UI
-        notify.success('Pedido asociado correctamente');
+        notify.success(t('email.orderAssociatedSuccess'));
         
         // Recargar el email actual para reflejar el cambio
         await this.reloadAroundIndex();
@@ -2185,11 +2189,11 @@ class EmailView {
         
       } catch (error) {
         console.error('[setupOrderSelector] Error al asociar pedido:', error);
-        notify.error(`Error al asociar pedido: ${error.message}`);
+        notify.error(t('email.orderAssociationError').replace('{error}', error.message));
         
         // Restaurar botón
         newAssociateBtn.disabled = false;
-        newAssociateBtn.innerHTML = '<i class="fas fa-link"></i> Asociar pedido';
+        newAssociateBtn.innerHTML = `<i class="fas fa-link"></i> ${t('email.associateOrder')}`;
       }
     });
   }
@@ -2225,7 +2229,7 @@ class EmailView {
       } else {
         btnReembolso.disabled = true;
         btnReembolso.onclick = null;
-        btnReembolso.setAttribute('data-tooltip', 'No hay items pendientes de reembolso');
+        btnReembolso.setAttribute('data-tooltip', t('email.noRefundableItems'));
       }
     } else {
       btnReembolso.disabled = true;
@@ -2405,14 +2409,30 @@ class EmailView {
    */
   getOrderStatusText(status) {
     const textMap = {
-      'paid': 'Pagado',
-      'pending': 'Pendiente',
-      'refunded': 'Reembolsado',
-      'partially_refunded': 'Reembolso Parcial',
-      'voided': 'Anulado',
-      'authorized': 'Autorizado'
+      'paid': t('email.orderStatusPaid'),
+      'pending': t('email.orderStatusPending'),
+      'refunded': t('email.orderStatusRefunded'),
+      'partially_refunded': t('email.orderStatusPartiallyRefunded'),
+      'voided': t('email.orderStatusVoided'),
+      'authorized': t('email.orderStatusAuthorized')
     };
-    return textMap[status] || status || 'Desconocido';
+    return textMap[status] || status || t('email.unknown');
+  }
+
+  /**
+   * Obtiene el texto legible para el estado de conversación
+   */
+  getConversationStatusText(status) {
+    const textMap = {
+      'open': t('email.conversationStatusOpen'),
+      'closed': t('email.conversationStatusClosed'),
+      'pending': t('email.conversationStatusPending'),
+      'resolved': t('email.conversationStatusResolved'),
+      'reserved': t('email.conversationStatusReserved'),
+      'confirmed': t('email.conversationStatusConfirmed'),
+      'cancelled': t('email.conversationStatusCancelled')
+    };
+    return textMap[status] || status || t('email.unknown');
   }
 
   /**
@@ -2420,13 +2440,13 @@ class EmailView {
    */
   getFulfillmentStatusText(status) {
     const textMap = {
-      'fulfilled': 'Enviado',
-      'partial': 'Envío Parcial',
-      'unfulfilled': 'Pendiente de Envío',
-      'null': 'Pendiente de Envío',
-      '': 'Pendiente de Envío'
+      'fulfilled': t('email.fulfillmentFulfilled'),
+      'partial': t('email.fulfillmentPartial'),
+      'unfulfilled': t('email.fulfillmentUnfulfilled'),
+      'null': t('email.fulfillmentUnfulfilled'),
+      '': t('email.fulfillmentUnfulfilled')
     };
-    return textMap[status] || status || 'Pendiente de Envío';
+    return textMap[status] || status || t('email.fulfillmentUnfulfilled');
   }
 
   formatEmailDate(dateString) {
@@ -2555,7 +2575,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       if (!res.ok) {
         const err = await res.json();
         console.error('Error al enviar la respuesta:', res.status, err);
-        notify.error('Error al enviar el correo ❌');
+        notify.error(t('email.sendError'));
         return;
       }
       const payload = await res.json().catch(()=> ({}));
@@ -2655,6 +2675,29 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
     
     const normalized = className.toLowerCase().trim();
     return classMap[normalized] || 'badge-otros';
+  }
+
+  /**
+   * Traduce el nombre de la clase de email
+   */
+  translateEmailClass(className) {
+    const translationMap = {
+      'postventa': t('email.classPostventa'),
+      'envios': t('email.classEnvios'),
+      'envío': t('email.classEnvios'),
+      'envíos': t('email.classEnvios'),
+      'producto': t('email.classProducto'),
+      'productos': t('email.classProducto'),
+      'tienda': t('email.classTienda'),
+      'shopify': t('email.classShopify'),
+      'comerciales': t('email.classComerciales'),
+      'comercial': t('email.classComerciales'),
+      'otros': t('email.classOtros'),
+      'otro': t('email.classOtros')
+    };
+    
+    const normalized = className.toLowerCase().trim();
+    return translationMap[normalized] || className;
   }
 
   /**
@@ -2910,15 +2953,14 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       '€';
 
     if (!rawCode || Number.isNaN(valueNum) || valueNum <= 0) {
-      summaryMain.textContent = 'Define código e importe del descuento';
+      summaryMain.textContent = t('email.discountSummaryMain');
     } else if (type === 'PERCENT') {
-      summaryMain.textContent = `${valueNum.toFixed(0)} % de descuento`;
+      summaryMain.textContent = t('email.discountSummaryPercent').replace('{value}', valueNum.toFixed(0));
     } else {
-      summaryMain.textContent = `${valueNum.toFixed(2)} ${currency} de descuento`;
+      summaryMain.textContent = t('email.discountSummaryAmount').replace('{value}', valueNum.toFixed(2)).replace('{currency}', currency);
     }
 
-    summaryDetails.textContent =
-      '1 uso · sin mínimo de compra · sin combinaciones · activo al crearse.';
+    summaryDetails.textContent = t('email.discountSummaryDetails');
 
     submitBtn.disabled = !isValid || (this.discountState && this.discountState.isSubmitting);
   }
@@ -3007,7 +3049,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(rawCode);
-          notify.info('Código copiado al portapapeles');
+          notify.info(t('email.discountCopied'));
         }
       } catch (e) {
         // no pasa nada si falla
@@ -3021,10 +3063,10 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       this.closeDiscountModal();
     } catch (error) {
       console.error('[discount] Error al crear descuento:', error);
-      notify.error(error.message || 'Error al crear el descuento.');
+      notify.error(error.message || t('email.discountError'));
       this.discountState.isSubmitting = false;
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-percent"></i> Crear código';
+      submitBtn.innerHTML = `<i class="fas fa-percent"></i> ${t('email.createDiscountButton')}`;
     }
   }
 
@@ -3081,7 +3123,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
     // Si no hay items refundables ni shipping, no abrir el modal
     const hasRefundableShipping = parseFloat(order.total_shipping || 0) > 0;
     if (refundableItems.length === 0 && !hasRefundableShipping) {
-      notify.error('No hay items pendientes de reembolso');
+      notify.error(t('email.noRefundableItems'));
       return;
     }
 
@@ -3414,7 +3456,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
         const shopifyUrl = `https://admin.shopify.com/store/${this.shopName}/orders/${order.shopify_id}`;
         window.open(shopifyUrl, '_blank');
       } else {
-        notify.error('No se pudo encontrar el ID de Shopify del pedido');
+        notify.error(t('email.shopifyIdNotFound'));
       }
     };
   }
@@ -3473,7 +3515,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.detail || 'Error al calcular preview');
+        throw new Error(error.detail || t('email.refundPreviewError'));
       }
       
       const data = await res.json();
@@ -3528,7 +3570,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       
     } catch (error) {
       console.error('Error en preview:', error);
-      notify.error(error.message || 'Error al calcular el reembolso');
+      notify.error(error.message || t('email.refundCalculationError'));
       this.showSummaryLoading(false);
     }
   }
@@ -3697,7 +3739,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       } else if (sug && manualAmount > 0) {
         const first = (sug.suggestedTransactions && sug.suggestedTransactions[0]) || null;
         if (!first) {
-          notify.error('No se pudo determinar la transacción base para reembolso manual');
+          notify.error(t('email.refundTransactionNotFound'));
           this.refundState.isSubmitting = false;
           submitBtn.disabled = false;
           submitBtn.innerHTML = `<i class="fas fa-undo"></i> Refund $${this.refundState.suggestedRefund?.totals?.total || '0.00'}`;
@@ -3720,13 +3762,13 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.detail || 'Error al crear el reembolso');
+        throw new Error(error.detail || t('email.refundError'));
       }
       
       const data = await res.json();
       
       // ✅ Éxito - mantener spinner mientras se cierra el modal y recarga
-      notify.success('Reembolso creado exitosamente');
+      notify.success(t('email.refundSuccess'));
       
       // Cerrar modal (el spinner sigue visible hasta que se cierre)
       this.closeRefundModal();
@@ -3737,7 +3779,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       
     } catch (error) {
       console.error('Error al crear refund:', error);
-      notify.error(error.message || 'Error al crear el reembolso');
+      notify.error(error.message || t('email.refundError'));
       
       // ❌ Error - restaurar botón al estado anterior
       const submitBtn = document.getElementById('submitRefundBtn');
@@ -3815,5 +3857,8 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
   
 }
 
-document.addEventListener('DOMContentLoaded', () => new EmailView());
+document.addEventListener('DOMContentLoaded', () => {
+  initI18n();
+  new EmailView();
+});
 
