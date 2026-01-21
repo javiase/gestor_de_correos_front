@@ -743,7 +743,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 7) Extraer datos del usuario (ESTRUCTURA NUEVA: payments.*)
   const billingSource = String(data.billing_source || "stripe").toLowerCase();
-  const provider = billingSource === "shopify" ? (data.shopify || {}) : (data.stripe || {});
+  const provider =
+    (billingSource === "shopify" ? data.shopify : data.stripe) ||
+    {
+      plan: data.plan,
+      monthly_cap: data.limit || null,
+      current_period_end: data.period_end || null,
+      trial_end: data.trial_end || null,
+      free_block_until: data.free_block_until || null,
+      pending: (data.pending_change_effective || data.pending_plan_change || data.pending_monthly_cap_change)
+        ? {
+            kind: "legacy_pending",
+            plan: data.pending_plan_change || null,
+            monthly_cap: data.pending_monthly_cap_change ?? null,
+            effective_at: data.pending_change_effective || null,
+          }
+        : null,
+    };
 
   // 🔄 FALLBACK: Si payments está vacío, intentar leer del formato viejo (raíz del documento)
   const isActive = !!data.active;
@@ -877,7 +893,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const p = provider.pending;
   if (p) {
-    pendingPlan = p.plan || (p.kind === "downgrade_to_free" ? "free" : null);
+    const kind = String(p.kind || "").trim();
+
+    pendingPlan = (kind === "downgrade_to_free_next_cycle") ? "free" : (p.plan ?? null);
+
     pendingConversations = (p.monthly_cap ?? null);
     pendingEffectiveDate = (p.effective_at ?? null);
   }
