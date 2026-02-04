@@ -240,7 +240,7 @@ body::-webkit-scrollbar-thumb:hover,
 }
 
 .info-icon {
-  color: #fbbf24;
+  color: #ffcd4d;
   font-size: 0.875rem;
   transition: color 0.2s ease;
 }
@@ -552,7 +552,7 @@ body::-webkit-scrollbar-thumb:hover,
 
 .pending-change-info p {
   margin: 0;
-  color: #fbbf24;
+  color: #ffcd4d;
   font-size: 0.875rem;
   font-weight: 500;
   word-wrap: break-word; /* Permitir salto de línea */

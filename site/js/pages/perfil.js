@@ -2,7 +2,7 @@
 import { initSidebar } from '/js/components/sidebar.js';
 import { fetchWithAuth, logout, getToken } from '/js/utils/api.js';
 import { LIMITS } from '/js/config.js'; 
-import { isProfileComplete, enforceFlowGate, markCompletionInBackend } from '/js/utils/flow-gate.js';
+import { isProfileComplete, enforceFlowGate, markCompletionInBackend, isOnboardingComplete } from '/js/utils/flow-gate.js';
 import { notify } from '/js/utils/notify.js';
 import { t, getCurrentLocale, setLocale, initI18n } from '/js/utils/i18n.js';
 
@@ -160,6 +160,9 @@ class UserProfile {
         // Inicializar sistema i18n
         initI18n();
         
+        // Populate translated dropdowns
+        this.populateTranslatedDropdowns();
+        
         await this.loadInitialData();
 
         const params = new URLSearchParams(window.location.search);
@@ -177,6 +180,12 @@ class UserProfile {
         // Cargar la firma DESPUÉS de inicializar el editor
         this.setSignatureHTML(this.currentData?.signature_html || '');
 
+        // 🆕 Cargar datos de referidos
+        await this.loadReferralData();
+        
+        // 🆕 Configurar sección de aplicar código de referido
+        this.setupReferralCodeSection();
+
         document.addEventListener('input', (e) => {
             const el = e.target;
             if (!el || !('value' in el)) return;
@@ -190,7 +199,85 @@ class UserProfile {
         this.setupFormValidation();
         this.updateDisplayInfo();
         
+        // Listen for language changes to repopulate dropdowns
+        window.addEventListener('locale-changed', () => {
+            this.populateTranslatedDropdowns();
+        });
+        
         console.log('User Profile initialized');
+    }
+    
+    /**
+     * Populate dropdowns with translated options
+     */
+    populateTranslatedDropdowns() {
+        // Business category dropdown
+        const businessCategorySelect = document.getElementById('businessCategory');
+        if (businessCategorySelect) {
+            const currentValue = businessCategorySelect.value;
+            
+            // Define options with their value and translation key
+            const categoryOptions = [
+                { value: '', key: 'profile.businessCategoryPlaceholder', disabled: true, selected: true },
+                { value: 'fashion', key: 'profile.categoryFashion' },
+                { value: 'electronics', key: 'profile.categoryElectronics' },
+                { value: 'books', key: 'profile.categoryBooks' },
+                { value: 'home', key: 'profile.categoryHome' },
+                { value: 'other', key: 'profile.categoryOther' }
+            ];
+            
+            // Clear and repopulate
+            businessCategorySelect.innerHTML = '';
+            categoryOptions.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = t(opt.key);
+                if (opt.disabled) option.disabled = true;
+                if (opt.selected && !currentValue) option.selected = true;
+                businessCategorySelect.appendChild(option);
+            });
+            
+            // Restore previous value if exists
+            if (currentValue) {
+                businessCategorySelect.value = currentValue;
+            }
+        }
+        
+        // Country dropdown
+        const countrySelect = document.getElementById('storeCountry');
+        if (countrySelect) {
+            const currentValue = countrySelect.value;
+            
+            // Define options with their value and translation key
+            const countryOptions = [
+                { value: 'US', key: 'profile.countryUS' },
+                { value: 'CA', key: 'profile.countryCA' },
+                { value: 'UK', key: 'profile.countryUK' },
+                { value: 'DE', key: 'profile.countryDE' },
+                { value: 'FR', key: 'profile.countryFR' },
+                { value: 'ES', key: 'profile.countryES' },
+                { value: 'IT', key: 'profile.countryIT' },
+                { value: 'AU', key: 'profile.countryAU' },
+                { value: 'JP', key: 'profile.countryJP' },
+                { value: 'OTHER', key: 'profile.countryOTHER' }
+            ];
+            
+            // Clear and repopulate
+            countrySelect.innerHTML = '';
+            countryOptions.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = t(opt.key);
+                countrySelect.appendChild(option);
+            });
+            
+            // Restore previous value if exists, otherwise default to 'US'
+            if (currentValue) {
+                countrySelect.value = currentValue;
+            } else {
+                countrySelect.value = 'US';
+            }
+        }
     }
     
     applyMaxLengthConstraints() {
@@ -286,7 +373,6 @@ class UserProfile {
         this._setValue('lastName',      this.currentData.lastName);
         this._setValue('personalEmail', this.currentData.personalEmail || '');
         this._setValue('personalPhone', this.currentData.personalPhone);
-        document.getElementById('timezone').value = this.currentData.timezone || 'UTC+1';
         document.getElementById('preferredLanguage').value = this.currentData.language || 'es';
 
         // Maestro de horarios (off por defecto si no viene del backend)
@@ -1009,7 +1095,9 @@ class UserProfile {
         const trialEnd = this.getTrialEndDate(this.currentData);
         if (trialEnd) {
             // Tooltip: cuándo termina exactamente (hora local)
-            badgeEl.title = `Termina el ${trialEnd.toLocaleString('es-ES', {
+            const currentLocale = getCurrentLocale();
+            const localeCode = currentLocale === 'es' ? 'es-ES' : 'en-US';
+            badgeEl.title = `${t('profile.trialEndsOn')} ${trialEnd.toLocaleString(localeCode, {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric',
@@ -1351,7 +1439,6 @@ class UserProfile {
             lastName: document.getElementById('lastName').value,
             personalEmail: document.getElementById('personalEmail').value,
             personalPhone: document.getElementById('personalPhone').value,
-            timezone: document.getElementById('timezone').value,
             language: document.getElementById('preferredLanguage').value,
             
             // Notifications (con validación para evitar null)
@@ -1494,9 +1581,8 @@ class UserProfile {
             lines.push(`Teléfono de contacto: ${info.storePhone}`);
         }
 
-        // Idioma y zona horaria
+        // Idioma
         if (info.language) lines.push(`Idioma principal: ${info.language}`);
-        if (info.timezone) lines.push(`Zona horaria: ${info.timezone}`);
 
         // Notificaciones (si te interesa que el escritor/crítico las conozcan)
         if (typeof info.emailNotifications === "boolean") {
@@ -1786,6 +1872,260 @@ class UserProfile {
                 notify.error('Error eliminando la cuenta. Inténtalo de nuevo.');
             }
         });
+    }
+
+    /* ──────────────────────────────────────────────────────────────
+     * REFERRALS SECTION
+     * ────────────────────────────────────────────────────────────── */
+    
+    async loadReferralData() {
+        try {
+            // Cargar mi código
+            await this.loadMyReferralCode();
+            
+            // Cargar estadísticas
+            await this.loadReferralStats();
+        } catch (err) {
+            console.error('[perfil] Error loading referral data:', err);
+        }
+    }
+
+    async loadMyReferralCode() {
+        const displayEl = document.getElementById('myReferralCodeDisplay');
+        if (!displayEl) return;
+
+        try {
+            // El código viene directamente en el store
+            const code = this.currentData?.my_referral_code;
+            
+            if (code) {
+                displayEl.innerHTML = `
+                    <div class="referral-code-value">
+                        <span class="referral-code-text">${code}</span>
+                        <button class="referral-code-copy-btn" onclick="window.userProfile.copyReferralCode('${code}')">
+                            <i class="fas fa-copy"></i>
+                            <span data-i18n="referrals.copyCode">${t('referrals.copyCode')}</span>
+                        </button>
+                    </div>
+                `;
+            } else {
+                displayEl.innerHTML = `
+                    <div class="referral-code-no-code">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-i18n="referrals.noCodeYet">${t('referrals.noCodeYet')}</span>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error('[perfil] Error loading referral code:', err);
+            displayEl.innerHTML = `
+                <div class="referral-code-no-code">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span data-i18n="referrals.errorLoadingStats">${t('referrals.errorLoadingStats')}</span>
+                </div>
+            `;
+        }
+    }
+
+    async loadReferralStats() {
+        try {
+            const res = await fetchWithAuth('/referrals/my-stats');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            const data = await res.json();
+            
+            // Actualizar estadísticas
+            document.getElementById('totalInvites').textContent = data.total_invites || 0;
+            document.getElementById('invitesPaid').textContent = data.invites_paid || 0;
+            document.getElementById('invitesTrial').textContent = data.invites_trial || 0;
+            document.getElementById('conversationsEarned').textContent = data.total_conversations_earned || 0;
+        } catch (err) {
+            console.error('[perfil] Error loading referral stats:', err);
+            // Mostrar valores por defecto
+            document.getElementById('totalInvites').textContent = '-';
+            document.getElementById('invitesPaid').textContent = '-';
+            document.getElementById('invitesTrial').textContent = '-';
+            document.getElementById('conversationsEarned').textContent = '-';
+        }
+    }
+
+    escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    copyReferralCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            notify.success(t('referrals.codeCopied'));
+        }).catch(err => {
+            console.error('[perfil] Error copying code:', err);
+            // Fallback: crear input temporal
+            const input = document.createElement('input');
+            input.value = code;
+            document.body.appendChild(input);
+            input.select();
+            try {
+                document.execCommand('copy');
+                notify.success(t('referrals.codeCopied'));
+            } catch (e) {
+                notify.error(t('common.error'));
+            }
+            document.body.removeChild(input);
+        });
+    }
+
+    setupReferralCodeSection() {
+        const sectionEl = document.getElementById('referralCodeApplySection');
+        if (!sectionEl) {
+            console.warn('[perfil] setupReferralCodeSection: section not found');
+            return;
+        }
+
+        // 🔒 Solo mostrar si el onboarding NO está completo
+        const onboardingCompleted = this.currentData?.onboarding_completed || isOnboardingComplete();
+        
+        if (onboardingCompleted) {
+            console.log('[perfil] Onboarding ya completado, ocultando sección de código de referido');
+            sectionEl.style.display = 'none';
+            return;
+        }
+
+        // Mostrar la sección (por si estaba oculta)
+        sectionEl.style.display = 'block';
+
+        const inputEl = document.getElementById('referralCodeInput');
+        const validateBtn = document.getElementById('validateCodeBtn');
+        const applyBtn = document.getElementById('applyCodeBtn');
+        const messageEl = document.getElementById('referralCodeMessage');
+
+        if (!inputEl || !validateBtn || !applyBtn || !messageEl) {
+            console.warn('[perfil] setupReferralCodeSection: missing elements');
+            return;
+        }
+
+        let validatedCode = null;
+        let validatedKind = null; // 'user' or 'partner'
+
+        const showMessage = (msg, type = 'info') => {
+            messageEl.textContent = msg;
+            messageEl.className = `referral-code-message ${type}`;
+            messageEl.style.display = 'flex';
+        };
+
+        const hideMessage = () => {
+            messageEl.style.display = 'none';
+            messageEl.textContent = '';
+        };
+
+        const resetValidation = () => {
+            validatedCode = null;
+            validatedKind = null;
+            applyBtn.disabled = true;
+            applyBtn.style.display = 'none';
+        };
+
+        // Verificar si ya se aplicó un código
+        const checkIfCodeAlreadyApplied = async () => {
+            const applied = localStorage.getItem('referral_code_applied');
+            if (applied) {
+                showMessage(t('onboarding.codeAlreadyApplied'), 'warning');
+                inputEl.disabled = true;
+                validateBtn.disabled = true;
+                applyBtn.disabled = true;
+                return true;
+            }
+            return false;
+        };
+
+        // Aplicar código (valida y aplica en un solo paso)
+        const validateCode = async () => {
+            const code = inputEl.value.trim().toUpperCase();
+            if (!code) {
+                showMessage(t('common.required'), 'warning');
+                resetValidation();
+                return;
+            }
+
+            validateBtn.disabled = true;
+            validateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t('common.applying');
+
+            try {
+                const res = await fetchWithAuth('/referrals/apply-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    if (res.status === 404) {
+                        showMessage(t('onboarding.codeInvalid'), 'error');
+                    } else if (res.status === 400) {
+                        showMessage(errorData.detail || t('onboarding.codeInvalid'), 'error');
+                    } else {
+                        throw new Error(errorData.detail || `HTTP ${res.status}`);
+                    }
+                    resetValidation();
+                    validateBtn.disabled = false;
+                    validateBtn.innerHTML = '<i class="fas fa-check"></i> ' + t('onboarding.validateCode');
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (data.success) {
+                    validatedCode = code;
+                    validatedKind = data.source_kind;
+
+                    // Marcar como aplicado en localStorage
+                    localStorage.setItem('referral_code_applied', code);
+
+                    // Mensaje de éxito con número de conversaciones
+                    const conversations = data.reward_conversations || 0;
+                    const successMsg = t('onboarding.conversationsWhenPaid', { conversations });
+                    showMessage(`+${conversations} ${successMsg}`, 'success');
+
+                    // Deshabilitar inputs permanentemente después de aplicar
+                    inputEl.disabled = true;
+                    validateBtn.disabled = true;
+
+                    // Recargar estadísticas después de aplicar el código
+                    setTimeout(() => {
+                        this.loadReferralData();
+                    }, 1500);
+                } else {
+                    showMessage(t('onboarding.codeInvalid'), 'error');
+                    resetValidation();
+                    validateBtn.disabled = false;
+                    validateBtn.innerHTML = '<i class="fas fa-check"></i> ' + t('onboarding.validateCode');
+                }
+            } catch (err) {
+                console.error('[perfil] Error applying code:', err);
+                showMessage(err.message || t('common.error'), 'error');
+                resetValidation();
+                validateBtn.disabled = false;
+                validateBtn.innerHTML = '<i class="fas fa-check"></i> ' + t('onboarding.validateCode');
+            }
+        };
+
+        // Event listeners
+        validateBtn.addEventListener('click', validateCode);
+
+        inputEl.addEventListener('input', () => {
+            hideMessage();
+            resetValidation();
+        });
+
+        inputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                validateCode();
+            }
+        });
+
+        // Verificar al cargar si ya se aplicó un código
+        checkIfCodeAlreadyApplied();
     }
 }
 

@@ -65,6 +65,8 @@ const translations = {
       disabled: 'Deshabilitado',
       or: 'o',
       and: 'y',
+      validating: 'Validando...',
+      applying: 'Aplicando...',
     },
     
     // Navbar
@@ -251,6 +253,23 @@ const translations = {
       businessCategoryPlaceholder: 'Selecciona una categoría',
       businessCategoryOther: 'Otra categoría',
       businessCategoryOtherPlaceholder: 'Escribe tu categoría',
+      // Business category options
+      categoryFashion: 'Moda',
+      categoryElectronics: 'Electrónica',
+      categoryBooks: 'Libros',
+      categoryHome: 'Hogar',
+      categoryOther: 'Otro',
+      // Country options
+      countryUS: 'Estados Unidos',
+      countryCA: 'Canadá',
+      countryUK: 'Reino Unido',
+      countryDE: 'Alemania',
+      countryFR: 'Francia',
+      countryES: 'España',
+      countryIT: 'Italia',
+      countryAU: 'Australia',
+      countryJP: 'Japón',
+      countryOTHER: 'Otro',
       openingHours: 'Horario de Apertura',
       hasOpeningHours: 'Tengo horario de apertura',
       openingHoursDescription: 'Establece el horario de funcionamiento de tu tienda',
@@ -290,6 +309,7 @@ const translations = {
       incompleteProfile: 'Tu perfil está incompleto.',
       incompleteProfileText: 'Rellena los campos obligatorios marcados con * para desbloquear todas las funciones.',
       requiredFields: 'Campos obligatorios',
+      trialEndsOn: 'Termina el',
     },
     
     // Plans page
@@ -356,6 +376,29 @@ const translations = {
       hirePlan: 'Contratar plan',
       processing: 'Procesando...',
       pendingChange: 'Cambio pendiente en otro plan',
+      scheduledPlan: 'Plan programado',
+      effectiveOn: 'Efectivo el:',
+      scheduledChangeTo: 'Cambio programado a',
+      scheduledChangeToFree: 'Cambio programado a plan free con 30 conversaciones',
+      scheduledChangeToPlan: 'Cambio programado a plan {plan} con {conversations} conversaciones',
+      scheduledChangeToConversations: 'Cambio programado a {conversations} conversaciones',
+      cancelChange: 'Cancelar cambio',
+      changeToFree: 'Cambiar a Free',
+      scheduleChangeNextCycle: 'Programar cambio para próximo ciclo',
+      planChangeCancelled: 'Cambio de plan cancelado',
+      planConversationsChangeCancelled: 'Cambio de plan/conversaciones cancelado',
+      changeToFreePlanScheduled: 'Cambio a plan Free programado',
+      effectiveOnDate: '(efectivo el {date})',
+      effectiveEndOfCycle: 'para fin de ciclo',
+      changeToConversationsScheduled: 'Cambio a {conversations} conversaciones programado',
+      errorBuyingPack: '❌ Error al comprar el pack',
+      errorLoadingPlans: 'No pudimos cargar tus planes',
+      errorCancellingChange: 'No se pudo cancelar el cambio',
+      errorSchedulingPlanChange: 'Error al programar el cambio de plan',
+      errorSelectingFreePlan: 'Error al seleccionar el plan gratuito',
+      errorSchedulingChange: 'Error al programar el cambio',
+      errorNoCheckoutUrl: 'El backend no devolvió URL de checkout/confirmación.',
+      errorProcessingPlan: 'Error al procesar el plan',
     },
     
     // Inbox page
@@ -1056,6 +1099,22 @@ const translations = {
       step3: 'Configura respuestas',
       skip: 'Saltar',
       finish: 'Finalizar',
+      // Referral code section
+      referralCodeTitle: '¿Tienes un código de referido?',
+      referralCodeSubtitle: 'Si alguien te invitó o tienes un código de un partner, ingrésalo aquí',
+      referralCodePlaceholder: 'Ingresa tu código',
+      validateCode: 'Validar',
+      applyCode: 'Aplicar código',
+      codeValidating: 'Validando código...',
+      codeApplying: 'Aplicando código...',
+      codeInvalid: 'Código inválido o inactivo',
+      codeValidUser: '+10 conversaciones para ti y +10 para quien te invitó (al pasar a pago)',
+      codeValidPartner: '+15 conversaciones para ti (al pasar a pago)',
+      codeApplied: 'Código aplicado. Las conversaciones se añadirán automáticamente cuando pases a un plan de pago.',
+      codeAlreadyApplied: 'Ya tienes un código aplicado',
+      codeCannotChange: 'No puedes cambiar el código una vez aplicado',
+      rewardPending: 'Recompensa pendiente: se activará al pasar a plan de pago',
+      conversationsWhenPaid: 'conversaciones se añadirán automáticamente a tus conversaciones extra cuando pases a un plan de pago',
     },
     
     // Badge labels (email classification)
@@ -1067,6 +1126,35 @@ const translations = {
       shopify: 'Shopify',
       comerciales: 'Comerciales',
       otros: 'Otros',
+    },
+
+    // Referrals section
+    referrals: {
+      sectionTitle: 'Programa de Referidos',
+      sectionDescription: 'Invita a otros y gana conversaciones extra gratis',
+      myCodeTitle: 'Mi código de referido',
+      myCodeDescription: 'Comparte este código con amigos y tiendas',
+      copyCode: 'Copiar código',
+      codeCopied: 'Código copiado al portapapeles',
+      noCodeYet: 'Completa el onboarding para obtener tu código',
+      statsTitle: 'Mis estadísticas',
+      totalInvites: 'Total de invitados',
+      invitesPaid: 'Invitados en pago',
+      invitesTrial: 'Invitados en prueba',
+      conversationsEarned: 'Conversaciones ganadas',
+      invitedStores: 'Tiendas invitadas',
+      storeName: 'Tienda',
+      email: 'Email',
+      status: 'Estado',
+      statusTrial: 'En prueba',
+      statusPaid: 'Pagando',
+      rewardPending: 'La recompensa se aplicará al pasar a pago',
+      noInvitesYet: 'Aún no has invitado a nadie. ¡Comparte tu código!',
+      loadingStats: 'Cargando estadísticas...',
+      errorLoadingStats: 'Error al cargar estadísticas',
+      createdAt: 'Creado',
+      signedUpAt: 'Registro',
+      conversationsGranted: 'Conversaciones otorgadas',
     },
   },
   
@@ -1122,6 +1210,8 @@ const translations = {
       disabled: 'Disabled',
       or: 'or',
       and: 'and',
+      validating: 'Validating...',
+      applying: 'Applying...',
     },
     
     // Navbar
@@ -1305,6 +1395,23 @@ const translations = {
       businessCategoryPlaceholder: 'Select a category',
       businessCategoryOther: 'Other category',
       businessCategoryOtherPlaceholder: 'Enter your category',
+      // Business category options
+      categoryFashion: 'Fashion',
+      categoryElectronics: 'Electronics',
+      categoryBooks: 'Books',
+      categoryHome: 'Home & Garden',
+      categoryOther: 'Other',
+      // Country options
+      countryUS: 'United States',
+      countryCA: 'Canada',
+      countryUK: 'United Kingdom',
+      countryDE: 'Germany',
+      countryFR: 'France',
+      countryES: 'Spain',
+      countryIT: 'Italy',
+      countryAU: 'Australia',
+      countryJP: 'Japan',
+      countryOTHER: 'Other',
       openingHours: 'Opening Hours',
       hasOpeningHours: 'I have opening hours',
       openingHoursDescription: 'Set your store operating hours',
@@ -1344,6 +1451,7 @@ const translations = {
       incompleteProfile: 'Your profile is incomplete.',
       incompleteProfileText: 'Fill in the required fields marked with * to unlock all features.',
       requiredFields: 'Required fields',
+      trialEndsOn: 'Ends on',
     },
     
     // Plans page
@@ -1411,6 +1519,29 @@ const translations = {
       hirePlan: 'Hire plan',
       processing: 'Processing...',
       pendingChange: 'Pending change in another plan',
+      scheduledPlan: 'Scheduled plan',
+      effectiveOn: 'Effective on:',
+      scheduledChangeTo: 'Scheduled change to',
+      scheduledChangeToFree: 'Scheduled change to free plan with 30 conversations',
+      scheduledChangeToPlan: 'Scheduled change to {plan} plan with {conversations} conversations',
+      scheduledChangeToConversations: 'Scheduled change to {conversations} conversations',
+      cancelChange: 'Cancel change',
+      changeToFree: 'Change to Free',
+      scheduleChangeNextCycle: 'Schedule change for next cycle',
+      planChangeCancelled: 'Plan change cancelled',
+      planConversationsChangeCancelled: 'Plan/conversations change cancelled',
+      changeToFreePlanScheduled: 'Change to Free plan scheduled',
+      effectiveOnDate: '(effective on {date})',
+      effectiveEndOfCycle: 'at end of cycle',
+      changeToConversationsScheduled: 'Change to {conversations} conversations scheduled',
+      errorBuyingPack: '❌ Error buying pack',
+      errorLoadingPlans: 'Could not load your plans',
+      errorCancellingChange: 'Could not cancel the change',
+      errorSchedulingPlanChange: 'Error scheduling plan change',
+      errorSelectingFreePlan: 'Error selecting free plan',
+      errorSchedulingChange: 'Error scheduling change',
+      errorNoCheckoutUrl: 'Backend did not return checkout/confirmation URL.',
+      errorProcessingPlan: 'Error processing plan',
     },
     
     // Inbox page
@@ -2108,6 +2239,22 @@ const translations = {
       step3: 'Set up responses',
       skip: 'Skip',
       finish: 'Finish',
+      // Referral code section
+      referralCodeTitle: 'Do you have a referral code?',
+      referralCodeSubtitle: 'If someone invited you or you have a partner code, enter it here',
+      referralCodePlaceholder: 'Enter your code',
+      validateCode: 'Validate',
+      applyCode: 'Apply code',
+      codeValidating: 'Validating code...',
+      codeApplying: 'Applying code...',
+      codeInvalid: 'Invalid or inactive code',
+      codeValidUser: '+10 conversations for you and +10 for who invited you (when converting to paid)',
+      codeValidPartner: '+15 conversations for you (when converting to paid)',
+      codeApplied: 'Code applied. Conversations will be automatically added when you upgrade to a paid plan.',
+      codeAlreadyApplied: 'You already have a code applied',
+      codeCannotChange: 'You cannot change the code once applied',
+      rewardPending: 'Reward pending: will activate when upgrading to paid plan',
+      conversationsWhenPaid: 'conversations will be automatically added to your extra conversations when you upgrade to a paid plan',
     },
     
     // Badge labels (email classification)
@@ -2119,6 +2266,35 @@ const translations = {
       shopify: 'Shopify',
       comerciales: 'Commercial',
       otros: 'Other',
+    },
+
+    // Referrals section
+    referrals: {
+      sectionTitle: 'Referral Program',
+      sectionDescription: 'Invite others and earn extra conversations for free',
+      myCodeTitle: 'My referral code',
+      myCodeDescription: 'Share this code with friends and stores',
+      copyCode: 'Copy code',
+      codeCopied: 'Code copied to clipboard',
+      noCodeYet: 'Complete onboarding to get your code',
+      statsTitle: 'My statistics',
+      totalInvites: 'Total invites',
+      invitesPaid: 'Paid invites',
+      invitesTrial: 'Trial invites',
+      conversationsEarned: 'Conversations earned',
+      invitedStores: 'Invited stores',
+      storeName: 'Store',
+      email: 'Email',
+      status: 'Status',
+      statusTrial: 'On trial',
+      statusPaid: 'Paying',
+      rewardPending: 'Reward will be applied when converting to paid',
+      noInvitesYet: "You haven't invited anyone yet. Share your code!",
+      loadingStats: 'Loading statistics...',
+      errorLoadingStats: 'Error loading statistics',
+      createdAt: 'Created',
+      signedUpAt: 'Signed up',
+      conversationsGranted: 'Conversations granted',
     },
   }
 };
@@ -2183,9 +2359,18 @@ export function setLocale(locale) {
  * Obtiene una traducción por su clave (dot notation)
  * Ejemplo: t('profile.storeName') → "Nombre de la Tienda" (ES) o "Store Name" (EN)
  */
-export function t(key, locale = null) {
-  if (!locale) {
+export function t(key, localeOrParams = null, params = null) {
+  let locale = null;
+  let replacements = null;
+  
+  // Si el segundo parámetro es un objeto, asumimos que son parámetros y usamos el locale actual
+  if (typeof localeOrParams === 'object' && localeOrParams !== null) {
+    replacements = localeOrParams;
     locale = getCurrentLocale();
+  } else {
+    // Si es un string, es el locale
+    locale = localeOrParams || getCurrentLocale();
+    replacements = params;
   }
   
   const keys = key.split('.');
@@ -2203,6 +2388,13 @@ export function t(key, locale = null) {
   if (typeof value !== 'string') {
     console.warn(`Translation not found for key: ${key} (locale: ${locale})`);
     return key;
+  }
+  
+  // Reemplazar placeholders si hay parámetros
+  if (replacements && typeof replacements === 'object') {
+    for (const [placeholder, replacement] of Object.entries(replacements)) {
+      value = value.replace(new RegExp(`\\{${placeholder}\\}`, 'g'), replacement);
+    }
   }
   
   return value;

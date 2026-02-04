@@ -470,8 +470,8 @@ async function fetchStoreFresh() {
 }
 
 // Variable global para mantener el valor seleccionado
-let selectedConversations = 50;
-let selectedPackConversations = 50; // Para el selector de packs
+let selectedConversations = 100;
+let selectedPackConversations = 20; // Para el selector de packs
 
 // Calcular precio total dinámicamente
 function updateTotalPrice(isPendingChange = false, pendingConvs = null) {
@@ -635,6 +635,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 3) Configurar selector de conversaciones SIEMPRE (público y privado)
   const conversationsScroller = document.getElementById('conversationsScroller');
   if (conversationsScroller) {
+    // Centrar inicialmente en 100 conversaciones
+    const defaultOption = conversationsScroller.querySelector('[data-value="100"]');
+    if (defaultOption) {
+      defaultOption.scrollIntoView({ block: 'center', behavior: 'instant' });
+      defaultOption.classList.add('centered');
+      selectedConversations = 100;
+      updateTotalPrice();
+    }
+    
     // Scroll listener con debounce
     let scrollTimeout;
     conversationsScroller.addEventListener('scroll', () => {
@@ -649,9 +658,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         option.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
     });
-    
-    // Calcular inicial
-    updateCenteredOption('conversationsScroller', false);
   }
 
   // Configurar selector de pack extra SIEMPRE
@@ -726,7 +732,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (fresh) data = fresh;
 
   if (!data) {
-    notify.error("No pudimos cargar tus planes");
+    notify.error(t('plans.errorLoadingPlans'));
     return;
   }
 
@@ -741,29 +747,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch {}
 
 
-  // 7) Extraer datos del usuario (ESTRUCTURA NUEVA: payments.*)
-  const billingSource = String(data.billing_source || "stripe").toLowerCase();
-  const provider =
-    (billingSource === "shopify" ? data.shopify : data.stripe) ||
-    {
-      plan: data.plan,
-      monthly_cap: data.limit || null,
-      current_period_end: data.period_end || null,
-      trial_end: data.trial_end || null,
-      free_block_until: data.free_block_until || null,
-      pending: (data.pending_change_effective || data.pending_plan_change || data.pending_monthly_cap_change)
-        ? {
-            kind: "legacy_pending",
-            plan: data.pending_plan_change || null,
-            monthly_cap: data.pending_monthly_cap_change ?? null,
-            effective_at: data.pending_change_effective || null,
-          }
-        : null,
-    };
+  // 7) Extraer datos del usuario (payments.* + fallback legacy)
+  const payments = data.payments || {};
 
-  // 🔄 FALLBACK: Si payments está vacío, intentar leer del formato viejo (raíz del documento)
-  const isActive = !!data.active;
-  const currentPlan = String(provider.plan || data.plan || "None").toLowerCase();
+  const billingSource = String(
+    data.billing_source || payments.billing_source || "stripe"
+  ).toLowerCase();
+
+  const providerFromPayments =
+    (billingSource === "shopify" ? payments.shopify : payments.stripe) || {};
+
+  const providerLegacy =
+    (billingSource === "shopify" ? data.shopify : data.stripe) || {};
+
+  const provider = Object.keys(providerFromPayments).length
+    ? providerFromPayments
+    : providerLegacy;
+
+  const isActive = !!(payments.active ?? data.active);
+
+  const currentPlan = String(
+    provider.plan || data.plan || "none"
+  ).toLowerCase();
+
+  const isPaid = isActive && currentPlan !== "free";
   
   console.log('🔍 [PLANS DEBUG] Datos extraídos:', {
     isActive,
@@ -785,8 +792,34 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ➊ Ajustar navbar según contexto del usuario
   const userContext = getUserContext(); // 'guest' | 'inactive' | 'active'
   
+  // 🎯 Ocultar/mostrar elementos del navbar según el contexto
+  const navbarLinks = document.getElementById('navbarLinks');
+  const navbarRight = document.querySelector('.navbar-right');
+  const joinFreeBtn = navbarRight?.querySelector('[data-i18n="navbar.joinFree"]');
+  
+  if (userContext === 'active') {
+    // Usuario con plan activo: NO mostrar links centrales ni botón "Únete gratis"
+    // (ya están ocultos por CSS, no hacemos nada)
+    if (navbarLinks) {
+      navbarLinks.style.display = 'none';
+    }
+    if (joinFreeBtn) {
+      joinFreeBtn.style.display = 'none';
+    }
+  } else {
+    // Usuario sin plan o sin sesión: mostrar navegación normal
+    if (navbarLinks) {
+      navbarLinks.style.display = 'flex';
+      navbarLinks.classList.add('show'); // Trigger transición de opacidad
+    }
+    if (joinFreeBtn) {
+      joinFreeBtn.classList.add('show'); // Trigger transición de opacidad
+    }
+  }
+  
   if (logoutBtn) {
     logoutBtn.removeAttribute('onclick');
+    logoutBtn.style.display = ''; // Asegurar que siempre sea visible
     
     switch (userContext) {
       case 'guest':
@@ -830,28 +863,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ➋ Bloqueo de plan Free (estructura NUEVA)
-  // 🔄 FALLBACK: También revisar en la raíz del documento
-  const freeBlockDate = toDate(provider.free_block_until || data.free_block_until);
+  const freeBlockDate = toDate(
+    provider.free_block_until || payments.free_block_until || data.free_block_until
+  );
   const freeBlocked = !!freeBlockDate && freeBlockDate.getTime() > Date.now();
-
-  console.log('🔍 [FREE DEBUG] Bloqueo:', {
-    free_block_until_provider: provider.free_block_until,
-    free_block_until_root: data.free_block_until,
-    freeBlockDate,
-    freeBlocked,
-    now: Date.now(),
-    comparison: freeBlockDate ? freeBlockDate.getTime() : null,
-    currentPlan,
-    isActive
-  });
-
-  // ✅ Solo ocultar Free si tiene bloqueo Y no está en free actualmente
-  // (Si está en free, se mostrará con botón "Plan actual")
-  const shouldHideFree = freeBlocked && currentPlan !== "free";
-
-  if (freeCard) {
-    freeCard.classList.toggle('hidden', shouldHideFree);
-  }
 
   // 🆕 Mostrar las cards con transición suave después de determinar cuáles ocultar
   requestAnimationFrame(() => {
@@ -862,28 +877,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (freeCard) {
       freeCard.classList.remove('preload-hidden');
       freeCard.style.transition = 'opacity 0.3s ease';
+      freeCard.style.opacity = '1';
     }
     if (starterCard) {
       starterCard.classList.remove('preload-hidden');
       starterCard.style.transition = 'opacity 0.3s ease';
+      starterCard.style.opacity = '1';
     }
     if (packCard) {
       packCard.classList.remove('preload-hidden');
       packCard.style.transition = 'opacity 0.3s ease';
+      packCard.style.opacity = '1';
     }
-    
-    // Mostrar cards apropiadas - respetar shouldHideFree
-    if (freeCard) {
-      if (shouldHideFree) {
-        freeCard.classList.add('hidden');
-        freeCard.style.opacity = '0';
-      } else {
-        freeCard.classList.remove('hidden');
-        freeCard.style.opacity = '1';
-      }
-    }
-    if (starterCard) starterCard.style.opacity = '1';
-    if (packCard) packCard.style.opacity = '1';
   });
 
   // Pending (estructura NUEVA): payments.<provider>.pending
@@ -903,44 +908,82 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const hasPendingChange = !!(pendingEffectiveDate && (pendingPlan || pendingConversations));
 
+  // 📅 Fecha de fin del período de facturación actual (para downgrades)
+  const currentConversations = data.limit || provider.monthly_cap || 50;
+  const billingPeriodEnd = provider.current_period_end || provider.period_end || data.period_end || null;
+
   // ➌ Configurar botón Plan Free
   const freeBtn = document.getElementById('freeBtn');
-  if (freeBtn && !shouldHideFree) {
+  if (freeBtn) {
+    freeBtn.disabled = false;
+    freeBtn.removeAttribute('data-tooltip');
+    freeBtn.removeAttribute('aria-disabled');
+    freeBtn.textContent = '';
     // Si el cambio pendiente ES a Free, lo mostramos como "Cambio programado"
     if (pendingPlan === "free" && pendingEffectiveDate) {
       freeBtn.disabled = true;
-      freeBtn.textContent = "Cambio programado";
-      const subtext = document.createElement('div');
-      subtext.className = 'cta-subtext';
-      subtext.textContent = formatBillingDate(pendingEffectiveDate);
-      freeBtn.appendChild(subtext);
+      freeBtn.innerHTML = `
+        ${t('plans.scheduledPlan')}
+        <div class="cta-subtext">${t('plans.effectiveOn')} ${formatBillingDate(pendingEffectiveDate)}</div>
+      `;
+      
+      // 📋 Agregar mensaje informativo en la tarjeta de Free
+      const existingInfo = freeCard?.querySelector('.pending-change-info');
+      if (freeCard && !existingInfo) {
+        const pendingInfo = document.createElement('div');
+        pendingInfo.className = 'pending-change-info';
+        pendingInfo.innerHTML = `
+          <p>📅 ${t('plans.scheduledChangeToFree')}</p>
+          <small>${t('plans.effectiveOn')} ${formatBillingDate(pendingEffectiveDate)}</small>
+        `;
+        
+        // Insertar después del card-header
+        const cardHeader = freeCard.querySelector('.card-header');
+        if (cardHeader) {
+          cardHeader.insertAdjacentElement('afterend', pendingInfo);
+        } else {
+          // Fallback: insertar al inicio de la card
+          freeCard.insertAdjacentElement('afterbegin', pendingInfo);
+        }
+      }
+      
+      // 🔴 Agregar botón "Cancelar cambio" en la tarjeta de Free
+      let cancelBtn = freeCard?.querySelector('.cancel-change-btn');
+      if (freeCard && !cancelBtn) {
+        cancelBtn = document.createElement('button');
+        cancelBtn.className = 'cancel-change-btn';
+        cancelBtn.textContent = t('plans.cancelChange');
+        
+        // Insertar después del botón principal
+        freeBtn.insertAdjacentElement('afterend', cancelBtn);
+        
+        cancelBtn.addEventListener('click', async () => {
+          cancelBtn.disabled = true;
+          try {
+            await fetchWithAuth('/billing/cancel-change-plan', { method: 'POST' });
+            const text = encodeURIComponent(t('plans.planChangeCancelled'));
+            window.location.href = `/secciones/perfil.html?msg=${text}`;
+          } catch {
+            notify.error(t('plans.errorCancellingChange'));
+            cancelBtn.disabled = false;
+          }
+        });
+      }
     } else if (hasPendingChange) {
       freeBtn.disabled = true;
-      freeBtn.textContent = "Cambio pendiente en otro plan";
+      freeBtn.textContent = t('plans.pendingChange');
     } else if (isActive && currentPlan === "free") {
       // Ya tiene plan Free activo
       freeBtn.disabled = true;
-      freeBtn.textContent = "Plan actual";
+      freeBtn.textContent = t('plans.currentPlan');
     } else if (isActive && currentPlan === "starter") {
-      // Verificar si hay cambio pendiente a Free
-      if (pendingPlan === "free" && pendingEffectiveDate) {
-        // Mostrar que el cambio está programado
-        freeBtn.disabled = true;
-        freeBtn.textContent = "Cambio programado";
-        const subtext = document.createElement('div');
-        subtext.className = 'cta-subtext';
-        subtext.textContent = formatBillingDate(pendingEffectiveDate);
-        freeBtn.appendChild(subtext);
-      } else {
+      // Permitir downgrade de Starter → Free (solo si NO hay cambio pendiente a Free)
+      if (pendingPlan !== "free") {
         // Permitir downgrade de Starter → Free
-        freeBtn.textContent = "Cambiar a Free";
+        freeBtn.textContent = t('plans.changeToFree');
         freeBtn.addEventListener('click', async () => {
-          if (!confirm("¿Cambiar a plan Free? El cambio se aplicará al finalizar tu período de facturación actual.")) {
-            return;
-          }
-
           freeBtn.disabled = true;
-          freeBtn.textContent = "Procesando...";
+          freeBtn.textContent = t('plans.processing');
 
           try {
             const res = await fetchWithAuth("/billing/change-plan", {
@@ -953,7 +996,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
 
             if (res.ok) {
-              const text = encodeURIComponent("Cambio a plan Free programado para fin de ciclo");
+              const dateMsg = billingPeriodEnd ? ` ${t('plans.effectiveOnDate', { date: formatBillingDate(billingPeriodEnd) })}` : ` ${t('plans.effectiveEndOfCycle')}`;
+              const text = encodeURIComponent(`${t('plans.changeToFreePlanScheduled')}${dateMsg}`);
               window.location.href = `/secciones/perfil.html?msg=${text}`;
               return;
             } else {
@@ -961,14 +1005,31 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
           } catch (error) {
             console.error(error);
-            notify.error("Error al programar el cambio de plan");
+            notify.error(t('plans.errorSchedulingPlanChange'));
             freeBtn.disabled = false;
-            freeBtn.textContent = "Cambiar a Free";
+            freeBtn.textContent = t('plans.changeToFree');
           }
         });
       }
+    } else if (!isActive && freeBlocked) {
+      // Usuario SIN plan activo pero con Free bloqueado (ya usó el free este ciclo)
+      // OJO: no usamos disabled para que el tooltip funcione en hover
+      freeBtn.textContent = "No disponible";
+      freeBtn.disabled = true;
+      freeBtn.setAttribute('aria-disabled', 'true');
+
+      const whenTxt = freeBlockDate ? formatBillingDate(freeBlockDate) : "próximo ciclo";
+      freeBtn.setAttribute(
+        'data-tooltip',
+        `No disponible porque ya has usado el plan gratis este mes. Disponible el ${whenTxt}.`
+      );
+
+      freeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+      });
+
     } else {
-      // Usuario nuevo sin plan activo
+      // Usuario nuevo sin plan activo y NO bloqueado → puede activar Free
       freeBtn.textContent = t('plans.startFree');
       freeBtn.addEventListener('click', async () => {
         freeBtn.disabled = true;
@@ -977,7 +1038,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
           const res = await fetchWithAuth("/billing/select-free-plan", { method: "POST" });
           if (res.ok) {
-            // ✅ IMPORTANTE: Refrescar el localStorage antes de redirigir
             await fetchStoreFresh();
             window.location.href = "/secciones/perfil.html";
             return;
@@ -990,7 +1050,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         } catch (error) {
           console.error(error);
-          notify.error("Error al seleccionar el plan gratuito");
+          notify.error(t('plans.errorSelectingFreePlan'));
           freeBtn.disabled = false;
           freeBtn.textContent = t('plans.startFree');
         }
@@ -1006,12 +1066,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentPlan,
     condition: isActive && currentPlan === "starter"
   });
-  
-  // Datos adicionales para el cambio de conversaciones - el backend los devuelve directamente
-  // 🔄 FALLBACK: Leer de la raíz si no está en provider
-  const currentConversations = data.limit || provider.monthly_cap || 50;
-  const billingPeriodEnd = provider.current_period_end || provider.period_end || data.period_end || null;
-
 
   // Mostrar ayuda de cambios si está activo
   const planChangeHelp = document.querySelector('.plan-change-help');
@@ -1028,7 +1082,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Mostrar info de cambio pendiente si existe
       console.log('Cambio pendiente:', { pendingPlan, pendingConversations, pendingEffectiveDate });
       
-      if (hasPendingChange) {
+      // 🔒 Solo mostrar cambio pendiente en Starter si NO es un downgrade a Free
+      // (el downgrade a Free se muestra en la tarjeta de Free)
+      const isDowngradeToFree = pendingPlan === "free";
+      const hasPendingChangeInStarter = hasPendingChange && !isDowngradeToFree;
+      
+      if (hasPendingChangeInStarter) {
         // Deshabilitar selector de conversaciones
         const conversationsSelector = starterCard.querySelector('.conversations-selector');
         if (conversationsSelector) {
@@ -1049,16 +1108,16 @@ document.addEventListener("DOMContentLoaded", async () => {
           // Determinar el mensaje según qué está cambiando
           let changeMessage = '';
           if (pendingPlan && pendingConversations) {
-            changeMessage = `📅 Cambio programado a plan ${pendingPlan} con ${pendingConversations} conversaciones`;
+            changeMessage = `📅 ${t('plans.scheduledChangeToPlan', { plan: pendingPlan, conversations: pendingConversations })}`;
           } else if (pendingPlan) {
-            changeMessage = `📅 Cambio programado a plan ${pendingPlan}`;
+            changeMessage = `📅 ${t('plans.scheduledChangeTo')} ${pendingPlan}`;
           } else if (pendingConversations) {
-            changeMessage = `📅 Cambio programado a ${pendingConversations} conversaciones`;
+            changeMessage = `📅 ${t('plans.scheduledChangeToConversations', { conversations: pendingConversations })}`;
           }
           
           pendingInfo.innerHTML = `
             <p>${changeMessage}</p>
-            <small>Efectivo el ${formatBillingDate(pendingEffectiveDate)}</small>
+            <small>${t('plans.effectiveOn')} ${formatBillingDate(pendingEffectiveDate)}</small>
           `;
           
           // Insertar después del card-header
@@ -1074,11 +1133,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Botón principal deshabilitado con info
         starterBtn.disabled = true;
-        starterBtn.textContent = "Cambio programado";
-        const subtext = document.createElement('div');
-        subtext.className = 'cta-subtext';
-        subtext.textContent = formatBillingDate(pendingEffectiveDate);
-        starterBtn.appendChild(subtext);
+        starterBtn.innerHTML = `
+          ${t('plans.scheduledPlan')}
+          <div class="cta-subtext">${t('plans.effectiveOn')} ${formatBillingDate(pendingEffectiveDate)}</div>
+        `;
 
         // Botón cancelar - insertar después del botón principal
         let cancelBtn = starterCard.querySelector('.cancel-change-btn');
@@ -1087,7 +1145,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!cancelBtn) {
           cancelBtn = document.createElement('button');
           cancelBtn.className = 'cancel-change-btn';
-          cancelBtn.textContent = 'Cancelar cambio';
+          cancelBtn.textContent = t('plans.cancelChange');
           
           // Insertar después del botón principal
           starterBtn.insertAdjacentElement('afterend', cancelBtn);
@@ -1098,17 +1156,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             cancelBtn.disabled = true;
             try {
               await fetchWithAuth('/billing/cancel-change-plan', { method: 'POST' });
-              const text = encodeURIComponent('Cambio de plan/conversaciones cancelado');
+              const text = encodeURIComponent(t('plans.planConversationsChangeCancelled'));
               window.location.href = `/secciones/perfil.html?msg=${text}`;
             } catch {
-              notify.error('No se pudo cancelar el cambio');
+              notify.error(t('plans.errorCancellingChange'));
               cancelBtn.disabled = false;
             }
           });
         }
       } else {
-        // No hay cambio pendiente, detectar si cambia las conversaciones
-        starterBtn.textContent = "Plan actual";
+        // No hay cambio pendiente en Starter (puede haber downgrade a Free pero eso se muestra en tarjeta Free)
+        // Permitir cambiar conversaciones normalmente
+        starterBtn.textContent = t('plans.currentPlan');
         starterBtn.disabled = true;
 
         // Actualizar botón cuando cambie el scroll
@@ -1117,12 +1176,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           const updateButtonState = () => {
             if (selectedConversations !== currentConversations) {
               starterBtn.disabled = false;
-              starterBtn.textContent = "Programar cambio para próximo ciclo";
+              starterBtn.textContent = t('plans.scheduleChangeNextCycle');
               starterBtn.classList.add('secondary');
               starterBtn.classList.remove('primary');
             } else {
               starterBtn.disabled = true;
-              starterBtn.textContent = "Plan actual";
+              starterBtn.textContent = t('plans.currentPlan');
               starterBtn.classList.remove('secondary');
               starterBtn.classList.add('primary');
             }
@@ -1175,17 +1234,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                   window.location.href = responseData.url;
                   return;
                 }
-                // Si no, es un cambio programado
-                const text = encodeURIComponent(`Cambio a ${selectedConversations} conversaciones programado`);
+                // Si no, es un cambio programado (downgrade)
+                const dateMsg = billingPeriodEnd ? ` ${t('plans.effectiveOnDate', { date: formatBillingDate(billingPeriodEnd) })}` : '';
+                const text = encodeURIComponent(`${t('plans.changeToConversationsScheduled', { conversations: selectedConversations })}${dateMsg}`);
                 window.location.href = `/secciones/perfil.html?msg=${text}`;
               } else {
                 throw new Error('Error en la respuesta');
               }
             } catch (error) {
               console.error(error);
-              notify.error("Error al programar el cambio");
+              notify.error(t('plans.errorSchedulingChange'));
               starterBtn.disabled = false;
-              starterBtn.textContent = "Programar cambio para próximo ciclo";
+              starterBtn.textContent = t('plans.scheduleChangeNextCycle');
             }
           });
         }
@@ -1217,12 +1277,30 @@ document.addEventListener("DOMContentLoaded", async () => {
               })
             });
 
-            const data = await res.json();
+            // ✅ Lee el body siempre, pero no redirijas si no es OK
+            let data = null;
+            try { data = await res.json(); } catch (_) {}
+
+            if (!res.ok) {
+              const msg = (data && (data.detail || data.message)) || `Error creando la sesión (${res.status})`;
+              notify.error(msg);
+              starterBtn.disabled = false;
+              starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
+              return;
+            }
+
+            if (!data?.url) {
+              notify.error(t('plans.errorNoCheckoutUrl'));
+              starterBtn.disabled = false;
+              starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
+              return;
+            }
+
             window.location.href = data.url;
 
           } catch (error) {
             console.error(error);
-            notify.error("Error al procesar el plan");
+            notify.error(t('plans.errorProcessingPlan'));
             starterBtn.disabled = false;
             starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
           }
@@ -1259,7 +1337,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           const data = await res.json();
           window.location.href = data.url;
         } catch {
-          const info = encodeURIComponent(`❌ Error al comprar el pack`);
+          const info = encodeURIComponent(t('plans.errorBuyingPack'));
           window.location.href = `/secciones/perfil.html?msg=${info}`;
           buyPackBtn.disabled = false;
           buyPackBtn.textContent = "Comprar pack";

@@ -9,6 +9,27 @@
   <link rel="preload" href="/fonts/inter/Inter-Variable.ttf" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/fonts.css?v=%ASSET_VERSION%">
   <link rel="stylesheet" href="/vendor/fontawesome-6.4.0/css/all.min.css?v=%ASSET_VERSION%">
+  
+  <!-- Evitar flash de contenido antes de detectar estado del usuario -->
+  <style>
+    /* Ocultar elementos que solo son para usuarios NO activos */
+    .navbar-center,
+    .navbar-right .cta-btn[data-i18n="navbar.joinFree"] {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    /* Mostrar cuando se confirma que el usuario NO está activo */
+    .navbar-center.show,
+    .navbar-right .cta-btn[data-i18n="navbar.joinFree"].show {
+      opacity: 1;
+    }
+    
+    /* El botón de login/logout siempre visible */
+    .navbar-right #logoutBtn {
+      opacity: 1 !important;
+    }
+  </style>
 </head>
 <body>
   <!-- Navbar -->
@@ -21,6 +42,7 @@
         <a href="/#faq" class="landing-link" data-i18n="navbar.faq">FAQ</a>
       </div>
       <div class="navbar-right">
+        <a href="#" id="logoutBtn" class="cta-btn" data-i18n="navbar.login">Iniciar sesión</a>
         <a href="https://www.shopify.com" target="_blank" class="cta-btn" data-i18n="navbar.joinFree">Únete gratis</a>
       </div>
       <button class="mobile-menu-btn">
@@ -72,7 +94,6 @@
               <span class="price">0€</span>
               <span class="period" data-i18n="plans.perMonth">/mes</span>
             </div>
-            <p class="no-card-required" data-i18n="plans.noCreditCardRequired">No requiere tarjeta de crédito</p>
           </div>
           
           <ul class="features-list">
@@ -194,15 +215,30 @@
             <div class="conversations-dropdown-wrapper">
               <div class="fade-top"></div>
               <div id="packConversationsScroller" class="conversations-scroller">
-                <div class="conversation-option" data-value="50">50 conversaciones</div>
+                <div class="conversation-option" data-value="20">20 conversaciones</div>
+                <div class="conversation-option" data-value="40">40 conversaciones</div>
+                <div class="conversation-option" data-value="60">60 conversaciones</div>
+                <div class="conversation-option" data-value="80">80 conversaciones</div>
                 <div class="conversation-option" data-value="100">100 conversaciones</div>
-                <div class="conversation-option" data-value="150">150 conversaciones</div>
+                <div class="conversation-option" data-value="120">120 conversaciones</div>
+                <div class="conversation-option" data-value="140">140 conversaciones</div>
+                <div class="conversation-option" data-value="160">160 conversaciones</div>
+                <div class="conversation-option" data-value="180">180 conversaciones</div>
                 <div class="conversation-option" data-value="200">200 conversaciones</div>
-                <div class="conversation-option" data-value="250">250 conversaciones</div>
+                <div class="conversation-option" data-value="220">220 conversaciones</div>
+                <div class="conversation-option" data-value="240">240 conversaciones</div>
+                <div class="conversation-option" data-value="260">260 conversaciones</div>
+                <div class="conversation-option" data-value="280">280 conversaciones</div>
                 <div class="conversation-option" data-value="300">300 conversaciones</div>
-                <div class="conversation-option" data-value="350">350 conversaciones</div>
+                <div class="conversation-option" data-value="320">320 conversaciones</div>
+                <div class="conversation-option" data-value="340">340 conversaciones</div>
+                <div class="conversation-option" data-value="360">360 conversaciones</div>
+                <div class="conversation-option" data-value="380">380 conversaciones</div>
                 <div class="conversation-option" data-value="400">400 conversaciones</div>
-                <div class="conversation-option" data-value="450">450 conversaciones</div>
+                <div class="conversation-option" data-value="420">420 conversaciones</div>
+                <div class="conversation-option" data-value="440">440 conversaciones</div>
+                <div class="conversation-option" data-value="460">460 conversaciones</div>
+                <div class="conversation-option" data-value="480">480 conversaciones</div>
                 <div class="conversation-option" data-value="500">500 conversaciones</div>
               </div>
               <div class="fade-bottom"></div>

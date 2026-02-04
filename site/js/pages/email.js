@@ -751,10 +751,18 @@ class EmailView {
     this.anchorId = null;
     this.anchorDate = null;
     
-    // 🆕 Cargar nombre de la tienda Shopify
+    // 🆕 Cargar nombre de la tienda Shopify desde storeUrl
     try {
       const store = await getStoreCached();
-      this.shopName = store?.shopName || 'tu-tienda';
+      // Extraer el nombre de la tienda desde storeUrl (ej: "https://respondize-dev.myshopify.com" -> "respondize-dev")
+      if (store?.storeUrl) {
+        const urlMatch = store.storeUrl.match(/https?:\/\/([^.]+)\./);
+        this.shopName = urlMatch ? urlMatch[1] : 'tu-tienda';
+        console.log('Nombre de la tienda extraído de URL:', this.shopName);
+      } else {
+        this.shopName = 'tu-tienda';
+        console.warn('[init] No se encontró storeUrl en el store');
+      }
     } catch (e) {
       console.warn('[init] No se pudo obtener el nombre de la tienda:', e);
       this.shopName = 'tu-tienda';

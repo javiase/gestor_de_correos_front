@@ -33,7 +33,7 @@
                             <!-- Badge de trial -->
                             <span class="trial-badge hidden" id="trialBadge" title="">
                                 <i class="fas fa-gift"></i>
-                                <span id="trialDays">0</span> días de prueba gratis restantes
+                                <span id="trialDays">0</span> <span data-i18n="profile.trialDaysRemaining">días de prueba gratis restantes</span>
                             </span>
                         </div>
                         <span class="user-status">Active</span>
@@ -98,6 +98,38 @@
 
             <!-- Profile Content -->
             <div class="profile-content">
+                <!-- 🆕 Aplicar código de referido -->
+                <div class="referral-code-apply-section" id="referralCodeApplySection">
+                    <div class="referral-code-apply-card">
+                        <div class="referral-code-header">
+                            <i class="fas fa-ticket-alt"></i>
+                            <div>
+                                <h3 data-i18n="onboarding.referralCodeTitle">¿Tienes un código de referido?</h3>
+                                <p data-i18n="onboarding.referralCodeSubtitle">Si alguien te invitó o tienes un código de un partner, ingrésalo aquí</p>
+                            </div>
+                        </div>
+                        <div class="referral-code-body">
+                            <div class="referral-code-input-group">
+                                <input 
+                                    type="text" 
+                                    id="referralCodeInput" 
+                                    class="referral-code-input" 
+                                    data-i18n-placeholder="onboarding.referralCodePlaceholder"
+                                    placeholder="Ingresa tu código"
+                                    maxlength="50"
+                                />
+                                <button type="button" id="validateCodeBtn" class="btn btn-secondary" data-i18n="onboarding.validateCode">
+                                    Validar
+                                </button>
+                                <button type="button" id="applyCodeBtn" class="btn btn-primary hidden" data-i18n="onboarding.applyCode">
+                                    Aplicar código
+                                </button>
+                            </div>
+                            <div id="referralCodeMessage" class="referral-code-message hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Store Information Section -->
                 <div class="profile-section">
                     <div class="section-header-profile">
@@ -374,18 +406,6 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="timezone" data-i18n="profile.timezone">Zona Horaria</label>
-                            <select id="timezone" class="form-select">
-                                <option value="UTC-8">Los Ángeles (UTC-8)</option>
-                                <option value="UTC-7">Denver (UTC-7)</option>
-                                <option value="UTC-6">Ciudad de México (UTC-6)</option>
-                                <option value="UTC-5">Nueva York (UTC-5)</option>
-                                <option value="UTC+0">Londres (UTC+0)</option>
-                                <option value="UTC+1" selected>Madrid (UTC+1)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
                             <label for="preferredLanguage" data-i18n="profile.language">Idioma</label>
                             <select id="preferredLanguage" class="form-select">
                                 <option value="es">Español</option>
@@ -394,6 +414,78 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 🆕 Referrals Section -->
+                <div class="profile-section" id="referralsSection">
+                    <div class="section-header-profile">
+                        <h2 data-i18n="referrals.sectionTitle">Programa de Referidos</h2>
+                        <p data-i18n="referrals.sectionDescription">Invita a otros y gana conversaciones extra gratis</p>
+                    </div>
+
+                    <div class="referrals-grid">
+                        <!-- Mi código -->
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <i class="fas fa-gift"></i>
+                                <h3 data-i18n="referrals.myCodeTitle">Mi código de referido</h3>
+                            </div>
+                            <p class="referral-card-description" data-i18n="referrals.myCodeDescription">
+                                Comparte este código con amigos y tiendas
+                            </p>
+                            <div class="referral-code-display" id="myReferralCodeDisplay">
+                                <div class="referral-code-loading">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span data-i18n="referrals.loadingStats">Cargando...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas -->
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <i class="fas fa-chart-line"></i>
+                                <h3 data-i18n="referrals.statsTitle">Mis estadísticas</h3>
+                            </div>
+                            <div class="referral-stats-grid" id="referralStatsGrid">
+                                <div class="referral-stat">
+                                    <div class="referral-stat-icon"><i class="fas fa-users"></i></div>
+                                    <div class="referral-stat-info">
+                                        <div class="referral-stat-value" id="totalInvites">-</div>
+                                        <div class="referral-stat-label" data-i18n="referrals.totalInvites">Total de invitados</div>
+                                    </div>
+                                </div>
+                                <div class="referral-stat">
+                                    <div class="referral-stat-icon"><i class="fas fa-credit-card"></i></div>
+                                    <div class="referral-stat-info">
+                                        <div class="referral-stat-value" id="invitesPaid">-</div>
+                                        <div class="referral-stat-label" data-i18n="referrals.invitesPaid">Invitados en pago</div>
+                                    </div>
+                                </div>
+                                <div class="referral-stat">
+                                    <div class="referral-stat-icon"><i class="fas fa-clock"></i></div>
+                                    <div class="referral-stat-info">
+                                        <div class="referral-stat-value" id="invitesTrial">-</div>
+                                        <div class="referral-stat-label" data-i18n="referrals.invitesTrial">Invitados en prueba</div>
+                                    </div>
+                                </div>
+                                <div class="referral-stat">
+                                    <div class="referral-stat-icon"><i class="fas fa-comments"></i></div>
+                                    <div class="referral-stat-info">
+                                        <div class="referral-stat-value" id="conversationsEarned">-</div>
+                                        <div class="referral-stat-label" data-i18n="referrals.conversationsEarned">Conversaciones ganadas</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de invitados (oculta - ya no se usa) -->
+                    <div class="referral-invites-table" id="referralInvitesTable" style="display: none;">
+                        <h3 data-i18n="referrals.invitedStores">Tiendas invitadas</h3>
+                        <div class="referral-invites-content"></div>
+                    </div>
+                </div>
+
                 <!-- Email Signature Section -->
                 <div class="profile-section" id="emailSignatureSection">
                     <div class="section-header-profile">
@@ -439,7 +531,6 @@
                         </div>
                     </div>
                 </div>
-
 
                 <div class="profile-footer">
                     <button id="deleteAccountBtn" class="btn btn-danger">Eliminar cuenta</button>
