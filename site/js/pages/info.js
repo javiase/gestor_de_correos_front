@@ -97,8 +97,12 @@ function applyPendingDotFromCache() {
     document.body.classList.toggle('has-pending-ideas', has); // ← pinta/quita el puntito
   } catch {}
 }
-function announceOnboardingProgress() {
+function announceOnboardingProgress(wasIncompleteBeforeSaving = false) {
   const complete = isOnboardingComplete();
+  
+  console.log('🔍 [announceOnboardingProgress] complete:', complete);
+  console.log('🔍 [announceOnboardingProgress] wasIncompleteBeforeSaving:', wasIncompleteBeforeSaving);
+  
   window.dispatchEvent(new CustomEvent('onboarding-complete-changed', {
     detail: { complete }
   }));
@@ -108,6 +112,50 @@ function announceOnboardingProgress() {
     markCompletionInBackend('onboarding').catch(e => {
       console.warn('[info] No se pudo marcar onboarding_completed en backend:', e);
     });
+    
+    // 🎊 Mostrar modal de felicitación si acabamos de completar el onboarding
+    if (wasIncompleteBeforeSaving) {
+      console.log('🎊 [info] ¡Onboarding recién completado! Mostrando modal...');
+      setTimeout(async () => {
+        // Verificar que notify.modal existe
+        if (typeof notify.modal === 'function') {
+          // Obtener traducciones (con fallback por si hay problemas de cache)
+          const title = t('info.onboardingCompletedTitle') || '¡Enhorabsssuena! 🎊';
+          const message = t('info.onboardingCompletedMessage') || 'Has completado el onboarding de Respondize. Ahora estás listo para empezar a gestionar tus correos de forma más eficiente. ¡Esperamos que la app te sea de mucha utilidad!';
+          const btnInbox = t('info.goToInbox') || 'Ir a la bandeja de entrada';
+          const btnStay = t('info.startUsing') || 'Seguir añadiendo información';
+          
+          console.log('🔍 [info] Traducciones del modal:', { title, message, btnInbox, btnStay });
+          
+          const action = await notify.modal({
+            title: title,
+            message: message,
+            buttons: [
+              { text: btnInbox, style: 'primary', value: 'inbox' },
+              { text: btnStay, style: 'secondary', value: 'stay' }
+            ]
+          });
+          
+          if (action === 'inbox') {
+            window.location.href = '/secciones/inbox.html';
+          }
+        } else {
+          // Fallback: mostrar notificación simple
+          console.warn('[info] notify.modal no disponible, usando fallback');
+          const title = t('info.onboardingCompletedTitle') || '¡Enhorabuena! 🎊';
+          notify.success(title);
+          setTimeout(() => {
+            const message = t('info.onboardingCompletedMessage') || 'Has completado el onboarding';
+            const question = t('info.goToInbox') || 'Ir a la bandeja de entrada';
+            if (confirm(message + '\n\n' + question + '?')) {
+              window.location.href = '/secciones/inbox.html';
+            }
+          }, 1000);
+        }
+      }, 800); // Pequeño delay para que se vea el mensaje de "Felicidades" primero
+    } else {
+      console.log('ℹ️ [info] Onboarding ya estaba completo, no se muestra modal');
+    }
   }
 }
 
@@ -599,11 +647,16 @@ function initPolicySubmit(card, form, policyType) {
         // 💾 refresca caché de esta política para próximas aperturas
         const k = normKey(policyName);
         POLICY_CACHE.set(k, { state: envelope, ts: Date.now() });
+        
+        // 🎯 IMPORTANTE: Capturar si el onboarding estaba incompleto ANTES de marcar este paso
+        const wasIncompleteBeforeSaving = !isOnboardingComplete();
+        console.log('🔍 [info] Onboarding completo ANTES de guardar esta política:', !wasIncompleteBeforeSaving);
+        
         const stepKey = resolveStepKey(policyName);
         if (stepKey) markOnboardingStep(stepKey, true);
 
         // 🆕 Verificar si se completó todo el onboarding y marcar en backend
-        announceOnboardingProgress();
+        announceOnboardingProgress(wasIncompleteBeforeSaving);
 
         wasSuccess = true;
 

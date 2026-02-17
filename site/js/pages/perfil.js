@@ -204,6 +204,18 @@ class UserProfile {
             this.populateTranslatedDropdowns();
         });
         
+        // 🎯 Mostrar modal de bienvenida si el perfil está incompleto
+        await this.showWelcomeModalIfNeeded();
+        
+        // 🧪 TESTING: Exponer función para resetear completion flags
+        window.__resetProfileCompletion = () => {
+            const store = JSON.parse(localStorage.getItem('store') || '{}');
+            store.profile_completed = false;
+            localStorage.setItem('store', JSON.stringify(store));
+            console.log('✅ profile_completed reseteado. Ahora modifica un campo y guarda para ver el modal.');
+        };
+        console.log('💡 Tip: Ejecuta window.__resetProfileCompletion() en consola para probar el modal de completación');
+        
         console.log('User Profile initialized');
     }
     
@@ -331,6 +343,22 @@ class UserProfile {
             const data = await res.json();
             localStorage.setItem('store', JSON.stringify(data));
             console.log('Profile data loaded:', data);
+            
+            // 🔍 Log del estado inicial del perfil
+            const initiallyComplete = isProfileComplete(data);
+            console.log('🔍 [loadInitialData] Perfil inicialmente completo:', initiallyComplete);
+            console.log('🔍 [loadInitialData] Campos obligatorios:', {
+                storeName: data.storeName,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                personalEmail: data.personalEmail,
+                hasPhysicalLocation: data.hasPhysicalLocation,
+                storeAddress: data.storeAddress,
+                storeCity: data.storeCity,
+                storeState: data.storeState,
+                storeCountry: data.storeCountry
+            });
+            
             this.originalData = data;
             this.currentData = { ...data };
             this.populateForm();
@@ -1724,6 +1752,12 @@ class UserProfile {
             const profileComplete = isProfileComplete(updated);
             console.log('🔍 [perfil] isProfileComplete resultado:', profileComplete);
             
+            // 🎯 IMPORTANTE: Verificar si el flag profile_completed era false ANTES de guardar
+            // (no si los campos estaban vacíos, sino si el backend tenía el flag en false)
+            const wasMarkedAsIncomplete = this.originalData.profile_completed === false;
+            console.log('🔍 [perfil] profile_completed en originalData:', this.originalData.profile_completed);
+            console.log('🔍 [perfil] wasMarkedAsIncomplete:', wasMarkedAsIncomplete);
+            
             if (profileComplete) {
                 console.log('✅ [perfil] Perfil completo! Marcando en backend...');
                 
@@ -1735,6 +1769,37 @@ class UserProfile {
                 await markCompletionInBackend('profile').catch(e => {
                     console.warn('[perfil] No se pudo marcar profile_completed en backend:', e);
                 });
+                
+                // 🎉 Mostrar modal de felicitación si acabamos de marcar el perfil como completo
+                if (wasMarkedAsIncomplete) {
+                    console.log('🎉 [perfil] ¡Perfil recién completado! Mostrando modal...');
+                    // Verificar que notify.modal existe
+                    if (typeof notify.modal === 'function') {
+                        const action = await notify.modal({
+                            title: t('profile.profileCompletedTitle'),
+                            message: t('profile.profileCompletedMessage'),
+                            buttons: [
+                                { text: t('profile.goToInfo'), style: 'primary', value: 'info' },
+                                { text: t('profile.continueExploring'), style: 'secondary', value: 'stay' }
+                            ]
+                        });
+                        
+                        if (action === 'info') {
+                            window.location.href = '/secciones/info.html';
+                        }
+                    } else {
+                        // Fallback: mostrar notificación simple
+                        console.warn('[perfil] notify.modal no disponible, usando fallback');
+                        notify.success(t('profile.profileCompletedTitle'));
+                        setTimeout(() => {
+                            if (confirm(t('profile.profileCompletedMessage') + '\n\n' + t('profile.goToInfo') + '?')) {
+                                window.location.href = '/secciones/info.html';
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    console.log('ℹ️ [perfil] Perfil ya estaba marcado como completo (profile_completed era true), no se muestra modal');
+                }
             } else {
                 console.log('⚠️ [perfil] Perfil aún no está completo, no se marca en backend');
             }
@@ -1930,7 +1995,20 @@ class UserProfile {
     async loadReferralStats() {
         try {
             const res = await fetchWithAuth('/referrals/my-stats');
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            if (!res.ok) {
+                // Si es 400, probablemente el endpoint no existe o no está configurado
+                if (res.status === 400 || res.status === 404) {
+                    console.warn('[perfil] Endpoint de referrals no disponible o no configurado');
+                } else {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                // Mostrar valores por defecto sin error
+                document.getElementById('totalInvites').textContent = '0';
+                document.getElementById('invitesPaid').textContent = '0';
+                document.getElementById('invitesTrial').textContent = '0';
+                document.getElementById('conversationsEarned').textContent = '0';
+                return;
+            }
             
             const data = await res.json();
             
@@ -1940,12 +2018,12 @@ class UserProfile {
             document.getElementById('invitesTrial').textContent = data.invites_trial || 0;
             document.getElementById('conversationsEarned').textContent = data.total_conversations_earned || 0;
         } catch (err) {
-            console.error('[perfil] Error loading referral stats:', err);
+            console.warn('[perfil] Error loading referral stats:', err.message);
             // Mostrar valores por defecto
-            document.getElementById('totalInvites').textContent = '-';
-            document.getElementById('invitesPaid').textContent = '-';
-            document.getElementById('invitesTrial').textContent = '-';
-            document.getElementById('conversationsEarned').textContent = '-';
+            document.getElementById('totalInvites').textContent = '0';
+            document.getElementById('invitesPaid').textContent = '0';
+            document.getElementById('invitesTrial').textContent = '0';
+            document.getElementById('conversationsEarned').textContent = '0';
         }
     }
 
@@ -2126,6 +2204,52 @@ class UserProfile {
 
         // Verificar al cargar si ya se aplicó un código
         checkIfCodeAlreadyApplied();
+    }
+    
+    /**
+     * Muestra un modal de bienvenida si el perfil está incompleto
+     * y no se ha mostrado antes en esta sesión
+     */
+    async showWelcomeModalIfNeeded() {
+        // 🧪 TESTING: Descomentar la siguiente línea para forzar el modal
+        const FORCE_SHOW_FOR_TESTING = false; // Cambiar a true para testing
+        
+        // Solo mostrar si el perfil está incompleto
+        if (!FORCE_SHOW_FOR_TESTING && isProfileComplete(this.currentData)) {
+            console.log('[perfil] Perfil completo, no se muestra modal de bienvenida');
+            return;
+        }
+        
+        // No mostrar si ya se mostró en esta sesión (a menos que estemos en modo testing)
+        const sessionKey = 'profile_welcome_shown';
+        if (!FORCE_SHOW_FOR_TESTING && sessionStorage.getItem(sessionKey)) {
+            console.log('[perfil] Modal de bienvenida ya mostrado en esta sesión');
+            return;
+        }
+        
+        // Marcar como mostrado
+        sessionStorage.setItem(sessionKey, 'true');
+        
+        console.log('[perfil] 🎯 Mostrando modal de bienvenida...');
+        
+        // Pequeño delay para que se cargue bien la UI primero
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Verificar que notify.modal existe (por si hay problemas de cache)
+        if (typeof notify.modal !== 'function') {
+            console.warn('[perfil] notify.modal no está disponible, usando notify.info como fallback');
+            notify.info(t('profile.incompleteProfileText'), { duration: 8000 });
+            return;
+        }
+        
+        // Mostrar modal informativo
+        await notify.modal({
+            title: '👋 ' + t('onboarding.welcome'),
+            message: t('profile.incompleteProfileText'),
+            buttons: [
+                { text: t('common.ok'), style: 'primary', value: 'ok' }
+            ]
+        });
     }
 }
 

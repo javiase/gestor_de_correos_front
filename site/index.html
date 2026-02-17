@@ -186,7 +186,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="timer-text">10 minutos</div>
+                  <div class="timer-text" data-i18n="landing.tenMinutes">10 minutos</div>
                 </div>
               </div>
               <p data-i18n="landing.quickOnboardingDesc">Conecta tu correo, sube tus políticas y responde a unas pocas preguntas sobre tu negocio. Sin instalaciones, sin código y sin proyectos de IT: en menos de 10 minutos tienes a Respondize lista para ayudar.</p>
@@ -698,7 +698,9 @@
     }
   </style>
 
-  <script>
+  <script type="module">
+    import { setLocale, getCurrentLocale } from '/js/utils/i18n.js';
+    
     // Language selector floating functionality
     const currentLangBtn = document.getElementById('currentLanguageBtn');
     const languageOptions = document.getElementById('languageOptions');
@@ -723,19 +725,8 @@
         // Hide options
         languageOptions.style.display = 'none';
         
-        // Trigger language change
-        const event = new Event('change');
-        const selectElement = document.getElementById('languageSelector');
-        if (selectElement) {
-          selectElement.value = lang;
-          selectElement.dispatchEvent(event);
-        } else {
-          // If no selector exists, handle language change directly
-          localStorage.setItem('preferredLanguage', lang);
-          if (window.applyTranslations) {
-            window.applyTranslations(lang);
-          }
-        }
+        // Change locale using i18n system
+        setLocale(lang);
       });
     });
 
@@ -747,7 +738,7 @@
     });
 
     // Set initial flag based on current language
-    const currentLang = localStorage.getItem('preferredLanguage') || 'es';
+    const currentLang = getCurrentLocale();
     if (currentLang === 'en') {
       const ukFlag = languageOptionBtns[1].querySelector('.flag-icon').cloneNode(true);
       currentFlag.innerHTML = ukFlag.innerHTML;
