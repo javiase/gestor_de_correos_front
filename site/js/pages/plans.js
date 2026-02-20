@@ -699,7 +699,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (logo) {
       logo.style.cursor = 'pointer';
-      logo.addEventListener('click', () => {
+      logo.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevenir navegación por defecto del href
         window.location.href = '/index.html';
       });
     }
@@ -707,6 +708,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Los botones están deshabilitados con data-tooltip="Próximamente"
     // La configuración de los botones se hace en setupPublicButtons() 
     // que se llama desde showCardsForPublic()
+    
+    // Mostrar calculadora para usuarios sin sesión
+    const calculator = document.getElementById('conversationsCalculator');
+    if (calculator) {
+      calculator.classList.remove('hidden');
+      initConversationsCalculator();
+    }
     
     return; // Salimos aquí si no hay token - NO llamamos enforceFlowGate()
   }
@@ -853,9 +861,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (logo) {
     logo.style.cursor = 'pointer';
-    logo.addEventListener('click', () => {
+    logo.addEventListener('click', (e) => {
+      e.preventDefault(); // Prevenir navegación por defecto del href
       if (userContext === 'active') {
-        window.location.href = '/secciones/perfil.html';
+        window.location.href = '/secciones/inbox.html';
       } else {
         window.location.href = '/index.html';
       }
@@ -1347,7 +1356,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     packCard.classList.add("hidden");
   }
 
-  // ➐ Inicializar tooltips mobile con backdrop
+  // ➐ Calculadora de conversaciones (solo mostrar si NO tiene plan activo)
+  const calculator = document.getElementById('conversationsCalculator');
+  if (calculator && !isActive) {
+    calculator.classList.remove('hidden');
+    
+    // Inicializar funcionalidad de la calculadora
+    initConversationsCalculator();
+  }
+
+  // ➑ Inicializar tooltips mobile con backdrop
   console.log('🚀 [INIT] Inicializando tooltips mobile...');
   initMobileTooltips();
 });
+
+// ============ CALCULADORA DE CONVERSACIONES ============
+function initConversationsCalculator() {
+  const weeklyEmailsInput = document.getElementById('weeklyEmails');
+  const monthlyEmailsEl = document.getElementById('monthlyEmails');
+  const conversationsNeededEl = document.getElementById('conversationsNeeded');
+
+  if (!weeklyEmailsInput || !monthlyEmailsEl || !conversationsNeededEl) {
+    console.warn('Elementos de calculadora no encontrados');
+    return;
+  }
+
+  function calculateConversations() {
+    const weeklyEmails = parseInt(weeklyEmailsInput.value) || 0;
+    
+    // Calcular correos mensuales (4 semanas aproximadamente)
+    const monthlyEmails = weeklyEmails * 4;
+    
+    // Calcular conversaciones necesarias (1 conversación = 3 correos)
+    const conversationsNeeded = Math.ceil(monthlyEmails / 3);
+    
+    // Actualizar UI
+    monthlyEmailsEl.textContent = `~${monthlyEmails}`;
+    conversationsNeededEl.textContent = `~${conversationsNeeded}`;
+  }
+
+  // Calcular inicialmente
+  calculateConversations();
+
+  // Recalcular cuando cambie el input
+  weeklyEmailsInput.addEventListener('input', calculateConversations);
+}

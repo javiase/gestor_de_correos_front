@@ -363,7 +363,7 @@ const translations = {
       reduceConversations: 'Reducir conversaciones',
       totalMonthly: 'Total mensual:',
       totalMonthlyExpected: 'Total mensual previsto:',
-      conversationTooltip: 'Una conversación/ticket es un problema completo resuelto de principio a fin. Solo cuenta cuando la conversación se cierra (el problema queda resuelto), no por cada correo individual. De media, una conversación suele incluir unos 3 correos intercambiados.',
+      conversationTooltip: 'Una conversación/ticket es un problema completo resuelto de principio a fin. Solo cuenta cuando la conversación se cierra (el problema queda resuelto), no por cada correo individual.',
       packExtraTooltip: 'Las conversaciones compradas como extra no caducan. Si no se consumen un mes, pasan al mes siguiente. Únicamente son consumidas cuando se llega al límite mensual de conversaciones',
       extraConversations: 'Conversaciones extra:',
       singlePurchase: 'Compra única',
@@ -371,6 +371,15 @@ const translations = {
       noExpiration: 'Sin caducidad',
       noExpirationDesc: 'Si no se consumen, se transfieren al mes siguiente',
       buyPack: 'Comprar pack',
+      // Calculadora de conversaciones
+      calculatorTitle: '¿Cuántas conversaciones necesitas?',
+      calculatorInfo: 'Estima cuántas conversaciones necesitas cada mes',
+      weeklyEmails: 'Correos que recibes por semana:',
+      weeklyEmailsPlaceholder: 'Ej: 150',
+      monthlyEmails: 'Correos mensuales:',
+      conversationsNeeded: 'Conversaciones necesarias:',
+      calculatorTip: '💡 Tip: Redondea hacia arriba para estar cubierto todo el mes',
+      // Fin traducciones
       startFree: 'Comenzar gratis',
       freeTrial: 'Prueba gratuita',
       hirePlan: 'Contratar plan',
@@ -613,25 +622,26 @@ const translations = {
       // Refund Modal
       createRefund: 'Crear Reembolso',
       refundItems: 'Items a reembolsar',
-      unfulfilled: 'Unfulfilled',
-      restock: 'Restock',
-      refundShipping: 'Refund shipping',
+      unfulfilled: 'Sin cumplir',
+      restock: 'Reintegrar al inventario',
+      refundShipping: 'Reembolsar envío',
       shippingMax: 'Máx.',
-      refundReason: 'Reason for refund',
+      refundReason: 'Razón del reembolso',
       refundReasonPlaceholder: 'Razón del reembolso...',
-      refundSummary: 'Summary',
+      refundReasonHelp: 'Solo tú y otros miembros del personal pueden ver esta razón',
+      refundSummary: 'Resumen',
       refundSubtotal: 'Subtotal',
-      refundShippingAmount: 'Shipping',
-      refundTotal: 'Refund total',
-      refundMethod: 'Refund method',
-      refundMethodOriginal: 'Original payment',
-      refundMethodCredit: 'Store credit',
-      refundMethodMixed: 'Original payment and store credit',
-      refundAmount: 'Refund amount',
+      refundShippingAmount: 'Envío',
+      refundTotal: 'Total a reembolsar',
+      refundMethod: 'Método de reembolso',
+      refundMethodOriginal: 'Pago original',
+      refundMethodCredit: 'Crédito de tienda',
+      refundMethodMixed: 'Pago original y crédito de tienda',
+      refundAmount: 'Cantidad a reembolsar',
       refundManual: 'Manual',
-      refundAvailable: '{amount} available for refund',
+      refundAvailable: '{amount} disponible para reembolso',
       refundExceedsAvailable: 'El monto excede el disponible para reembolso',
-      refundButton: 'Refund {amount}',
+      refundButton: 'Reembolsar {amount}',
       refundCreating: 'Creando reembolso...',
       refundSuccess: 'Reembolso creado correctamente',
       refundError: 'Error al crear el reembolso',
@@ -1506,7 +1516,7 @@ const translations = {
       totalMonthly: 'Monthly total:',
       totalMonthlyExpected: 'Expected monthly total:',
       conversations: 'per conversation',
-      conversationTooltip: 'A conversation/ticket is a complete problem solved from start to finish. It only counts when the conversation is closed (the problem is resolved), not for each individual email. On average, a conversation usually includes about 3 exchanged emails.',
+      conversationTooltip: 'A conversation/ticket is a complete problem solved from start to finish. It only counts when the conversation is closed (the problem is resolved), not for each individual email.',
       packExtraTooltip: 'Extra purchased conversations do not expire. If they are not consumed in one month, they carry over to the next month. They are only consumed when the monthly conversation limit is reached',
       extraConversations: 'Extra conversations:',
       singlePurchase: 'Single purchase',
@@ -1514,6 +1524,17 @@ const translations = {
       noExpiration: 'No expiration',
       noExpirationDesc: 'If not consumed, they transfer to the next month',
       buyPack: 'Buy pack',
+      // Calculator translations
+      calculatorTitle: 'How many conversations do you need?',
+      calculatorInfo: 'Estimate how many conversations you need each month',
+      weeklyEmails: 'Emails you receive per week:',
+      weeklyEmailsPlaceholder: 'Ex: 150',
+      monthlyEmails: 'Monthly emails:',
+      conversationsNeeded: 'Conversations needed:',
+      calculatorTip: '💡 Tip: Round up to be covered all month',
+      // End translations
+      calculatorTip: '💡 Tip: Round up to be covered all month',
+      // End translations
       startFree: 'Start free',
       freeTrial: 'Free trial',
       hirePlan: 'Hire plan',
@@ -1762,6 +1783,7 @@ const translations = {
       shippingMax: 'Max.',
       refundReason: 'Reason for refund',
       refundReasonPlaceholder: 'Reason for refund...',
+      refundReasonHelp: 'Only you and other staff can see this reason',
       refundSummary: 'Summary',
       refundSubtotal: 'Subtotal',
       refundShippingAmount: 'Shipping',
@@ -2303,21 +2325,24 @@ const translations = {
  * Obtiene el idioma actual del usuario
  */
 export function getCurrentLocale() {
-  // 1. Intentar leer del perfil del store (si el usuario está autenticado)
-  try {
-    const storeData = localStorage.getItem('store');
-    if (storeData) {
-      const store = JSON.parse(storeData);
-      // El idioma está en 'language', no en 'preferred_language'
-      if (store.language && SUPPORTED_LOCALES.includes(store.language)) {
-        return store.language;
+  // 1. Intentar leer del perfil del store (SOLO si el usuario está autenticado)
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const storeData = localStorage.getItem('store');
+      if (storeData) {
+        const store = JSON.parse(storeData);
+        // El idioma está en 'language', no en 'preferred_language'
+        if (store.language && SUPPORTED_LOCALES.includes(store.language)) {
+          return store.language;
+        }
       }
+    } catch (e) {
+      console.warn('[getCurrentLocale] Error reading from store:', e);
     }
-  } catch (e) {
-    console.warn('[getCurrentLocale] Error reading from store:', e);
   }
   
-  // 2. Intentar leer de localStorage
+  // 2. Intentar leer de localStorage (idioma de la landing page)
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored && SUPPORTED_LOCALES.includes(stored)) {
     return stored;

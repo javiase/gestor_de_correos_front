@@ -185,9 +185,9 @@ class ShopifyLoadingPage {
       localStorage.setItem('store', JSON.stringify(store));
 
       // ✅ 2 flujos:
-      // - active => perfil/inbox
+      // - active => inbox
       // - no active => planes internos
-      window.location.href = store.active ? '/secciones/perfil.html' : '/secciones/plans.html';
+      window.location.href = store.active ? '/secciones/inbox.html' : '/secciones/plans.html';
 
     } catch (e) {
       console.error('❌ Error auth poll:', e);

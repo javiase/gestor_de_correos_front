@@ -108,6 +108,14 @@
  background: #fff; color: #333; font-size: 14px; line-height: 18px; text-align: center; cursor: pointer;}
 .attachment-chip.outgoing .rm:hover { background: #eee;}
 .response-subject { display: block; width: 100%; min-height: 2.5vh; padding: 0.2vh 0; cursor: text; outline: none;}
+
+/* Estilos para subject no editable */
+.response-subject[contenteditable="false"] {
+  color: #878c97;
+  cursor: default;
+  opacity: 0.8;
+}
+
 .response-subject:focus,
 .response-body:focus { outline: none;}
 .response-subject:empty::before,

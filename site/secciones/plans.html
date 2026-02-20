@@ -141,7 +141,6 @@
             <div class="conversations-dropdown-wrapper">
               <div class="fade-top"></div>
               <div id="conversationsScroller" class="conversations-scroller">
-                <div class="conversation-option" data-value="50">50 conversaciones</div>
                 <div class="conversation-option" data-value="100">100 conversaciones</div>
                 <div class="conversation-option" data-value="150">150 conversaciones</div>
                 <div class="conversation-option" data-value="200">200 conversaciones</div>
@@ -257,6 +256,47 @@
           </ul>
           
           <button id="buyPackBtn" class="cta-button secondary" data-i18n="plans.buyPack">Comprar pack</button>
+        </div>
+      </div>
+
+      <!-- Calculadora de conversaciones (solo visible para usuarios sin plan activo) -->
+      <div id="conversationsCalculator" class="conversations-calculator hidden">
+        <div class="calculator-header">
+          <i class="fas fa-calculator"></i>
+          <h3 data-i18n="plans.calculatorTitle">¿Cuántas conversaciones necesitas?</h3>
+        </div>
+        <div class="calculator-body">
+          <p class="calculator-info" data-i18n="plans.calculatorInfo">
+            Aproximadamente, 1 conversación = 3 correos procesados
+          </p>
+          
+          <div class="calculator-input-group">
+            <label for="weeklyEmails" data-i18n="plans.weeklyEmails">Correos que recibes por semana:</label>
+            <input 
+              type="number" 
+              id="weeklyEmails" 
+              min="0" 
+              step="1" 
+              data-i18n-placeholder="plans.weeklyEmailsPlaceholder"
+              placeholder="Ej: 150"
+              value="150"
+            />
+          </div>
+
+          <div class="calculator-result">
+            <div class="result-row">
+              <span class="result-label" data-i18n="plans.monthlyEmails">Correos mensuales:</span>
+              <span class="result-value" id="monthlyEmails">~600</span>
+            </div>
+            <div class="result-row highlight">
+              <span class="result-label" data-i18n="plans.conversationsNeeded">Conversaciones necesarias:</span>
+              <span class="result-value" id="conversationsNeeded">~200</span>
+            </div>
+          </div>
+
+          <p class="calculator-tip" data-i18n="plans.calculatorTip">
+            💡 Tip: Redondea hacia arriba para estar cubierto todo el mes
+          </p>
         </div>
       </div>
     </div>

@@ -192,6 +192,14 @@ async function renovarToken() {
 function mostrarModalSesionCaducada() {
   const existing = document.getElementById("modal-sesion-caducada");
   if (existing) return existing.style.display = "flex";
+  
+  // Obtener el dominio de Shopify del store
+  let shopifyDomain = null;
+  try {
+    const store = JSON.parse(localStorage.getItem('store') || '{}');
+    shopifyDomain = store.shopify_domain || store.shop_domain || store.domain;
+  } catch {}
+  
   const modal = document.createElement("div");
   modal.id = "modal-sesion-caducada";
   Object.assign(modal.style, {
@@ -202,16 +210,24 @@ function mostrarModalSesionCaducada() {
   modal.innerHTML = `
     <div style="background: #2a2a2a; padding: 2rem; border-radius: 8px; text-align: center; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
       <h2 style="color: #fff;">Sesión caducada</h2>
-      <p style="color: #ddd;">Tu sesión ha expirado por inactividad. Por favor, vuelve a iniciar sesión para continuar.</p>
+      <p style="color: #ddd;">Tu sesión ha expirado por inactividad. Serás redirigido a tu panel de Shopify.</p>
       <button id="cerrar-modal-sesion" style="margin-top: 1rem; padding: 0.5rem 1rem; border: none; background: #20ab7a; color: white; border-radius: 5px; cursor: pointer;">
-        Entendido
+        Volver a Shopify
       </button>
     </div>`;
   document.body.appendChild(modal);
   document.getElementById("cerrar-modal-sesion").onclick = () => {
     clearToken();
     clearClientStateOnLogout();
-    window.location.href = "/index.html";
+    
+    // Redirigir a Shopify si tenemos el dominio, sino a index
+    if (shopifyDomain) {
+      // Asegurarse de que tiene el formato correcto
+      const cleanDomain = shopifyDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      window.location.href = `https://${cleanDomain}/admin`;
+    } else {
+      window.location.href = "/index.html";
+    }
   };
 }
 

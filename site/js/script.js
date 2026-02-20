@@ -1,23 +1,35 @@
 import { API_BASE } from '/js/utils/api.js';
 import { getCurrentLocale, setLocale, initI18n } from '/js/utils/i18n.js';
 
-// Inicializar i18n en la landing page
-initI18n();
+// Redirigir usuarios con sesión activa al inbox
+(function checkActiveSession() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    // Usuario ya tiene sesión activa, redirigir a inbox
+    window.location.href = '/secciones/inbox.html';
+    return;
+  }
+})();
 
-// Configurar selector de idioma
-const languageSelector = document.getElementById('languageSelector');
-if (languageSelector) {
-  // Establecer el idioma actual
-  languageSelector.value = getCurrentLocale();
+// Inicializar i18n cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+  initI18n();
   
-  // Escuchar cambios
-  languageSelector.addEventListener('change', (e) => {
-    const newLocale = e.target.value;
-    setLocale(newLocale);
-    // Recargar para aplicar traducciones
-    window.location.reload();
-  });
-}
+  // Configurar selector de idioma (si existe en la página)
+  const languageSelector = document.getElementById('languageSelector');
+  if (languageSelector) {
+    // Establecer el idioma actual
+    languageSelector.value = getCurrentLocale();
+    
+    // Escuchar cambios
+    languageSelector.addEventListener('change', (e) => {
+      const newLocale = e.target.value;
+      setLocale(newLocale);
+      // Recargar para aplicar traducciones
+      window.location.reload();
+    });
+  }
+});
 
 // ============ GRADIENTE ANIMADO CON SCROLL ============
 let scrollListener = null;

@@ -3625,7 +3625,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       document.getElementById('refundSummaryItemsAmount').textContent = '$0.00';
       document.getElementById('refundSummaryShippingRow').style.display = 'none';
       document.getElementById('refundSummaryTotal').textContent = '$0.00';
-      document.getElementById('refundAvailableAmount').textContent = '$0.00 available for refund';
+      document.getElementById('refundAvailableAmount').textContent = t('email.refundAvailable', { amount: '$0.00' });
 
       if (submitBtn) {
         // Si ya estamos enviando, NO tocar el texto del botón (mantener spinner)
@@ -3633,7 +3633,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
           submitBtn.disabled = true;
         } else {
           submitBtn.disabled = true;
-          submitBtn.innerHTML = '<i class="fas fa-undo"></i> Refund $0.00';
+          submitBtn.innerHTML = '<i class="fas fa-undo"></i> ' + t('email.refundButton', { amount: '$0.00' });
         }
       }
       return;
@@ -3675,7 +3675,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
     
     // Actualizar available amount
     document.getElementById('refundAvailableAmount').textContent =
-      `$${maxavailable.toFixed(2)} available for refund`;
+      t('email.refundAvailable', { amount: `$${maxavailable.toFixed(2)}` });
     
     if (submitBtn) {
       if (isSubmitting) {
@@ -3685,7 +3685,7 @@ await this.loadBatch(prevPage, { replace: false, prepend: true });
       } else {
         // Estado normal (antes de enviar): botón con importe
         submitBtn.disabled = !isValid || finalAmount === 0;
-        submitBtn.innerHTML = `<i class="fas fa-undo"></i> Refund $${finalAmount.toFixed(2)}`;
+        submitBtn.innerHTML = `<i class="fas fa-undo"></i> ${t('email.refundButton', { amount: `$${finalAmount.toFixed(2)}` })}`;
       }
     }
     
