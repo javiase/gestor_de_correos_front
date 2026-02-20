@@ -788,10 +788,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     dataRoot: { plan: data.plan, active: data.active, free_block_until: data.free_block_until }
   });
 
-  // En la estructura nueva, el trial-used está por proveedor
-  // 🔄 FALLBACK: También revisar en la raíz del documento
-  const usedFreeStarter = !!provider.free_trial_starter || !!data.used_free_trial_starter;
-
   // Trial (estructura nueva)
   // 🔄 FALLBACK: También revisar en la raíz
   const trialEndDate = toDate(provider.trial_end || data.trial_end);
@@ -1261,14 +1257,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } else {
       // Usuario NO tiene plan Starter o no está activo
-      const hasUsedTrial = usedFreeStarter;
+      // Ya no hay free trial para Starter, siempre es de pago
       
       // Deshabilitar si hay cambio pendiente
       if (hasPendingChange) {
         starterBtn.disabled = true;
         starterBtn.textContent = t('plans.pendingChange');
       } else {
-        starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
+        starterBtn.textContent = t('plans.hirePlan');
 
         starterBtn.addEventListener('click', async () => {
           starterBtn.disabled = true;
@@ -1294,14 +1290,14 @@ document.addEventListener("DOMContentLoaded", async () => {
               const msg = (data && (data.detail || data.message)) || `Error creando la sesión (${res.status})`;
               notify.error(msg);
               starterBtn.disabled = false;
-              starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
+              starterBtn.textContent = t('plans.hirePlan');
               return;
             }
 
             if (!data?.url) {
               notify.error(t('plans.errorNoCheckoutUrl'));
               starterBtn.disabled = false;
-              starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
+              starterBtn.textContent = t('plans.hirePlan');
               return;
             }
 
@@ -1311,7 +1307,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.error(error);
             notify.error(t('plans.errorProcessingPlan'));
             starterBtn.disabled = false;
-            starterBtn.textContent = hasUsedTrial ? t('plans.hirePlan') : t('plans.freeTrial');
+            starterBtn.textContent = t('plans.hirePlan');
           }
         });
       }
