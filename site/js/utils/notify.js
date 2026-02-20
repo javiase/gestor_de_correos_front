@@ -42,14 +42,31 @@ function ensureStyles() {
     position: fixed; inset: 0; background: rgba(0,0,0,.5);
     display: flex; justify-content: center; align-items: center;
     z-index: 10001;
+    backdrop-filter: blur(4px);
   }
   .notify-modal {
-    background: #2a2a2a; color: #fff; padding: 1.125rem;
-    border-radius: .625rem; max-width: 92vw; width: 22.5rem;
+    background: #2a2a2a; color: #fff; padding: 1.5rem;
+    border-radius: .75rem; max-width: 92vw; width: 28rem;
     text-align: center;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.6);
+  }
+  .notify-modal-title {
+    font-size: 1.5rem; font-weight: 600; margin-bottom: .75rem;
+  }
+  .notify-modal-message {
+    font-size: .95rem; line-height: 1.5; margin-bottom: 1.25rem;
+    color: #d1d5db;
   }
   .notify-actions { display:flex; justify-content:center; gap: .625rem; margin-top: .875rem; }
-  .notify-btn { padding: .5rem .75rem; border-radius: .5rem; border: 0; cursor: pointer; }
+  .notify-btn { 
+    padding: .625rem 1.25rem; border-radius: .5rem; border: 0; 
+    cursor: pointer; font-size: .875rem; font-weight: 500;
+    transition: all .2s ease;
+  }
+  .notify-btn.primary { background:#e879f9; color:#000; }
+  .notify-btn.primary:hover { background:#d946ef; transform: translateY(-1px); }
+  .notify-btn.secondary { background:#3a3a3a; color:#fff; }
+  .notify-btn.secondary:hover { background:#4a4a4a; }
   .notify-btn.ok { background:#ef4444; color:#fff; }
   .notify-btn.cancel { background:#444; color:#fff; }
   `;
@@ -122,6 +139,61 @@ async function confirm(text = '¿Estás seguro?', { okText = 'Sí', cancelText =
   });
 }
 
+/**
+ * Modal informativo con botones personalizados
+ * @param {Object} options - Configuración del modal
+ * @param {string} options.title - Título del modal
+ * @param {string} options.message - Mensaje (puede contener HTML)
+ * @param {Array} options.buttons - Array de botones [{text, style, value}]
+ * @returns {Promise} - Resuelve con el valor del botón clickeado
+ */
+async function modal({ title = '', message = '', buttons = [] } = {}) {
+  ensureStyles();
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'notify-modal-overlay';
+    const box = document.createElement('div');
+    box.className = 'notify-modal';
+    
+    let html = '';
+    if (title) html += `<div class="notify-modal-title">${title}</div>`;
+    if (message) html += `<div class="notify-modal-message">${message}</div>`;
+    
+    if (buttons.length > 0) {
+      html += '<div class="notify-actions">';
+      buttons.forEach((btn, idx) => {
+        const style = btn.style || 'secondary';
+        const text = btn.text || 'OK';
+        html += `<button class="notify-btn ${style}" data-idx="${idx}">${text}</button>`;
+      });
+      html += '</div>';
+    }
+    
+    box.innerHTML = html;
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+
+    const cleanup = (value) => { ov.remove(); resolve(value); };
+    
+    // Click en botones
+    box.querySelectorAll('.notify-btn').forEach((btn, idx) => {
+      btn.onclick = () => cleanup(buttons[idx]?.value ?? idx);
+    });
+    
+    // Click fuera cierra sin valor
+    ov.addEventListener('click', (e) => { if (e.target === ov) cleanup(null); });
+    
+    // ESC cierra sin valor
+    const onEsc = (ev) => {
+      if (ev.key === 'Escape') {
+        document.removeEventListener('keydown', onEsc);
+        cleanup(null);
+      }
+    };
+    document.addEventListener('keydown', onEsc);
+  });
+}
+
 export const notify = {
   show,
   info: (t, o) => show(t, 'info', o),
@@ -129,4 +201,5 @@ export const notify = {
   warning: (t, o) => show(t, 'warning', o),
   error: (t, o) => show(t, 'error', o),
   confirm,
+  modal,
 };

@@ -108,6 +108,7 @@ const translations = {
       connectedResponsesDesc: 'Si trabajas con Shopify, puedes conectar tu tienda para que Respondize consulte pedidos, estados de envío... Así gestionas devoluciones, cambios e incidencias sin salir del propio correo.',
       quickOnboarding: 'Onboarding en menos de 10 minutos',
       quickOnboardingDesc: 'Conecta tu correo, sube tus políticas y responde a unas pocas preguntas sobre tu negocio. Sin instalaciones, sin código y sin proyectos de IT: en menos de 10 minutos tienes a Respondize lista para ayudar.',
+      tenMinutes: '10 minutos',
       helpfulMetrics: 'Métricas que sí ayudan a decidir',
       helpfulMetricsDesc: 'Ve tiempos de respuesta, motivos de contacto y volumen por tipo de consulta para decidir dónde automatizar más y dónde reforzar tu equipo. (Disponible próximamente).',
       howItWorksTitle: 'Cómo funciona',
@@ -310,6 +311,16 @@ const translations = {
       incompleteProfileText: 'Rellena los campos obligatorios marcados con * para desbloquear todas las funciones.',
       requiredFields: 'Campos obligatorios',
       trialEndsOn: 'Termina el',
+      // Profile completion modal
+      profileCompletedTitle: '¡Perfil completado! 🎉',
+      profileCompletedMessage: 'Has desbloqueado la sección <strong>Info</strong>. Ahora puedes añadir información sobre tus políticas de envío, devoluciones y más para que Respondize pueda ayudarte mejor.',
+      goToInfo: 'Ir a Info',
+      continueExploring: 'Continuar explorando',
+      // Onboarding incomplete alert
+      onboardingIncompleteTitle: '⚠️ Onboarding incompleto',
+      onboardingIncompleteMessage: 'Para aprovechar al máximo Respondize, primero completa la sección <strong>Info</strong> con tus políticas y datos de tu tienda.',
+      goToInfoNow: 'Completar ahora',
+      remindLater: 'Más tarde',
     },
     
     // Plans page
@@ -793,7 +804,7 @@ const translations = {
     
     // Sidebar
     sidebar: {
-      inbox: 'Inbox',
+      inbox: 'Bandeja de Entrada',
       inboxHeader: 'Bandeja de Entrada',
       sent: 'Enviados',
       drafts: 'Borradores',
@@ -808,19 +819,6 @@ const translations = {
       help: 'Ayuda',
       plans: 'Planes',
       feedback: 'Feedback',
-    },
-    
-    // Info page
-    info: {
-      title: 'Información',
-      pendingIdeas: 'Ideas pendientes',
-      noPendingIdeas: 'No hay ideas pendientes',
-      howItWorks: 'Cómo funciona',
-      faq: 'Preguntas frecuentes',
-      support: 'Soporte',
-      documentation: 'Documentación',
-      tutorials: 'Tutoriales',
-      contactUs: 'Contáctanos',
     },
     
     // Integrations page
@@ -892,6 +890,12 @@ const translations = {
     info: {
       pageTitle: 'Información sobre la tienda',
       pageSubtitle: 'Completa estos bloques. Puedes marcar campos como No aplicable (N/A). Guardaremos el texto listo para usar y también la configuración para que puedas editarla después.',
+      
+      // Onboarding completion modal
+      onboardingCompletedTitle: '¡Enhorabuena! 🎊',
+      onboardingCompletedMessage: 'Has completado el onboarding de Respondize. Ahora estás listo para empezar a gestionar tus correos de forma más eficiente. ¡Esperamos que la app te sea de mucha utilidad!',
+      startUsing: 'Seguir añadiendo información',
+      goToInbox: 'Ir a la bandeja de entrada',
       
       // Card titles
       returnsPolicy: 'Política de Devoluciones',
@@ -1263,6 +1267,7 @@ const translations = {
       connectedResponsesDesc: 'If you work with Shopify, you can connect your store so Respondize can query orders, shipping status... This way you manage returns, changes and incidents without leaving the email itself.',
       quickOnboarding: 'Onboarding in less than 10 minutes',
       quickOnboardingDesc: 'Connect your email, upload your policies and answer a few questions about your business. No installations, no code and no IT projects: in less than 10 minutes you have Respondize ready to help.',
+      tenMinutes: '10 minutes',
       helpfulMetrics: 'Metrics that actually help decide',
       helpfulMetricsDesc: 'See response times, contact reasons and volume by query type to decide where to automate more and where to reinforce your team. (Available soon).',
       howItWorksTitle: 'How it works',
@@ -1462,6 +1467,16 @@ const translations = {
       incompleteProfileText: 'Fill in the required fields marked with * to unlock all features.',
       requiredFields: 'Required fields',
       trialEndsOn: 'Ends on',
+      // Profile completion modal
+      profileCompletedTitle: 'Profile completed! 🎉',
+      profileCompletedMessage: 'You have unlocked the <strong>Info</strong> section. Now you can add information about your shipping policies, returns and more so Respondize can help you better.',
+      goToInfo: 'Go to Info',
+      continueExploring: 'Continue exploring',
+      // Onboarding incomplete alert
+      onboardingIncompleteTitle: '⚠️ Onboarding incomplete',
+      onboardingIncompleteMessage: 'To get the most out of Respondize, first complete the <strong>Info</strong> section with your policies and store data.',
+      goToInfoNow: 'Complete now',
+      remindLater: 'Later',
     },
     
     // Plans page
@@ -1970,6 +1985,12 @@ const translations = {
       pageTitle: 'Store Information',
       pageSubtitle: 'Complete these blocks. You can mark fields as Not applicable (N/A). We will save the ready-to-use text and also the configuration so you can edit it later.',
       
+      // Onboarding completion modal
+      onboardingCompletedTitle: 'Congratulations! 🎊',
+      onboardingCompletedMessage: 'You have completed the Respondize onboarding. You are now ready to start managing your emails more efficiently. We hope the app is very useful to you!',
+      startUsing: 'Continue adding information',
+      goToInbox: 'Go to inbox',
+      
       // Card titles
       returnsPolicy: 'Returns Policy',
       shippingPolicy: 'Shipping Policy',
@@ -2123,6 +2144,11 @@ const translations = {
       documentation: 'Documentation',
       tutorials: 'Tutorials',
       contactUs: 'Contact us',
+      // Onboarding completion modal
+      onboardingCompletedTitle: 'Congratulations! 🎊',
+      onboardingCompletedMessage: 'You have completed the Respondize onboarding. You are now ready to start managing your emails more efficiently. We hope the app is very useful to you!',
+      startUsing: 'Start using Respondize',
+      goToInbox: 'Go to inbox',
     },
     
     // Integrations page
